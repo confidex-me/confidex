@@ -6,3 +6,6 @@ It requires the GitHub CLI, `GH_TOKEN`, `GITHUB_REPOSITORY` and `RELEASE_TAG`.
 
 The release workflow calls it after the platform builds succeed. It does not
 create tags or releases and does not change the release title or notes.
+
+The workflow downloads only `native-*`, `web` and `selfhost` artifacts. Docker
+build reports stay in Actions and are not release assets, including on reruns.

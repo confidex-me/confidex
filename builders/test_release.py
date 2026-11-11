@@ -22,7 +22,11 @@ class ReleaseTests(unittest.TestCase):
             paths = release.assets(root, '1.2.3+gabcdef')
             self.assertEqual(paths, [artifact, root / 'SHA256SUMS'])
             expected = (root / 'SHA256SUMS').read_bytes()
-            for name in ['credentials.txt', 'confidex-1.2.3+g000000-arm64-macos.dmg']:
+            for name in [
+                'credentials.txt',
+                'confidex-1.2.3+g000000-arm64-macos.dmg',
+                'confidex-me~confidex~PUBLIC.dockerbuild',
+            ]:
                 unexpected = root / name
                 unexpected.write_bytes(b'public negative fixture')
                 with self.assertRaises(ValueError):
