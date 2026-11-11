@@ -36,6 +36,8 @@ step to 60 minutes, including compilation.
 Windows ARM CI tests use `-C target-cpu=native` to enable the runner's crypto
 instructions. RustCrypto's ARM feature detection does not support Windows.
 This flag applies only to that test step; release packages use portable targets.
+The target-specific Cargo variable preserves the HTTP/3 and Swift runtime flags
+from `.cargo/config.toml`.
 
 For a machine with little disk space, set `CARGO_BUILD_JOBS=2`,
 `CARGO_INCREMENTAL=0` and `CARGO_PROFILE_TEST_DEBUG=0`. Build directories are

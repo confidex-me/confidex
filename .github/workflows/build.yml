@@ -76,7 +76,7 @@ jobs:
         timeout-minutes: 60
         env:
           # RustCrypto cannot detect ARM crypto instructions on Windows.
-          RUSTFLAGS: ${{ matrix.platform == 'windows' && matrix.arch == 'arm64' && '-C target-cpu=native' || '' }}
+          CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUSTFLAGS: -C target-cpu=native
       - if: ${{ inputs.release-tag == '' }}
         run: cargo check --locked -p confidex --no-default-features
       - if: ${{ inputs.release-tag == '' }}
