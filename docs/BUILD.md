@@ -33,6 +33,10 @@ vendored KeePass reader. Real KDF fixtures keep their original parameters;
 workspace test code keeps its normal debug checks. CI limits each workspace test
 step to 60 minutes, including compilation.
 
+Windows ARM CI tests use `-C target-cpu=native` to enable the runner's crypto
+instructions. RustCrypto's ARM feature detection does not support Windows.
+This flag applies only to that test step; release packages use portable targets.
+
 For a machine with little disk space, set `CARGO_BUILD_JOBS=2`,
 `CARGO_INCREMENTAL=0` and `CARGO_PROFILE_TEST_DEBUG=0`. Build directories are
 ignored. Changing a target directory affects where packaging looks for binaries.
