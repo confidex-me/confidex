@@ -34,7 +34,7 @@ def main():
         print('Cloudflare deployment skipped: CLOUDFLARE_API_TOKEN is not set.')
         return
     if not os.environ.get('CLOUDFLARE_ACCOUNT_ID'):
-        raise SystemExit('Set the CLOUDFLARE_ACCOUNT_ID repository variable.')
+        raise SystemExit('Set CLOUDFLARE_ACCOUNT_ID as a repository variable or secret.')
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     version = release_version(os.environ['RELEASE_TAG'], commit)
     expected = {'version': version, 'commit': commit}

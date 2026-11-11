@@ -33,7 +33,7 @@ class CloudflareTests(unittest.TestCase):
             deploy.main()
             run.assert_not_called()
         with patch.dict(os.environ, {'CLOUDFLARE_API_TOKEN': 'public-test-token'}, clear=True), patch.object(deploy, 'run') as run:
-            with self.assertRaises(SystemExit):
+            with self.assertRaisesRegex(SystemExit, 'repository variable or secret'):
                 deploy.main()
             run.assert_not_called()
 

@@ -4,7 +4,8 @@
 The release workflow calls it after uploading artifacts.
 
 In the application repository's GitHub Actions settings, add the secret
-`CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`. The token must allow
+`CLOUDFLARE_API_TOKEN` and a variable or secret named `CLOUDFLARE_ACCOUNT_ID`.
+If both exist, the variable takes precedence. The token must allow
 Worker deployment and reading D1 database metadata in that account. Without the
 token, deployment is skipped and release builds/uploads still work.
 

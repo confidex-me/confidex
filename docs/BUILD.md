@@ -110,7 +110,7 @@ macOS can show OS security prompts for these packages. The workflow does not
 claim notarization, Authenticode signing or a security audit.
 
 The release can also deploy the app and sync Worker. Add the
-`CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` Actions variable in the
+`CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` Actions variable or secret in the
 application repository. Without the token this step is skipped. Existing D1
 data and Worker variables/secrets are preserved; see the
 [deployment helper](../builders/cloudflare/README.md).
