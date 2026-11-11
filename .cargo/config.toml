@@ -1,3 +1,7 @@
 # reqwest requires this flag for HTTP/3 on native targets.
 [target.'cfg(not(target_arch = "wasm32"))']
 rustflags = ["--cfg", "reqwest_unstable"]
+
+# The Swift bridge needs the system Swift runtime directory at load time.
+[target.'cfg(target_os = "macos")']
+rustflags = ["-C", "link-arg=-Wl,-rpath,/usr/lib/swift"]

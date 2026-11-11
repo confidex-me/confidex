@@ -19,3 +19,7 @@ cargo test --locked -p confidex-device-secrets
 
 Contract tests use test backends. Hardware checks require a suitable device,
 user session and explicit interaction.
+
+On macOS, consumers outside this workspace must add
+`-C link-arg=-Wl,-rpath,/usr/lib/swift` to their Rust linker flags. The Swift bridge
+uses the system runtime; it does not bundle the Xcode runtime.
