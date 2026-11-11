@@ -54,9 +54,10 @@ The output includes a build manifest with the source commit and asset hashes.
 Run browser checks with a Chromium executable and the generated bundle:
 
 ```sh
-node apps/confidex/web/check.mjs /path/to/chromium dist/wasm
-node apps/confidex/web/storage-check.mjs /path/to/chromium dist/wasm
-node apps/confidex/web/device-unlock-check.mjs /path/to/chromium dist/wasm
+node apps/confidex/web/check.mjs /path/to/chromium dist/web
+node apps/confidex/web/input-check.mjs /path/to/chromium dist/wasm
+node apps/confidex/web/storage-check.mjs /path/to/chromium
+node apps/confidex/web/device-unlock-check.mjs /path/to/chromium dist/wasm DISPOSABLE_SYNC_SERVER_URL
 ```
 
 These headless checks do not replace real Safari input and passkey checks.
@@ -74,13 +75,12 @@ npx wrangler deploy --config apps/confidex/wrangler.production.toml
 ## Sync Worker
 
 The sync Worker shares the Rust daemon's implementation but uses D1 and S3.
-Install the pinned builder and prepare a local configuration:
+Build the compiled Worker, then prepare a local configuration:
 
 ```sh
-cargo install --locked worker-build --version 0.8.7
 npm ci
-cd apps/confidexsyncd
-worker-build --release
+python3 builders/syncd/build.py
+npx wrangler deploy --dry-run --config apps/confidexsyncd/wrangler.toml
 ```
 
 See [configuration](../apps/confidexsyncd/docs/CONFIGURATION.md) for D1 setup, S3
@@ -90,14 +90,19 @@ belong in local configuration or repository secrets, not source control.
 ## Releases
 
 CI checks native targets on Linux, macOS and Windows, and builds the browser
-application and sync Worker. A `v*` tag runs the release workflow. It packages
-the desktop app, CLI and daemon separately, includes their licenses, records the
-source commit and writes SHA-256 checksums. macOS packages contain an `.app`;
-Windows packages are ZIP archives; Linux packages are tar archives.
+application and sync Worker. Create and publish a GitHub Release to start
+`.github/workflows/release.yml`, as with the release process in the repository's
+GitHub interface. The workflow builds the release tag, derives the version as `tag+gSHA6`
+without changing Cargo manifests, packages the outputs and uploads them to the existing
+release. A tag push alone does not create or publish a release.
 
-The workflow creates a **draft** GitHub release. Review the assets and release
-notes before publishing it. No deployment runs on a pull request. Cloudflare
-credentials are not needed to build or create release artifacts.
+macOS app packages are two DMG images, for Apple Silicon and Intel. Each contains
+`Confidex.app` and a link to `/Applications`. The copied website icon and its
+raster sizes are in `apps/confidex/assets/icons/`. Windows packages are MSI installers; Linux packages are tar archives for glibc
+and musl. Desktop packages include the GUI and CLI; daemon archives are separate.
+See the [artifact contract](../builders/docs/ARTIFACTS.md) for stable names.
+All packages include licenses and source provenance. `SHA256SUMS` covers the
+release assets. CI and release builds require no Cloudflare credentials.
 
 Release binaries are unsigned unless signing is added separately. Windows and
 macOS can show OS security prompts for these packages. The workflow does not

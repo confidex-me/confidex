@@ -6,6 +6,6 @@ preview_urls = false
 routes = [{ pattern = "app.confidex.me", custom_domain = true }]
 
 [assets]
-directory = "web-dist"
+directory = "../../dist/web"
 html_handling = "auto-trailing-slash"
 not_found_handling = "none"

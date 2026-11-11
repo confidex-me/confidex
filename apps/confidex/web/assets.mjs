@@ -52,3 +52,18 @@ self.addEventListener('fetch', event => {
 `);
   return files;
 }
+
+// Read only packaged files, so release checks cannot hide missing assets.
+export async function releaseAssets(directory) {
+  const files = {};
+  async function visit(path, prefix = '') {
+    for (const entry of await readdir(path, {withFileTypes: true})) {
+      const name = prefix + entry.name;
+      if (entry.isDirectory()) await visit(join(path, entry.name), name + '/');
+      else files['/' + name] = await readFile(join(path, entry.name));
+    }
+  }
+  await visit(directory);
+  files['/'] = files['/index.html'];
+  return files;
+}

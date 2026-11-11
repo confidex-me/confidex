@@ -166,15 +166,15 @@ The Worker is the library's `cdylib` WASM entrypoint, built from the same packag
 The native `main` executable is not used by the Workers runtime.
 
 ```sh
-cargo install worker-build --version 0.8.7 --locked
-cd apps/confidexsyncd
-worker-build --release
-npx wrangler d1 execute confidexsyncd-index --local --file schema.sql
-npx wrangler dev --local
+npm ci
+python3 builders/syncd/build.py
+npx wrangler d1 execute confidexsyncd-index --local --config apps/confidexsyncd/wrangler.toml --file apps/confidexsyncd/schema.sql
+npx wrangler dev --local --config apps/confidexsyncd/wrangler.toml
 ```
 
-Use a Rust toolchain with `wasm32-unknown-unknown`. `worker-build` emits the
-JavaScript loader and WASM under ignored `build/`. The tracked `wrangler.toml`
+Run these commands from the repository root. The Python builder pins worker-build
+and emits the JavaScript loader and WASM under ignored `apps/confidexsyncd/build/`.
+Wrangler uses those compiled files; it does not run a Rust build. The tracked `wrangler.toml`
 is a template. Copy it to ignored `wrangler.production.toml`, set the account,
 D1 database ID and R2 S3 URL there, and deploy with `--config wrangler.production.toml`.
 The configuration disables workers.dev and preview URLs and declares the

@@ -16,7 +16,9 @@ export async function runBrowser(chromePath, assets, expression, { windowSize = 
     const asset = assets[req.url];
     if (req.url === '/') { res.setHeader('Content-Type', 'text/html'); res.end((typeof expression === 'function' && asset) || '<!doctype html><title>Confidex checks</title>'); }
     else if (asset) {
-      const type = req.url.endsWith('.js') ? 'text/javascript'
+      const type = req.url.endsWith('.html') ? 'text/html'
+        : req.url.endsWith('.json') ? 'application/json'
+        : req.url.endsWith('.js') ? 'text/javascript'
         : req.url.endsWith('.ttf') ? 'font/ttf'
         : req.url.endsWith('.txt') ? 'text/plain; charset=utf-8'
         : 'application/wasm';
@@ -88,7 +90,7 @@ export async function runBrowser(chromePath, assets, expression, { windowSize = 
       await delay(100);
     }
     if (!passkeys && assets['/app_bg.wasm']) {
-      const cancelEnrollment = `if (navigator.credentials) navigator.credentials.create = async () => {
+      const cancelEnrollment = `if (navigator.credentials) for (const method of ['create', 'get']) navigator.credentials[method] = async () => {
         throw new DOMException('Test enrollment canceled', 'NotAllowedError');
       };`;
       const installed = await command('Page.addScriptToEvaluateOnNewDocument', {source: cancelEnrollment});
