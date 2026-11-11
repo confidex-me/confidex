@@ -113,3 +113,9 @@ The release can also deploy the app and sync Worker. Add the
 application repository. Without the token this step is skipped. Existing D1
 data and Worker variables/secrets are preserved; see the
 [deployment helper](../builders/cloudflare/README.md).
+
+Releases also publish `ghcr.io/confidex-me/confidexsyncd` and
+`ghcr.io/confidex-me/confidex-web` for amd64 and arm64, with the original release
+tag and `latest`. Use a tag without `+` metadata. For local image builds and the
+one-time GHCR Public visibility setting, see the
+[container builder](../builders/containers/README.md).
