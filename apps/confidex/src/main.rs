@@ -1,5 +1,9 @@
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--version")) {
+        println!("confidexm {}", confidex_app::BUILD_VERSION);
+        return Ok(());
+    }
     let path = if let Some(path) = std::env::args_os().nth(1) {
         std::path::PathBuf::from(path)
     } else {

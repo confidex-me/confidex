@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "version_pattern": "(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?\\+(?:[0-9A-Za-z-]+\\.)*g[0-9a-f]{6}",
+  "fields": {
+    "arch": "amd64|arm64",
+    "libc": "gnu|musl"
+  },
+  "formats": [
+    {
+      "id": "desktop-macos",
+      "role": "desktop",
+      "platform": "macos",
+      "kind": "dmg",
+      "template": "confidex-{version}-{arch}-macos.dmg"
+    },
+    {
+      "id": "desktop-windows",
+      "role": "desktop",
+      "platform": "windows",
+      "kind": "msi",
+      "template": "confidex-{version}-{arch}-windows.msi"
+    },
+    {
+      "id": "desktop-linux",
+      "role": "desktop",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "template": "confidex-{version}-{arch}-linux-{libc}.tar.gz"
+    },
+    {
+      "id": "server-macos",
+      "role": "server",
+      "platform": "macos",
+      "kind": "tar.gz",
+      "template": "confidexsyncd-{version}-{arch}-macos.tar.gz"
+    },
+    {
+      "id": "server-windows",
+      "role": "server",
+      "platform": "windows",
+      "kind": "zip",
+      "template": "confidexsyncd-{version}-{arch}-windows.zip"
+    },
+    {
+      "id": "server-linux",
+      "role": "server",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "template": "confidexsyncd-{version}-{arch}-linux-{libc}.tar.gz"
+    },
+    {
+      "id": "web",
+      "role": "web",
+      "platform": null,
+      "kind": "tar.gz",
+      "template": "confidex-{version}-web.tar.gz"
+    },
+    {
+      "id": "worker",
+      "role": "worker",
+      "platform": null,
+      "kind": "tar.gz",
+      "template": "confidexsyncd-{version}-worker.tar.gz"
+    },
+    {
+      "id": "selfhost",
+      "role": "selfhost",
+      "platform": null,
+      "kind": "zip",
+      "template": "confidex-selfhost-{version}.zip"
+    }
+  ]
+}

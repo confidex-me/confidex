@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from artifacts import filename
 from common import ICONS, ROOT, archive, host_arch, metadata, native, options, prepare_version, run
 
 
@@ -27,7 +28,7 @@ def build(args):
 
 def package(args, binaries):
     target = ('aarch64' if args.arch == 'arm64' else 'x86_64') + '-apple-darwin'
-    output = args.output / f'confidex-{args.version}-{args.arch}-macos.dmg'
+    output = args.output / filename('confidex', args.version, f'{args.arch}-macos', 'dmg')
     with tempfile.TemporaryDirectory(prefix='confidex-dmg-') as temp:
         staging = Path(temp)
         app = staging / 'Confidex.app'
@@ -43,7 +44,7 @@ def package(args, binaries):
             'CFBundleExecutable': 'confidexm', 'CFBundleIconFile': 'Confidex.icns',
             'CFBundlePackageType': 'APPL', 'CFBundleVersion': args.version.split('-')[0].split('+')[0],
             'CFBundleShortVersionString': args.version.split('-')[0].split('+')[0],
-            'NSHighResolutionCapable': True,
+            'CFBundleGetInfoString': args.version, 'NSHighResolutionCapable': True,
         }
         (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
         for name, data in metadata(args.version, target).items():

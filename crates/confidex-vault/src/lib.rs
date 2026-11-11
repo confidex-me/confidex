@@ -1,4 +1,10 @@
-//! Portable vault operations. FORMAT.md defines the wire format.
+//! Portable vault operations. docs/FORMAT.md defines the wire format.
+
+/// Release tag and source revision supplied by the release builder.
+pub const BUILD_VERSION: &str = match option_env!("CONFIDEX_BUILD_VERSION") {
+    Some(version) => version,
+    None => env!("CARGO_PKG_VERSION"),
+};
 
 pub mod crypto;
 pub mod date;

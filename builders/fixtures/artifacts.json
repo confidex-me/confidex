@@ -1,0 +1,290 @@
+[
+  {
+    "name": "confidex-1.2.3+gabcdef-amd64-macos.dmg",
+    "expected": {
+      "id": "desktop-macos",
+      "role": "desktop",
+      "platform": "macos",
+      "kind": "dmg",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-arm64-macos.dmg",
+    "expected": {
+      "id": "desktop-macos",
+      "role": "desktop",
+      "platform": "macos",
+      "kind": "dmg",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-amd64-windows.msi",
+    "expected": {
+      "id": "desktop-windows",
+      "role": "desktop",
+      "platform": "windows",
+      "kind": "msi",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-arm64-windows.msi",
+    "expected": {
+      "id": "desktop-windows",
+      "role": "desktop",
+      "platform": "windows",
+      "kind": "msi",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-amd64-linux-gnu.tar.gz",
+    "expected": {
+      "id": "desktop-linux",
+      "role": "desktop",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": "gnu"
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-amd64-linux-musl.tar.gz",
+    "expected": {
+      "id": "desktop-linux",
+      "role": "desktop",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": "musl"
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-arm64-linux-gnu.tar.gz",
+    "expected": {
+      "id": "desktop-linux",
+      "role": "desktop",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": "gnu"
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-arm64-linux-musl.tar.gz",
+    "expected": {
+      "id": "desktop-linux",
+      "role": "desktop",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": "musl"
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-amd64-macos.tar.gz",
+    "expected": {
+      "id": "server-macos",
+      "role": "server",
+      "platform": "macos",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-arm64-macos.tar.gz",
+    "expected": {
+      "id": "server-macos",
+      "role": "server",
+      "platform": "macos",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-amd64-windows.zip",
+    "expected": {
+      "id": "server-windows",
+      "role": "server",
+      "platform": "windows",
+      "kind": "zip",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-arm64-windows.zip",
+    "expected": {
+      "id": "server-windows",
+      "role": "server",
+      "platform": "windows",
+      "kind": "zip",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": null
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-amd64-linux-gnu.tar.gz",
+    "expected": {
+      "id": "server-linux",
+      "role": "server",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": "gnu"
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-amd64-linux-musl.tar.gz",
+    "expected": {
+      "id": "server-linux",
+      "role": "server",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "amd64",
+      "libc": "musl"
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-arm64-linux-gnu.tar.gz",
+    "expected": {
+      "id": "server-linux",
+      "role": "server",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": "gnu"
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-arm64-linux-musl.tar.gz",
+    "expected": {
+      "id": "server-linux",
+      "role": "server",
+      "platform": "linux",
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": "arm64",
+      "libc": "musl"
+    }
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-web.tar.gz",
+    "expected": {
+      "id": "web",
+      "role": "web",
+      "platform": null,
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": null,
+      "libc": null
+    }
+  },
+  {
+    "name": "confidexsyncd-1.2.3+gabcdef-worker.tar.gz",
+    "expected": {
+      "id": "worker",
+      "role": "worker",
+      "platform": null,
+      "kind": "tar.gz",
+      "version": "1.2.3+gabcdef",
+      "arch": null,
+      "libc": null
+    }
+  },
+  {
+    "name": "confidex-selfhost-1.2.3+gabcdef.zip",
+    "expected": {
+      "id": "selfhost",
+      "role": "selfhost",
+      "platform": null,
+      "kind": "zip",
+      "version": "1.2.3+gabcdef",
+      "arch": null,
+      "libc": null
+    }
+  },
+  {
+    "name": "confidex-2.0.0-rc.1+ci.7.g012abc-arm64-macos.dmg",
+    "expected": {
+      "id": "desktop-macos",
+      "role": "desktop",
+      "platform": "macos",
+      "kind": "dmg",
+      "version": "2.0.0-rc.1+ci.7.g012abc",
+      "arch": "arm64",
+      "libc": null
+    }
+  },
+  {
+    "name": "SHA256SUMS",
+    "expected": null
+  },
+  {
+    "name": "confidex-source.zip",
+    "expected": null
+  },
+  {
+    "name": "confidex-1.2.3-arm64-macos.dmg",
+    "expected": null
+  },
+  {
+    "name": "confidex-01.2.3+gabcdef-arm64-macos.dmg",
+    "expected": null
+  },
+  {
+    "name": "confidex-1.2.3-01+gabcdef-arm64-macos.dmg",
+    "expected": null
+  },
+  {
+    "name": "confidex-1.2.3+gabcdefg-arm64-macos.dmg",
+    "expected": null
+  },
+  {
+    "name": "confidex-1.2.3+gabcde-arm64-macos.dmg",
+    "expected": null
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-x86_64-macos.dmg",
+    "expected": null
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-amd64-linux.tar.gz",
+    "expected": null
+  },
+  {
+    "name": "confidex-1.2.3+gabcdef-amd64-linux-musl.tar.gz.sig",
+    "expected": null
+  },
+  {
+    "name": "cfdex-1.2.3+gabcdef-arm64-macos.dmg",
+    "expected": null
+  },
+  {
+    "name": "../confidex-1.2.3+gabcdef-arm64-macos.dmg",
+    "expected": null
+  }
+]

@@ -21,8 +21,10 @@ await visit(directory);
 for (const name of ['app_bg.wasm', 'image_codec_bg.wasm', 'index.html', 'sw.js', '_headers']) {
   assert(files[name]?.bytes > 0, `Missing release asset: ${name}`);
 }
-const commit = execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim();
-const manifest = JSON.stringify({commit, files}, null, 2) + '\n';
+const commit = process.env.CONFIDEX_SOURCE_COMMIT || execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim();
+const version = process.env.CONFIDEX_BUILD_VERSION;
+assert(version, 'Build through builders/wasm/build.py to set the release version');
+const manifest = JSON.stringify({version, commit, files}, null, 2) + '\n';
 const total = Object.values(files).reduce((sum, file) => sum + file.bytes, Buffer.byteLength(manifest));
 assert(total < 25_000_000, `Web package exceeds size budget: ${total} bytes`);
 await writeFile(join(directory, 'BUILD.json'), manifest);

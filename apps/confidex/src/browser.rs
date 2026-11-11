@@ -512,6 +512,9 @@ impl WebHandle {
             app.set_file_drop_position(None);
         }
     }
+    pub fn version(&self) -> String {
+        confidex_app::BUILD_VERSION.to_owned()
+    }
     pub fn snapshot(&self) -> Result<JsValue, JsValue> {
         let app = self
             .runner

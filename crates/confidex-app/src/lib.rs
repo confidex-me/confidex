@@ -1,5 +1,6 @@
 //! Vault operations shared by GUI, browser workers, and future CLI hosts.
 use confidex_storage::{Head, RecordId, RevisionId, Store, StoredVault, VaultId, VaultInfo};
+pub use confidex_vault::BUILD_VERSION;
 use confidex_vault::{
     entropy,
     envelope::{self, EventKind, Options},

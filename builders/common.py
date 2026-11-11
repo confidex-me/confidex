@@ -7,7 +7,8 @@ import platform
 import subprocess
 import tomllib
 from pathlib import Path
-from version import VERSION, set_version
+from version import release_version
+from artifacts import filename
 
 ROOT = Path(__file__).resolve().parents[1]
 ICONS = ROOT / 'apps/confidex/assets/icons'
@@ -24,9 +25,9 @@ def options():
     parser.add_argument('--version', default=os.environ.get('RELEASE_VERSION', ''))
     args = parser.parse_args()
     current = tomllib.loads((ROOT / 'apps/confidex/Cargo.toml').read_text())['package']['version']
-    args.version = (args.version or current).removeprefix('v')
-    if not VERSION.fullmatch(args.version):
-        raise ValueError('Release version must be a semantic version')
+    args.tag = args.version or 'v' + current
+    args.commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    args.version = release_version(args.tag, args.commit)
     args.output = ROOT / 'dist/releases'
     args.output.mkdir(parents=True, exist_ok=True)
     return args
@@ -41,16 +42,16 @@ def host_arch():
 
 
 def prepare_version(args):
-    current = tomllib.loads((ROOT / 'apps/confidex/Cargo.toml').read_text())['package']['version']
-    if current != args.version:
-        set_version(args.version, ROOT)
-        run('cargo', 'update', '--workspace')
+    os.environ['CONFIDEX_BUILD_VERSION'] = args.version
+    os.environ['CONFIDEX_SOURCE_COMMIT'] = args.commit
 
 
 def native(args, environment=None):
     if args.arch != host_arch():
         raise ValueError('Use a native runner for the selected architecture')
     prepare_version(args)
+    if environment is not None:
+        environment.update({key: os.environ[key] for key in ['CONFIDEX_BUILD_VERSION', 'CONFIDEX_SOURCE_COMMIT']})
     run('cargo', 'build', '--locked', '--release', '-p', 'confidex', '-p', 'cfdex', '-p', 'confidexsyncd', env=environment)
     directory = Path(os.environ.get('CARGO_TARGET_DIR', str(ROOT / 'target')))
     if not directory.is_absolute():
@@ -59,7 +60,7 @@ def native(args, environment=None):
 
 
 def metadata(version, target, component="confidex"):
-    commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    commit = os.environ.get('CONFIDEX_SOURCE_COMMIT') or subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     license_file = ROOT / ('apps/confidexsyncd/LICENSE' if component == 'confidexsyncd' else 'LICENSE')
     files = {'LICENSE': license_file.read_bytes(),
              'SOURCE.json': json.dumps({'version': version, 'commit': commit, 'target': target}, sort_keys=True).encode() + b'\n'}
@@ -88,7 +89,7 @@ def archive(name, version, target, binaries, output):
     import tarfile
     files = metadata(version, target, name)
     files.update({name: path.read_bytes() for name, path in binaries.items()})
-    destination = output / f'{name}-{version}-{target}.tar.gz'
+    destination = output / filename(name, version, target, 'tar.gz')
     with destination.open('wb') as stream, gzip.GzipFile(filename='', mode='wb', fileobj=stream, mtime=0) as compressed:
         with tarfile.open(fileobj=compressed, mode='w') as tar:
             for member, data in sorted(files.items()):

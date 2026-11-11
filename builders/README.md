@@ -5,15 +5,15 @@ Python 3.12 or later. Run `python builders/<platform>/build.py --help` for its
 options. `--arch` accepts `amd64` or `arm64`; native builds use a matching runner. The macOS builder can also cross-compile
 with the installed Xcode SDK.
 
-`--version` or `RELEASE_VERSION` accepts a semantic version with an optional `v`
-prefix. Without it, the builder uses the app's Cargo version. The build updates
-workspace package versions when needed and keeps non-workspace dependencies
-locked. Output archives are in `dist/releases/`.
+`--version` or `RELEASE_VERSION` accepts a semantic release tag with an optional
+`v` prefix. The builder adds `+g` and the first six characters of the source
+commit SHA, for example `1.2.3+gabcdef`. Without a tag it uses the app's Cargo
+version. Sources and lock files stay unchanged. Output is in `dist/releases/`.
 
-`common.py` supplies Cargo invocation, source commit metadata, license files,
-archive modes and SHA-256 checksums. `version.py` validates all package manifests
-before changing versions. Platform scripts own their tool and packaging steps.
-Detailed platform requirements are in the root build guide.
+`common.py` supplies Cargo invocation, source metadata, licenses and archives.
+`version.py` derives the build version. Platform scripts own packaging steps.
+See the [artifact contract](docs/ARTIFACTS.md) for stable names and versions,
+and the root build guide for platform requirements.
 
 ```sh
 python -m unittest discover -s builders -p 'test_common.py'

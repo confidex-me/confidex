@@ -12,7 +12,7 @@ mod records;
 mod sync;
 
 #[derive(Parser)]
-#[command(name = "cfdex", version, about = "Read local Confidex vaults without the GUI", color = clap::ColorChoice::Never)]
+#[command(name = "cfdex", version = confidex_app::BUILD_VERSION, about = "Read local Confidex vaults without the GUI", color = clap::ColorChoice::Never)]
 pub struct Args {
     #[arg(long, global = true)]
     pub database: Option<PathBuf>,

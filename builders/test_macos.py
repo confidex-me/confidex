@@ -22,7 +22,7 @@ class MacTests(unittest.TestCase):
             root = Path(temporary)
             for name in ['confidex', 'cfdex']:
                 (root / name).write_bytes(name.encode())
-            args = types.SimpleNamespace(arch='arm64', version='0.1.0', output=root)
+            args = types.SimpleNamespace(arch='arm64', version='0.1.0+gaaaaaa', output=root)
             def inspect(*command):
                 if command[:2] != ('hdiutil', 'create'):
                     return
@@ -30,6 +30,8 @@ class MacTests(unittest.TestCase):
                 app = staging / 'Confidex.app'
                 info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
                 self.assertEqual(info['CFBundleExecutable'], 'confidexm')
+                self.assertEqual(info['CFBundleGetInfoString'], args.version)
+                self.assertEqual(info['CFBundleShortVersionString'], '0.1.0')
                 self.assertEqual((app / 'Contents/MacOS/cfdex').read_bytes(), b'cfdex')
                 self.assertTrue((app / 'Contents/Resources/Confidex.icns').is_file())
                 self.assertTrue((app / 'Contents/Resources/LICENSE').is_file())

@@ -4,6 +4,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     use confidexsyncd::{config::Config, native::Index};
     let mut args = std::env::args().skip(1);
     let config = match args.next().as_deref() {
+        Some("--version") => {
+            println!("confidexsyncd {}", confidex_vault::BUILD_VERSION);
+            return Ok(());
+        }
         Some("--help") => {
             println!(
                 "Usage: confidexsyncd [CONFIG_TOML]\nWithout a file, read LISTEN_*, INDEX_URL, LIMITS_BODY_BYTES and BACKEND_* from the environment."
