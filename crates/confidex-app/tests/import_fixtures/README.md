@@ -6,8 +6,8 @@ No importer is implemented by this directory.
 
 ## Origin and evidence
 
-The editable inputs are schema-derived, not exports captured from installed vendor
-applications. `bw`, `op` and `keepassxc-cli` were unavailable on the development
+The original editable inputs are schema-derived. The additional 1Password template
+capture is described separately below. `bw`, `op` and `keepassxc-cli` were unavailable on the development
 machine. [sources.json](sources.json) distinguishes the documented schemas,
 pinned producer code and a published upstream KeePass XML test export. The
 published export was independently read to verify protection markers; its digest
@@ -20,6 +20,7 @@ synthetic exports for their supported producer versions before claiming coverage
 | Bitwarden | `bitwarden_json/personal.json` | `personal.expected.json` | Plain JSON, explicit `encrypted:false`, folders/items; producer commit is pinned in sources |
 | Bitwarden organization | `bitwarden_json/organization.json` | `organization.expected.json` | Collections and organization scope; intentionally reuses a personal item ID |
 | 1Password | `onepassword_1pux/account.1pux` | `onepassword_1pux/expected.json` | 1PUX attributes version 3; editable `export/` tree, two vaults and a binary document |
+| 1Password templates | `onepassword_1pux/templates.1pux` | `import_onepassword` template tests | Sanitized UI capture: 22 items, 175 section fields; [audit and origin](onepassword_1pux/docs/TEMPLATES.md) |
 | KeePass | `keepass_xml/database.xml` | `keepass_xml/expected.json` | Plain KeePass 2 XML with textual dates and `ProtectInMemory` markers |
 | Generic CSV | `csv/generic.csv` + `csv/mapping.json` | `csv/expected.json` | UTF-8 BOM, comma, CRLF, quoted multiline text; positional mapping |
 

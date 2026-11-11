@@ -5,6 +5,9 @@ use confidex_vault::{record::Value, resources::MAX_OPEN_MEMORY};
 use serde_json::{Value as Json, json};
 use std::io::Write;
 
+#[path = "onepassword/templates.rs"]
+mod templates;
+
 const ATTRIBUTES: &[u8] =
     include_bytes!("import_fixtures/onepassword_1pux/export/export.attributes");
 const DATA: &[u8] = include_bytes!("import_fixtures/onepassword_1pux/export/export.data");
