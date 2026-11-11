@@ -1,0 +1,258 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "source": {
+        "format": "onepassword-1pux",
+        "account": "account-1",
+        "vault": "vault-1",
+        "item": "item-1",
+        "instance": "public-fixture-source"
+      },
+      "status": "review",
+      "diagnostics": [
+        "source-data-preserved",
+        "notes-protected-by-default"
+      ],
+      "record": {
+        "entries": [
+          {
+            "name": "username",
+            "type": "username/v1",
+            "value": {
+              "username": "alice@example.invalid"
+            },
+            "extra": {}
+          },
+          {
+            "name": "password",
+            "type": "password/v1",
+            "value": {
+              "password": "PUBLIC-FIXTURE-PASSWORD"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Primary",
+            "type": "url/v1",
+            "value": {
+              "url": "https://mail.example.invalid"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Other",
+            "type": "url/v1",
+            "value": {
+              "url": "https://second.example.invalid"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Notes",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "Private fixture note\n\nSecond line"
+            },
+            "extra": {}
+          },
+          {
+            "name": "PIN",
+            "type": "secret/v1",
+            "value": {
+              "secret": "PUBLIC-FIXTURE-PIN"
+            },
+            "extra": {
+              "confidex.import.section": {
+                "name": "section-1",
+                "title": "Security",
+                "field_id": "pin-1"
+              },
+              "metadata": {
+                "protected": true
+              }
+            }
+          },
+          {
+            "name": "Repeated",
+            "type": "text/v1",
+            "value": {
+              "text": "public first"
+            },
+            "extra": {
+              "confidex.import.section": {
+                "name": "section-1",
+                "title": "Security",
+                "field_id": "public-1"
+              }
+            }
+          },
+          {
+            "name": "Repeated",
+            "type": "text/v1",
+            "value": {
+              "text": "PUBLIC-FIXTURE-GUARDED"
+            },
+            "extra": {
+              "confidex.import.section": {
+                "name": "section-1",
+                "title": "Security",
+                "field_id": "private-1"
+              },
+              "metadata": {
+                "protected": true
+              }
+            }
+          },
+          {
+            "name": "",
+            "type": "text/v1",
+            "value": {
+              "text": ""
+            },
+            "extra": {
+              "confidex.import.section": {
+                "name": "section-1",
+                "title": "Security",
+                "field_id": "empty-1"
+              }
+            }
+          },
+          {
+            "name": "One-time code",
+            "type": "totp/v1",
+            "value": {
+              "secret": {
+                "$binary": "3132333435363738393031323334353637383930"
+              },
+              "algorithm": "SHA256",
+              "digits": 8,
+              "period": 45,
+              "t0": 0
+            },
+            "extra": {
+              "confidex.import.section": {
+                "name": "section-1",
+                "title": "Security",
+                "field_id": "otp-1"
+              },
+              "confidex.import.totp": {
+                "uri": "otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Fixture&algorithm=SHA256&digits=8&period=45"
+              }
+            }
+          },
+          {
+            "name": "Original data",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "{\"passwordHistory\":[{\"value\":\"PUBLIC-FIXTURE-OLD\",\"time\":1764547200}],\"favIndex\":1,\"categoryUuid\":\"001\"}"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [
+          "Work",
+          "メール"
+        ],
+        "extra": {
+          "confidex.title": "Почта — 東京"
+        }
+      },
+      "source_attributes": {
+        "createdAt": 1767225600,
+        "updatedAt": 1767312000,
+        "state": "active"
+      }
+    },
+    {
+      "source": {
+        "format": "onepassword-1pux",
+        "account": "account-1",
+        "vault": "vault-1",
+        "item": "document-item",
+        "instance": "public-fixture-source"
+      },
+      "status": "ready",
+      "diagnostics": [],
+      "record": {
+        "entries": [
+          {
+            "name": "fixture.bin",
+            "type": "file/v1",
+            "value": {
+              "data": {
+                "$binary": "5055424c4943204649585455524520444f43554d454e540a00ff"
+              },
+              "filename": "fixture.bin"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Public fixture document"
+        }
+      },
+      "source_attributes": {}
+    },
+    {
+      "source": {
+        "format": "onepassword-1pux",
+        "account": "account-1",
+        "vault": "vault-1",
+        "item": "future-1",
+        "instance": "public-fixture-source"
+      },
+      "status": "review",
+      "diagnostics": [
+        "archived-excluded-by-default",
+        "unknown-item-preserved"
+      ],
+      "record": {
+        "entries": [
+          {
+            "name": "Original data",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "{\"uuid\":\"future-1\",\"categoryUuid\":\"999\",\"state\":\"archived\",\"overview\":{\"title\":\"Archived future\",\"tags\":[]},\"details\":{\"sections\":[{\"name\":\"future-section\",\"title\":\"Future\",\"fields\":[{\"id\":\"future-field\",\"title\":\"Future\",\"value\":{\"future\":{\"secret\":\"PUBLIC-FIXTURE-FUTURE\"}}}]}]}}"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Archived future"
+        }
+      },
+      "source_attributes": {}
+    },
+    {
+      "source": {
+        "format": "onepassword-1pux",
+        "account": "account-1",
+        "vault": "vault-2",
+        "item": "item-1",
+        "instance": "public-fixture-source"
+      },
+      "status": "ready",
+      "diagnostics": [],
+      "record": {
+        "entries": [
+          {
+            "name": "Notes",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "PUBLIC-FIXTURE-OTHER-VAULT"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Same ID, other vault"
+        }
+      },
+      "source_attributes": {}
+    }
+  ]
+}

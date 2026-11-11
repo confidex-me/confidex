@@ -1,0 +1,90 @@
+{
+  "encrypted": false,
+  "folders": [
+    {
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "name": "Work/メール"
+    }
+  ],
+  "items": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": null,
+      "folderId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "type": 1,
+      "reprompt": 0,
+      "name": "Почта — 東京",
+      "notes": "Private fixture note\n\nSecond line",
+      "favorite": true,
+      "creationDate": "2026-01-01T00:00:00.000Z",
+      "revisionDate": "2026-01-02T00:00:00.000Z",
+      "deletedDate": null,
+      "login": {
+        "uris": [
+          {
+            "match": 0,
+            "uri": "https://mail.example.invalid/a?x=1&x=2"
+          },
+          {
+            "match": null,
+            "uri": "https://second.example.invalid"
+          }
+        ],
+        "username": "alice@example.invalid",
+        "password": "PUBLIC-FIXTURE-PASSWORD",
+        "totp": "otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Fixture&algorithm=SHA256&digits=8&period=45"
+      },
+      "fields": [
+        {
+          "name": "Repeated",
+          "value": "public first",
+          "type": 0
+        },
+        {
+          "name": "Repeated",
+          "value": "PUBLIC-FIXTURE-HIDDEN",
+          "type": 1
+        },
+        {
+          "name": "",
+          "value": "",
+          "type": 0
+        },
+        {
+          "name": "Enabled",
+          "value": "true",
+          "type": 2
+        }
+      ],
+      "passwordHistory": [
+        {
+          "lastUsedDate": "2025-12-01T00:00:00.000Z",
+          "password": "PUBLIC-FIXTURE-OLD"
+        }
+      ]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "type": 2,
+      "name": "Private note",
+      "notes": "PUBLIC-FIXTURE-SECURE-NOTE\n\nFin",
+      "secureNote": {
+        "type": 0
+      },
+      "fields": [],
+      "folderId": null,
+      "favorite": false,
+      "reprompt": 0
+    },
+    {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "type": 99,
+      "name": "Future item",
+      "future": {
+        "secret": "PUBLIC-FIXTURE-FUTURE",
+        "enabled": true
+      },
+      "fields": []
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "source": {
+        "format": "keepass2-xml",
+        "account": null,
+        "vault": null,
+        "item": "EREREREREREREREREREREQ==",
+        "instance": "public-fixture-source"
+      },
+      "status": "review",
+      "diagnostics": [
+        "source-data-preserved",
+        "protected-url-not-indexed"
+      ],
+      "record": {
+        "entries": [
+          {
+            "name": "UserName",
+            "type": "username/v1",
+            "value": {
+              "username": "alice@example.invalid"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Password",
+            "type": "password/v1",
+            "value": {
+              "password": "PUBLIC-FIXTURE-PASSWORD"
+            },
+            "extra": {
+              "metadata": {
+                "protected": true
+              }
+            }
+          },
+          {
+            "name": "URL",
+            "type": "url/v1",
+            "value": {
+              "url": "https://mail.example.invalid"
+            },
+            "extra": {
+              "metadata": {
+                "protected": true
+              }
+            }
+          },
+          {
+            "name": "Notes",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "Private fixture note\n\nSecond line"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Public custom",
+            "type": "text/v1",
+            "value": {
+              "text": "public first"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Hidden custom",
+            "type": "secret/v1",
+            "value": {
+              "secret": "PUBLIC-FIXTURE-HIDDEN"
+            },
+            "extra": {
+              "metadata": {
+                "protected": true
+              }
+            }
+          },
+          {
+            "name": "Empty",
+            "type": "text/v1",
+            "value": {
+              "text": ""
+            },
+            "extra": {}
+          },
+          {
+            "name": "otp",
+            "type": "totp/v1",
+            "value": {
+              "secret": {
+                "$binary": "3132333435363738393031323334353637383930"
+              },
+              "algorithm": "SHA256",
+              "digits": 8,
+              "period": 45,
+              "t0": 0
+            },
+            "extra": {
+              "confidex.import.totp": {
+                "uri": "otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Fixture&algorithm=SHA256&digits=8&period=45"
+              }
+            }
+          },
+          {
+            "name": "Original data",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "{\"AutoType\":{\"Enabled\":true,\"DefaultSequence\":\"{USERNAME}{TAB}{PASSWORD}{ENTER}\"},\"CustomData\":{\"fixture-plugin\":\"PUBLIC-FIXTURE-PLUGIN\"},\"History\":[{\"Password\":\"PUBLIC-FIXTURE-OLD\"}]}"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [
+          "Work",
+          "メール"
+        ],
+        "extra": {
+          "confidex.title": "Почта — 東京"
+        }
+      },
+      "source_attributes": {
+        "group_path": [
+          "Public fixture",
+          "Work/メール"
+        ]
+      }
+    },
+    {
+      "source": {
+        "format": "keepass2-xml",
+        "account": null,
+        "vault": null,
+        "item": "MzMzMzMzMzMzMzMzMzMzMw==",
+        "instance": "public-fixture-source"
+      },
+      "status": "blocked",
+      "diagnostics": [
+        "unresolved-field-reference"
+      ],
+      "record": {
+        "entries": [],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Reference"
+        }
+      },
+      "source_attributes": {}
+    },
+    {
+      "source": {
+        "format": "keepass2-xml",
+        "account": null,
+        "vault": null,
+        "item": "RERERERERERERERERERERA==",
+        "instance": "public-fixture-source"
+      },
+      "status": "excluded",
+      "diagnostics": [
+        "recycle-bin-excluded-by-default"
+      ],
+      "record": {
+        "entries": [
+          {
+            "name": "Password",
+            "type": "password/v1",
+            "value": {
+              "password": "PUBLIC-FIXTURE-DELETED"
+            },
+            "extra": {
+              "metadata": {
+                "protected": true
+              }
+            }
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Deleted"
+        }
+      },
+      "source_attributes": {}
+    }
+  ]
+}

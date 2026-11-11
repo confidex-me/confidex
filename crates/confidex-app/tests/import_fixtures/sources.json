@@ -1,0 +1,41 @@
+{
+  "checked_at": "2026-11-09",
+  "origin": "Schema-derived synthetic inputs written for Confidex. They are not captured exports from installed vendor applications.",
+  "onepassword": {
+    "format": "1PUX version 3",
+    "documentation": "https://support.1password.com/1pux-format/",
+    "observed": "Official example contains concealed with guarded=false. Concealed must remain secret."
+  },
+  "bitwarden": {
+    "format": "Plain export JSON with encrypted=false; no schema version field",
+    "documentation": "https://bitwarden.com/help/condition-bitwarden-import/",
+    "field_types_source": "https://github.com/bitwarden/clients/blob/2ff80e50951792379f970f65cd4fb585fc50bbd5/libs/common/src/vault/enums/field-type.enum.ts",
+    "sha256": "7b1e1ff41d37afd492c4adac5bf8da91391a7bfa4568c46f9f39f94285a3435e",
+    "observed": {
+      "Text": 0,
+      "Hidden": 1,
+      "Boolean": 2,
+      "Linked": 3
+    }
+  },
+  "keepass_published_export": {
+    "format": "KeePass2 XML test export, published by KeePassXC",
+    "url": "https://raw.githubusercontent.com/keepassxreboot/keepassxc/6bcb901aefdd6c7a525466d7dfe099c5ebc13c0e/tests/data/NewDatabase.xml",
+    "sha256": "ad2a92168118b5959ac72270c85b983c617ec89d5c2e556047acd35ece8b9766",
+    "observed": "UserName has ProtectInMemory=True. Its Value is plaintext. The file also contains ordinary unmarked Password values and binary references."
+  },
+  "keepass_implementation": {
+    "writer": "https://github.com/keepassxreboot/keepassxc/blob/6bcb901aefdd6c7a525466d7dfe099c5ebc13c0e/src/format/KdbxXmlWriter.cpp#L402",
+    "reader": "https://github.com/keepassxreboot/keepassxc/blob/6bcb901aefdd6c7a525466d7dfe099c5ebc13c0e/src/format/KdbxXmlReader.cpp#L967",
+    "observed": "ProtectInMemory marks plaintext in an export; Protected marks inner-stream encrypted base64. These must not be treated as the same encoding."
+  },
+  "csv": {
+    "format": "Generic UTF-8 BOM, comma, header, CRLF; explicit positional mapping",
+    "origin": "Confidex synthetic dialect fixture. This does not certify Chrome, Firefox or Apple export compatibility."
+  },
+  "validation_limits": [
+    "No vendor application roundtrip was run: bw, op and keepassxc-cli are not installed.",
+    "Expected Records are semantic golden fixtures, not export byte-roundtrip promises.",
+    "KDBX, encrypted Bitwarden and browser CSV export captures belong to their format adapters."
+  ]
+}

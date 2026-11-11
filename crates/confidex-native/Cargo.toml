@@ -1,0 +1,27 @@
+[package]
+name = "confidex-native"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[features]
+default = []
+sync = ["dep:reqwest", "dep:tokio"]
+
+[dependencies]
+confidex-app = { path = "../confidex-app" }
+confidex-device-secrets = { path = "../confidex-device-secrets" }
+confidex-storage = { path = "../confidex-storage", features = ["sqlite"] }
+futures-executor = "0.3"
+directories = "6"
+reqwest = { version = "=0.12.28", default-features = false, features = ["rustls-tls", "stream", "http2", "http3"], optional = true }
+tokio = { version = "=1.54.1", default-features = false, features = ["net", "time", "macros"], optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+zeroize = "1"
+
+[dev-dependencies]
+tokio = { version = "=1.54.1", default-features = false, features = ["rt"] }
+tempfile = "3"

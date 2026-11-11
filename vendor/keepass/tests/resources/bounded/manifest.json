@@ -1,0 +1,24 @@
+{
+  "purpose": "Public synthetic data only; no accounts or user vaults",
+  "writer": "Local MIT keepass 0.17.0, boundary commit a22c5d067e36fcae7e660ffbaca063b3af7af30b",
+  "reader": "KeePassXC 2.8.0",
+  "argon2_v10": "KeePassXC 2.8.0 rejects this variant; independent rust-argon2 vectors and registry keepass reader checked separately",
+  "reader_binary_sha256": "3a738f4bfae8cd00b4561af80055e27711201b8ca8696550105304fb4f3b9b3e",
+  "files": {
+    "generate.rs": "b584e27333556a56996a5d7ec82505dcf701f4a42aea83599e437d1d3938e7dc",
+    "upstream.rs": "0fcfecc79a31f66f264dd34ea7712035f8e68ac51716185d789ff3244f5f2b14",
+    "capture.py": "e4c36353e43dc1771f7093ccf89c8637621ecea781785d19431604e0c3412168",
+    "public-v2.keyx": "d95ada0ebe98864be3fb0d3e216592e36bf51ef8ce8b8a28ef69f5bed1a4374d",
+    "public.raw": "8c0cc17a04942cc4f8e0fe0b302606d3108860c126428ba2ceeb5f9ed41c2b05",
+    "public.hex": "4cdf1b8543776a38b14c795c2839d3710c623eee2d6c91b7df9c608529e31fa1",
+    "argon2d-aes-v10.kdbx": "89da87348a36b8657bd68090cd7e8be4a25118c4f472cac22e5eec223aed19fe",
+    "argon2d-aes.kdbx": "f9a34bdb1c73f1d0edb8a3b51dc845cdd6066915150a4458864516e9cea6116e",
+    "argon2d-aes.xml": "e880dabb1f8ea1576aa2606f790e4d95df04019d5305a5a68ac97b1b695e90cb",
+    "argon2id-chacha.kdbx": "c16edf3755c2a1203f452cc4fb1f7e2fd8992b431df1d701f1ff431c79d174a5",
+    "argon2id-chacha.xml": "a206355a63f2f623bc77342926c291b6bb72487476ec4eaeff660e6227456991",
+    "aes-twofish.kdbx": "79503d69e466308d55bb72a7d4389c0a54d2ac3a795409cbe4d1bd14611fb94d",
+    "aes-twofish.xml": "bc7fca3359641a930b6511ad3d3a97190d0f17b9c8d23cd857a678c563f088b5",
+    "argon2id-aes-hex.kdbx": "ad6398c11465eb34fe8f35daf9e024f01339678b40fd4c38c44a27dcf927b13c",
+    "argon2id-aes-hex.xml": "9a776471a60a243a20281aee5176210b58e1ee3f46d2fa0b6641eac678e5ae89"
+  }
+}

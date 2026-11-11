@@ -1,0 +1,91 @@
+{
+  "personal": {
+    "sha256": "143276feafe17096912af232fe5c6ea0fe9269e0162864876fb5781d85f18812",
+    "skippedAttachmentCount": 0,
+    "items": [
+      "item-a",
+      "item-b",
+      "empty"
+    ],
+    "members": {
+      "data.json": "1c6755d3412e880d4d772027a40c51e010e227880d3efabac11407915be2c41e",
+      "attachments/": null,
+      "attachments/Почта _ 東京/": null,
+      "attachments/Почта _ 東京/scanpart.txt": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be",
+      "attachments/Почта _ 東京/scanpart_1.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "attachments/Почта _ 東京/résumé.txt": "4a99557e4033c3539de2eb65472017cad5f9557f7a0625a09f1c3f6e2ba69c4c",
+      "attachments/Second/": null,
+      "attachments/Second/scanpart.txt": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    }
+  },
+  "duplicate": {
+    "sha256": "7dbe266ff7133439f448026db8a0e205b05950cd19ac95648ce63b7b6fd22129",
+    "skippedAttachmentCount": 0,
+    "items": [
+      "a",
+      "b"
+    ],
+    "members": {
+      "data.json": "3971b567f64fe239b7974dad6a3f607921b7eb0ba3584405221c39c9a431ae27",
+      "attachments/": null,
+      "attachments/Same/": null,
+      "attachments/Same/file.txt": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be"
+    }
+  },
+  "sanitize": {
+    "sha256": "f5a68f53aaeee591ce4288b2e3bad2359077e8370dae093d271e5edaf2d42046",
+    "skippedAttachmentCount": 0,
+    "items": [
+      "a",
+      "b"
+    ],
+    "members": {
+      "data.json": "f43ab414972e32999dcb47865a112db5b8ee82ce48525fd734a1cb2797cd6f09",
+      "attachments/": null,
+      "attachments/a_b/": null,
+      "attachments/a_b/one": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be",
+      "attachments/a_b/two": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be"
+    }
+  },
+  "suffix": {
+    "sha256": "4e7bd5da1c401f7d808de328e549403c68bbf2fc04211f33bf99a4179d91d8c1",
+    "skippedAttachmentCount": 0,
+    "items": [
+      "a",
+      "b",
+      "c"
+    ],
+    "members": {
+      "data.json": "3be82bd5ffa2f7fe45d8f6a60f9a4ba787644c6693fb008290b01bd759343aab",
+      "attachments/": null,
+      "attachments/Same/": null,
+      "attachments/Same/file": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be",
+      "attachments/Same_1/": null,
+      "attachments/Same_1/file": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be",
+      "attachments/Same_1/other": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be"
+    }
+  },
+  "skipped": {
+    "sha256": "4e6b81b5177db69e17c9c31e3a561bbec9d27c2727f6896b23d83c88dc020e5f",
+    "skippedAttachmentCount": 1,
+    "items": [
+      "a"
+    ],
+    "members": {
+      "data.json": "f917508daef26daa096992c985ef1d4659a1de9ffc852da7043881b4b735957d",
+      "attachments/": null,
+      "attachments/Skipped/": null
+    }
+  },
+  "restricted": {
+    "sha256": "6d9bef15c62f08901e7985c370622a7042d210d2ec95b7801a2c29fd845336e1",
+    "skippedAttachmentCount": 0,
+    "items": [],
+    "members": {
+      "data.json": "652d5fa5f8a1e1a53090712c490d873f811027475ff83ffef5c26bbf84ccfba9",
+      "attachments/": null,
+      "attachments/Restricted/": null,
+      "attachments/Restricted/orphan.txt": "e9489f37fb3051e9efa1dc916004d7274e7b63975e3209708947267f2393a9be"
+    }
+  }
+}

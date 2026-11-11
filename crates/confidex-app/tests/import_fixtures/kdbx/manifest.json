@@ -1,0 +1,54 @@
+{
+  "producer": "KeePassXC 2.8.0",
+  "files": {
+    "password.kdbx": {
+      "sha256": "d45115260cbadef5961e8df50c1401c997c933f3268f3837fe770eb3d7477331",
+      "major": 4,
+      "minor": 0,
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 13636364
+      }
+    },
+    "keyfile.kdbx": {
+      "sha256": "3ccf0e386278e47a40043e693ecc6e517c393c31f90bedeaea36c6dc2dfdef85",
+      "major": 4,
+      "minor": 0,
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 13636364
+      }
+    },
+    "both.kdbx": {
+      "sha256": "a4d0cb8b613f67a1bfb35e4c1b59aa9d4d5a2dea756c7744894e0aee4ec2f1d7",
+      "major": 4,
+      "minor": 0,
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 13043478
+      }
+    },
+    "input.xml": {
+      "sha256": "4918d6f3b6ae9e752258d97ca9ddba666932a4bf1b7b7708039bb5cb66ec8f90"
+    },
+    "public.key": {
+      "sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
+    },
+    "password.xml": {
+      "sha256": "a6d2803f34354d07cb3a8554ba74faa9af924c07cc9e553408aeda0b860eaf12"
+    },
+    "keyfile.xml": {
+      "sha256": "dc58b3a24ac0a1f6f55869b15f239d790b1cabf4edaaa517ac03b1e7fc764b69"
+    },
+    "both.xml": {
+      "sha256": "47ef2c2cde289e87d646247552126814efb9f966856ff023e117b4bd5df811d8"
+    }
+  },
+  "producer_executable_sha256": "3a738f4bfae8cd00b4561af80055e27711201b8ca8696550105304fb4f3b9b3e"
+}

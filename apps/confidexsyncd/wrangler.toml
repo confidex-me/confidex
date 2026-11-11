@@ -1,0 +1,17 @@
+name = "confidexsyncd"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-11-08"
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "sync.confidex.me", custom_domain = true }]
+
+[build]
+command = "worker-build --release"
+
+[[d1_databases]]
+binding = "INDEX"
+database_name = "confidexsyncd-index"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[vars]
+BACKEND_S3_URL_0 = "https://ACCOUNT_ID.r2.cloudflarestorage.com/confidexsyncd?region=auto"

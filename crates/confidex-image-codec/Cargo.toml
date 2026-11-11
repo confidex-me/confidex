@@ -1,0 +1,16 @@
+[package]
+name = "confidex-image-codec"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+confidex-ui = { path = "../confidex-ui", default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.130"

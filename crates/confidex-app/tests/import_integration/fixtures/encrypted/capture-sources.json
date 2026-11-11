@@ -1,0 +1,48 @@
+{
+  "commit": "ae7567e4cc9d8178bf903b060a8c31c10e779509",
+  "sdk": "0.2.0-main.1214",
+  "files": [
+    {
+      "path": "libs/legacy-crypto/src/models/enc-string.ts",
+      "class": "EncString",
+      "sha256": "0d3889a740d9e40674f3dc5a3abff692dd83194fe0ced22a549d70e204ec0338"
+    },
+    {
+      "path": "libs/legacy-crypto/src/models/symmetric-crypto-key.ts",
+      "class": "SymmetricCryptoKey",
+      "sha256": "0668b7f2eb7516a51758672e0a80bf1c6a9cd2947b593d21cdd017d8b4ac155b"
+    },
+    {
+      "path": "libs/legacy-crypto/src/services/web-crypto-function.service.ts",
+      "class": "WebCryptoFunctionService",
+      "sha256": "3e650702918be20477b16f3a481ac7161449f615975958126b43ffe43fea7882"
+    },
+    {
+      "path": "libs/legacy-crypto/src/services/default-key-generation.service.ts",
+      "class": "DefaultKeyGenerationService",
+      "sha256": "85449701368ce4cae3a600ef323dbf4980c4aab556c4332b435fbb29ebf59b31"
+    },
+    {
+      "path": "libs/legacy-crypto/src/services/encrypt.service.implementation.ts",
+      "class": "EncryptServiceImplementation",
+      "sha256": "d38815d00b8a978723b3e3d9eb290c8a87d1f8a605e1ff5f1bbcc4360fa707e5"
+    },
+    {
+      "path": "libs/tools/export-vault-core/src/services/base-vault-export.service.ts",
+      "class": "BaseVaultExportService",
+      "sha256": "b71beaff4ec67245a96ffc1fa9bb4cfd93b89d83f987abdca218460256e19f9c"
+    }
+  ],
+  "sdk_commit": "5b7fbb413cf0eff108b0abdbc22607945cc36d8b",
+  "sdk_integrity": "sha512-Imlyz7g0NAERFbCMTcCvoe2V+c8TSPor1Xvz9Pjs6xRyJ05iNaLOWHAKBhllBxK9zQ5uG+a5DUWs0NknE/TSUw==",
+  "typescript": "5.9.3",
+  "fixtures": [
+    {
+      "file": "pbkdf2-legacy.json",
+      "sha256": "cb6d27268e3dd991952bcbe8511e20c758d190310840e0bab690def73645fe6c"
+    }
+  ],
+  "original_plaintext_sha256": "117512859fecca184720b1a9edf8f9b8002eb8002f784817ab60cc61c440cc98",
+  "modified_plaintext_sha256": "9308a4ed9ee7fa371f92a798fa7a037a467773235f1079b50ec6adb5c21d3b37",
+  "capture_harness_sha256": "d3ef4dd975d6916b7c65172bfac5040bec28b5de0ceeae53e4ad9068eefcd7e7"
+}

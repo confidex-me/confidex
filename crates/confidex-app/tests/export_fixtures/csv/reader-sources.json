@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/bitwarden/clients",
+  "commit": "2ff80e50951792379f970f65cd4fb585fc50bbd5",
+  "files": [
+    {"path": "libs/importer/src/importers/chrome-csv-importer.ts", "sha256": "50d96d8f037e4959a537344a87d7339aee62bd4849d88cfc53ede05b0815accb"},
+    {"path": "libs/importer/src/importers/firefox-csv-importer.ts", "sha256": "01ed4b2d79eaa081dd3411346089f676323b90ddf7edfd40136c691ad588ff1c"},
+    {"path": "libs/importer/src/importers/safari-csv-importer.ts", "sha256": "09d172a2b39c424ad1f368768dcab0043856ac183315e24def439d9de57d0a8b"},
+    {"path": "package.json", "sha256": "ac9d11adb603923f3ce61cd69f49ef675e2108fe4309b1c59666f6fe0ca4e54e"}
+  ],
+  "packages": [
+    {"name": "papaparse", "version": "5.7.0", "tarball": "https://registry.npmjs.org/papaparse/-/papaparse-5.7.0.tgz", "integrity": "sha512-qBGxg/7Q3Kl9Wfhrz2Z74UnvnHTXLNG6jmKJFeBvP2+y4lV7So+7SR62+Zd47JvdrCkX+nDcnr0ObPzek/+6RA==", "path": "package/papaparse.js", "local": "papaparse.cjs", "sha256": "01d32cdc0b8ceced438f078c6859e16c8aefc0d3eb5fb06992df0d3f63666ba0"},
+    {"name": "tldts", "version": "7.4.2", "tarball": "https://registry.npmjs.org/tldts/-/tldts-7.4.2.tgz", "integrity": "sha512-kCwffuaH8ntKtygnWe1b4BJKWiCUH30n5KfoTr6IchcXOwR7chAOFJxFrH3vjANafUYrIA4a7SDL+nn7SiR4Sw==", "path": "package/dist/index.cjs.min.js", "local": "tldts.cjs", "sha256": "fd2168b91e566b90616774678e73e7a91010ce20da3d35817b5ed8a2abc93856"}
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "commit": "ae7567e4cc9d8178bf903b060a8c31c10e779509",
+  "sdk": "0.2.0-main.1214",
+  "files": [
+    {
+      "path": "libs/legacy-crypto/src/models/enc-string.ts",
+      "class": "EncString",
+      "sha256": "0d3889a740d9e40674f3dc5a3abff692dd83194fe0ced22a549d70e204ec0338"
+    },
+    {
+      "path": "libs/legacy-crypto/src/models/symmetric-crypto-key.ts",
+      "class": "SymmetricCryptoKey",
+      "sha256": "0668b7f2eb7516a51758672e0a80bf1c6a9cd2947b593d21cdd017d8b4ac155b"
+    },
+    {
+      "path": "libs/legacy-crypto/src/services/web-crypto-function.service.ts",
+      "class": "WebCryptoFunctionService",
+      "sha256": "3e650702918be20477b16f3a481ac7161449f615975958126b43ffe43fea7882"
+    },
+    {
+      "path": "libs/legacy-crypto/src/services/default-key-generation.service.ts",
+      "class": "DefaultKeyGenerationService",
+      "sha256": "85449701368ce4cae3a600ef323dbf4980c4aab556c4332b435fbb29ebf59b31"
+    },
+    {
+      "path": "libs/legacy-crypto/src/services/encrypt.service.implementation.ts",
+      "class": "EncryptServiceImplementation",
+      "sha256": "d38815d00b8a978723b3e3d9eb290c8a87d1f8a605e1ff5f1bbcc4360fa707e5"
+    },
+    {
+      "path": "libs/tools/export-vault-core/src/services/base-vault-export.service.ts",
+      "class": "BaseVaultExportService",
+      "sha256": "b71beaff4ec67245a96ffc1fa9bb4cfd93b89d83f987abdca218460256e19f9c"
+    }
+  ],
+  "sdk_commit": "5b7fbb413cf0eff108b0abdbc22607945cc36d8b",
+  "sdk_integrity": "sha512-Imlyz7g0NAERFbCMTcCvoe2V+c8TSPor1Xvz9Pjs6xRyJ05iNaLOWHAKBhllBxK9zQ5uG+a5DUWs0NknE/TSUw==",
+  "typescript": "5.9.3",
+  "fixtures": [
+    {
+      "file": "pbkdf2.json",
+      "sha256": "400b4f19f083c3f5fd8093fbceec38b565b5fd0c06d8a98440448d4ed0f9a54d"
+    },
+    {
+      "file": "pbkdf2-legacy.json",
+      "sha256": "a9d04805a603241c1c9ddd906eedbb876c34d1d8727ab405b991606eae0b5088"
+    },
+    {
+      "file": "argon2.json",
+      "sha256": "d41da10c2235145365f322f9604143ad6d152b916d1e9c802ac19ea231dda5ed"
+    },
+    {
+      "file": "argon2-64.json",
+      "sha256": "a6950378245baa8497f73b445fa8af6209b350ca1f98ae1c4188a74e7fb41d97"
+    },
+    {
+      "file": "argon2-128.json",
+      "sha256": "45dc8b180fc512e2964aca878d63967626db704128b762d36cd08e5b669ea833"
+    },
+    {
+      "file": "argon2-min.json",
+      "sha256": "dc10b9e9f4b0942ca13da4dcf67d375dc8d0dbd46e80ec6cacdca3140da41c62"
+    },
+    {
+      "file": "invalid-json.json",
+      "sha256": "268b41d15ef43d892f62d8864931f36bc16df488cff1f9ced9b8b8c36b78b6ff"
+    },
+    {
+      "file": "encrypted-plaintext.json",
+      "sha256": "2f4d2180e08284bd84bbe975e0051751d62c5dbd136e10952f05ec72c364bab9"
+    }
+  ]
+}

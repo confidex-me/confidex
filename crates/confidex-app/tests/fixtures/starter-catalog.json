@@ -1,0 +1,227 @@
+[
+  {"id":"login","name":"Login","fields":[
+    ["Username","username/v1",""],
+    ["Password","password/v1",""],
+    ["Website","url/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"secure-note","name":"Secure Note","fields":[
+    ["Notes","secure-note/v1",""]
+  ]},
+  {"id":"credit-card","name":"Credit Card","fields":[
+    ["Card number","secret/v1",""],
+    ["Cardholder","text/v1",""],
+    ["Expiry","text/v1",""],
+    ["CVV","secret/v1",""],
+    ["PIN","secret/v1",""],
+    ["Brand","text/v1",""]
+  ]},
+  {"id":"identity","name":"Identity","fields":[
+    ["Full name","text/v1",""],
+    ["Document number","text/v1",""],
+    ["Date of birth","text/v1",""],
+    ["Country","text/v1",""],
+    ["Expires","text/v1",""],
+    ["Photo","photo/v1",""]
+  ]},
+  {"id":"api-key","name":"API Credentials","fields":[
+    ["Username","username/v1",""],
+    ["Credential","secret/v1",""],
+    ["Type","text/v1",""],
+    ["Filename","text/v1",""],
+    ["Valid from","date/v1",""],
+    ["Expires","date/v1",""],
+    ["Hostname","text/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"document","name":"Document","fields":[
+    ["Document","file/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"ssh-key","name":"SSH Key","fields":[
+    ["SSH key","ssh/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"bank-account","name":"Bank Account","fields":[
+    ["Bank name","text/v1",""],
+    ["Name on account","text/v1",""],
+    ["Type","text/v1",""],
+    ["Routing number","text/v1",""],
+    ["Account number","text/v1",""],
+    ["SWIFT","text/v1",""],
+    ["IBAN","text/v1",""],
+    ["PIN","password/v1",""],
+    ["Phone","text/v1","Branch Information"],
+    ["Address","text/v1","Branch Information"],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"crypto-wallet","name":"Crypto Wallet","fields":[
+    ["Recovery phrase","password/v1",""],
+    ["Password","password/v1",""],
+    ["Wallet address","text/v1","Wallet"],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"database","name":"Database","fields":[
+    ["Type","text/v1",""],
+    ["Server","text/v1",""],
+    ["Port","text/v1",""],
+    ["Database","text/v1",""],
+    ["Username","username/v1",""],
+    ["Password","password/v1",""],
+    ["SID","text/v1",""],
+    ["Alias","text/v1",""],
+    ["Connection options","text/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"driver-license","name":"Driver License","fields":[
+    ["Full name","text/v1",""],
+    ["Address","text/v1",""],
+    ["Date of birth","date/v1",""],
+    ["Gender","text/v1",""],
+    ["Height","text/v1",""],
+    ["Number","text/v1",""],
+    ["License class","text/v1",""],
+    ["Conditions / restrictions","text/v1",""],
+    ["State","text/v1",""],
+    ["Country","text/v1",""],
+    ["Expiry date","month-year/v1",""],
+    ["Front side","photo/v1",""],
+    ["Back side","photo/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"email","name":"Email","fields":[
+    ["Type","text/v1",""],
+    ["Username","username/v1",""],
+    ["Server","text/v1",""],
+    ["Port number","text/v1",""],
+    ["Password","password/v1",""],
+    ["Security","text/v1",""],
+    ["Auth method","text/v1",""],
+    ["SMTP server","text/v1","SMTP"],
+    ["Port number","text/v1","SMTP"],
+    ["Username","username/v1","SMTP"],
+    ["Password","password/v1","SMTP"],
+    ["Security","text/v1","SMTP"],
+    ["Auth method","text/v1","SMTP"],
+    ["Provider","text/v1","Contact Information"],
+    ["Provider's website","text/v1","Contact Information"],
+    ["Phone (local)","text/v1","Contact Information"],
+    ["Phone (toll free)","text/v1","Contact Information"],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"medical-record","name":"Medical Record","fields":[
+    ["Date","date/v1",""],
+    ["Location","text/v1",""],
+    ["Healthcare professional","text/v1",""],
+    ["Patient","text/v1",""],
+    ["Reason for visit","note/v1",""],
+    ["Medication","text/v1","Medication"],
+    ["Dosage","text/v1","Medication"],
+    ["Medication notes","note/v1","Medication"],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"membership","name":"Membership","fields":[
+    ["Group","text/v1",""],
+    ["Website","text/v1",""],
+    ["Telephone","text/v1",""],
+    ["Member name","text/v1",""],
+    ["Member since","month-year/v1",""],
+    ["Expiry date","month-year/v1",""],
+    ["Member ID","text/v1",""],
+    ["PIN","password/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"outdoor-license","name":"Outdoor License","fields":[
+    ["Full name","text/v1",""],
+    ["Valid from","date/v1",""],
+    ["Expires","date/v1",""],
+    ["Approved wildlife","text/v1",""],
+    ["Maximum quota","text/v1",""],
+    ["State","text/v1",""],
+    ["Country","text/v1",""],
+    ["Front side","photo/v1",""],
+    ["Back side","photo/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"passport","name":"Passport","fields":[
+    ["Type","text/v1",""],
+    ["Issuing country","text/v1",""],
+    ["Number","text/v1",""],
+    ["Full name","text/v1",""],
+    ["Gender","text/v1",""],
+    ["Nationality","text/v1",""],
+    ["Issuing authority","text/v1",""],
+    ["Date of birth","date/v1",""],
+    ["Place of birth","text/v1",""],
+    ["Issued on","date/v1",""],
+    ["Expiry date","date/v1",""],
+    ["Front side","photo/v1",""],
+    ["Back side","photo/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"password","name":"Password","fields":[
+    ["Username","username/v1",""],
+    ["Password","password/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"rewards","name":"Rewards","fields":[
+    ["Company name","text/v1",""],
+    ["Member name","text/v1",""],
+    ["Member ID","text/v1",""],
+    ["PIN","password/v1",""],
+    ["Member ID (additional)","text/v1","More Information"],
+    ["Member since","month-year/v1","More Information"],
+    ["Customer service phone","text/v1","More Information"],
+    ["Phone for reservations","text/v1","More Information"],
+    ["Website","text/v1","More Information"],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"server","name":"Server","fields":[
+    ["URL","text/v1",""],
+    ["Username","username/v1",""],
+    ["Password","password/v1",""],
+    ["Admin console URL","text/v1","Admin Console"],
+    ["Admin console username","username/v1","Admin Console"],
+    ["Console password","password/v1","Admin Console"],
+    ["Name","text/v1","Hosting Provider"],
+    ["Website","text/v1","Hosting Provider"],
+    ["Support URL","text/v1","Hosting Provider"],
+    ["Support phone","text/v1","Hosting Provider"],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"social-security-number","name":"Social Security Number","fields":[
+    ["Name","text/v1",""],
+    ["Number","password/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"software-license","name":"Software License","fields":[
+    ["Version","text/v1",""],
+    ["License key","secure-note/v1",""],
+    ["Licensed to","text/v1","Customer"],
+    ["Registered email","text/v1","Customer"],
+    ["Company","text/v1","Customer"],
+    ["Download page","text/v1","Publisher"],
+    ["Publisher","text/v1","Publisher"],
+    ["Website","text/v1","Publisher"],
+    ["Retail price","text/v1","Publisher"],
+    ["Support email","text/v1","Publisher"],
+    ["Purchase date","date/v1","Order"],
+    ["Order number","text/v1","Order"],
+    ["Order total","text/v1","Order"],
+    ["License file","file/v1",""],
+    ["Front side","photo/v1",""],
+    ["Back side","photo/v1",""],
+    ["Notes","note/v1",""]
+  ]},
+  {"id":"wireless-router","name":"Wireless Router","fields":[
+    ["Base station name","text/v1",""],
+    ["Base station password","password/v1",""],
+    ["Server / IP address","text/v1",""],
+    ["AirPort ID","text/v1",""],
+    ["Network name","text/v1",""],
+    ["Wireless security","wifi-qr/v1",""],
+    ["Wireless network password","password/v1",""],
+    ["Attached storage password","password/v1",""],
+    ["Notes","note/v1",""]
+  ]}
+]

@@ -1,0 +1,41 @@
+{
+  "repository": "https://github.com/bitwarden/clients",
+  "commit": "2ff80e50951792379f970f65cd4fb585fc50bbd5",
+  "files": [
+    {
+      "path": "libs/common/src/models/export/collection.export.ts",
+      "local": "collection.export.ts",
+      "sha256": "23f627ffabeda1eb7ad32b2c98e2a91ef130ec1f6df41fda5a41bb8b7056a9c3"
+    },
+    {
+      "path": "libs/common/src/models/export/collection-with-id.export.ts",
+      "local": "collection-with-id.export.ts",
+      "sha256": "a5df4d4312394527dc519dc6997c46d58a6475098b6de68d986cb5cb8f90ef9d"
+    },
+    {
+      "path": "libs/tools/export-vault-core/src/types/bitwarden-json-export-types.ts",
+      "local": "bitwarden-json-export-types.ts",
+      "sha256": "b70c36bce8e007780d53ec708d3e519010ea484b50470ac43718ec7be66658d3"
+    },
+    {
+      "path": "libs/common/src/platform/misc/utils.ts",
+      "local": "utils-platform.ts",
+      "sha256": "386ecf67788b293e30ac02a7362f4eae4e6360543df18fb36dceacade6d44766"
+    },
+    {
+      "path": "libs/importer/src/models/import-result.ts",
+      "local": "import-result.ts",
+      "sha256": "a377e3f4d902d0af8010d4ccdee55ce9757c30d33b15cb0ff497a3c85120061a"
+    },
+    {
+      "path": "libs/importer/src/importers/base-importer.ts",
+      "local": "base-importer.ts",
+      "sha256": "3ac04522983a07ef34e8977f280a6ee3fbafe48d10954e61cf111b6c88089ba7"
+    },
+    {
+      "path": "libs/importer/src/importers/bitwarden/bitwarden-json-importer.ts",
+      "local": "bitwarden-json-importer.ts",
+      "sha256": "25f3435d2f1cae713a8109107d2048c800a091604fe8d7ebb4b5a0f9bb0fe844"
+    }
+  ]
+}

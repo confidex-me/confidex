@@ -1,0 +1,68 @@
+{
+  "producer": "KeePassXC 2.8.0",
+  "producer_sha256": "3a738f4bfae8cd00b4561af80055e27711201b8ca8696550105304fb4f3b9b3e",
+  "capture_sha256": "6f4d19058668e685dfb9a5845e8f92f6d0138980406ae8f5149986455ad1712f",
+  "keyfile_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd",
+  "files": {
+    "password.kdbx": {
+      "source_sha256": "d45115260cbadef5961e8df50c1401c997c933f3268f3837fe770eb3d7477331",
+      "sha256": "ae908d8526074087d614ec1f111bf7f1489b6b93e84548f354ba540bb22bd135",
+      "major": 4,
+      "minor": 0,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 13636364
+      },
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1
+    },
+    "keyfile.kdbx": {
+      "source_sha256": "3ccf0e386278e47a40043e693ecc6e517c393c31f90bedeaea36c6dc2dfdef85",
+      "sha256": "8d6fdd2e38f9d1112fc46f617e57d8bed9fca72532757027ad1b3157a720f03e",
+      "major": 4,
+      "minor": 0,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 13636364
+      },
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1
+    },
+    "both.kdbx": {
+      "source_sha256": "a4d0cb8b613f67a1bfb35e4c1b59aa9d4d5a2dea756c7744894e0aee4ec2f1d7",
+      "sha256": "23d792352a2b43146633b0cbabb26959c3a0cbbf302d06747753f28e29bd4849",
+      "major": 4,
+      "minor": 0,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 13043478
+      },
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1
+    },
+    "empty-password.kdbx": {
+      "source_sha256": "32b23d55eef63e055d8532b679228132c8575a41a5fc1f6a85eb414e16776603",
+      "sha256": "df700031fac13bba05b2b4660dd21727aed5c597af6f3d99fa1f77d6b32cfe91",
+      "major": 4,
+      "minor": 0,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 7500000
+      },
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1
+    },
+    "empty-password-keyfile.kdbx": {
+      "source_sha256": "25bdec8bfb6299a8aff388a2dde70d7ecadfdfae9f0f7494ee24af18a464e52d",
+      "sha256": "0a4395e1299076bdc6c23b9756a7dbb7f4355b718c400330bebed5514e34f187",
+      "major": 4,
+      "minor": 0,
+      "kdf": {
+        "uuid": "c9d9f39a628a4460bf740d08c18a4fea",
+        "R": 8571429
+      },
+      "cipher_uuid": "31c1f2e6bf714350be5805216afc5aff",
+      "compression": 1
+    }
+  }
+}

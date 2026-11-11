@@ -1,0 +1,123 @@
+<?xml version='1.0' encoding='utf-8'?>
+<KeePassFile>
+  <Meta>
+    <Generator>Confidex public schema fixture</Generator>
+    <MemoryProtection>
+      <ProtectPassword>True</ProtectPassword>
+      <ProtectNotes>False</ProtectNotes>
+    </MemoryProtection>
+    <RecycleBinUUID>AgICAgICAgICAgICAgICAg==</RecycleBinUUID>
+  </Meta>
+  <Root>
+    <Group>
+      <UUID>AAAAAAAAAAAAAAAAAAAAAA==</UUID>
+      <Name>Public fixture</Name>
+      <Group>
+        <UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+        <Name>Work/メール</Name>
+        <Entry>
+          <UUID>EREREREREREREREREREREQ==</UUID>
+          <Times>
+            <CreationTime>2026-01-01T00:00:00Z</CreationTime>
+            <LastModificationTime>2026-01-02T00:00:00Z</LastModificationTime>
+          </Times>
+          <Tags>Work;メール</Tags>
+          <String>
+            <Key>Title</Key>
+            <Value>Почта — 東京</Value>
+          </String>
+          <String>
+            <Key>UserName</Key>
+            <Value>alice@example.invalid</Value>
+          </String>
+          <String>
+            <Key>Password</Key>
+            <Value ProtectInMemory="True">PUBLIC-FIXTURE-PASSWORD</Value>
+          </String>
+          <String>
+            <Key>URL</Key>
+            <Value ProtectInMemory="True">https://mail.example.invalid</Value>
+          </String>
+          <String>
+            <Key>Notes</Key>
+            <Value ProtectInMemory="True">Private fixture note
+
+Second line</Value>
+          </String>
+          <String>
+            <Key>Public custom</Key>
+            <Value>public first</Value>
+          </String>
+          <String>
+            <Key>Hidden custom</Key>
+            <Value ProtectInMemory="True">PUBLIC-FIXTURE-HIDDEN</Value>
+          </String>
+          <String>
+            <Key>Empty</Key>
+            <Value />
+          </String>
+          <String>
+            <Key>otp</Key>
+            <Value ProtectInMemory="True">otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;issuer=Fixture&amp;algorithm=SHA256&amp;digits=8&amp;period=45</Value>
+          </String>
+          <AutoType>
+            <Enabled>True</Enabled>
+            <DefaultSequence>{USERNAME}{TAB}{PASSWORD}{ENTER}</DefaultSequence>
+          </AutoType>
+          <CustomData>
+            <Item>
+              <Key>fixture-plugin</Key>
+              <Value>PUBLIC-FIXTURE-PLUGIN</Value>
+            </Item>
+          </CustomData>
+          <History>
+            <Entry>
+              <UUID>EREREREREREREREREREREQ==</UUID>
+              <String>
+                <Key>Password</Key>
+                <Value ProtectInMemory="True">PUBLIC-FIXTURE-OLD</Value>
+              </String>
+            </Entry>
+          </History>
+        </Entry>
+        <Entry>
+          <UUID>MzMzMzMzMzMzMzMzMzMzMw==</UUID>
+          <Times>
+            <CreationTime>2026-01-01T00:00:00Z</CreationTime>
+            <LastModificationTime>2026-01-02T00:00:00Z</LastModificationTime>
+          </Times>
+          <Tags>Work;メール</Tags>
+          <String>
+            <Key>Title</Key>
+            <Value>Reference</Value>
+          </String>
+          <String>
+            <Key>Password</Key>
+            <Value ProtectInMemory="True">{REF:P@I:11111111111111111111111111111111}</Value>
+          </String>
+        </Entry>
+      </Group>
+      <Group>
+        <UUID>AgICAgICAgICAgICAgICAg==</UUID>
+        <Name>Recycle Bin</Name>
+        <Entry>
+          <UUID>RERERERERERERERERERERA==</UUID>
+          <Times>
+            <CreationTime>2026-01-01T00:00:00Z</CreationTime>
+            <LastModificationTime>2026-01-02T00:00:00Z</LastModificationTime>
+          </Times>
+          <Tags>Work;メール</Tags>
+          <String>
+            <Key>Title</Key>
+            <Value>Deleted</Value>
+          </String>
+          <String>
+            <Key>Password</Key>
+            <Value ProtectInMemory="True">PUBLIC-FIXTURE-DELETED</Value>
+          </String>
+        </Entry>
+      </Group>
+    </Group>
+    <DeletedObjects />
+  </Root>
+</KeePassFile>

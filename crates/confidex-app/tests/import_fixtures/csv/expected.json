@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "source": {
+        "format": "generic-csv",
+        "account": null,
+        "vault": null,
+        "item": null,
+        "instance": "public-fixture-source"
+      },
+      "status": "ready",
+      "diagnostics": [],
+      "record": {
+        "entries": [
+          {
+            "name": "url",
+            "type": "url/v1",
+            "value": {
+              "url": "https://mail.example.invalid/a?x=1&x=2"
+            },
+            "extra": {}
+          },
+          {
+            "name": "username",
+            "type": "username/v1",
+            "value": {
+              "username": "alice@example.invalid"
+            },
+            "extra": {}
+          },
+          {
+            "name": "password",
+            "type": "password/v1",
+            "value": {
+              "password": "PUBLIC-FIXTURE-PASSWORD"
+            },
+            "extra": {}
+          },
+          {
+            "name": "note",
+            "type": "note/v1",
+            "value": {
+              "text": "Public line\n\nHe said \"hello\", again."
+            },
+            "extra": {}
+          },
+          {
+            "name": "extra",
+            "type": "text/v1",
+            "value": {
+              "text": "public first"
+            },
+            "extra": {}
+          },
+          {
+            "name": "extra",
+            "type": "secret/v1",
+            "value": {
+              "secret": "PUBLIC-FIXTURE-HIDDEN"
+            },
+            "extra": {
+              "metadata": {
+                "protected": true
+              }
+            }
+          },
+          {
+            "name": "",
+            "type": "text/v1",
+            "value": {
+              "text": ""
+            },
+            "extra": {}
+          },
+          {
+            "name": "otp",
+            "type": "totp/v1",
+            "value": {
+              "secret": {
+                "$binary": "3132333435363738393031323334353637383930"
+              },
+              "algorithm": "SHA256",
+              "digits": 8,
+              "period": 45,
+              "t0": 0
+            },
+            "extra": {
+              "confidex.import.totp": {
+                "uri": "otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Fixture&algorithm=SHA256&digits=8&period=45"
+              }
+            }
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Почта — 東京"
+        }
+      },
+      "source_attributes": {
+        "row": 1
+      }
+    },
+    {
+      "source": {
+        "format": "generic-csv",
+        "account": null,
+        "vault": null,
+        "item": null,
+        "instance": "public-fixture-source"
+      },
+      "status": "ready",
+      "diagnostics": [],
+      "record": {
+        "entries": [
+          {
+            "name": "url",
+            "type": "url/v1",
+            "value": {
+              "url": ""
+            },
+            "extra": {}
+          },
+          {
+            "name": "username",
+            "type": "username/v1",
+            "value": {
+              "username": ""
+            },
+            "extra": {}
+          },
+          {
+            "name": "password",
+            "type": "password/v1",
+            "value": {
+              "password": ""
+            },
+            "extra": {}
+          },
+          {
+            "name": "note",
+            "type": "note/v1",
+            "value": {
+              "text": ""
+            },
+            "extra": {}
+          },
+          {
+            "name": "extra",
+            "type": "text/v1",
+            "value": {
+              "text": ""
+            },
+            "extra": {}
+          },
+          {
+            "name": "extra",
+            "type": "secret/v1",
+            "value": {
+              "secret": ""
+            },
+            "extra": {
+              "metadata": {
+                "protected": true
+              }
+            }
+          },
+          {
+            "name": "",
+            "type": "text/v1",
+            "value": {
+              "text": ""
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Empty values"
+        }
+      },
+      "source_attributes": {
+        "row": 2
+      }
+    }
+  ]
+}

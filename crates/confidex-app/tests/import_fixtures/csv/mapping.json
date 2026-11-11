@@ -1,0 +1,50 @@
+{
+  "delimiter": ",",
+  "header": true,
+  "columns": [
+    {
+      "index": 0,
+      "target": "title"
+    },
+    {
+      "index": 1,
+      "target": "url/v1",
+      "name": "url"
+    },
+    {
+      "index": 2,
+      "target": "username/v1",
+      "name": "username"
+    },
+    {
+      "index": 3,
+      "target": "password/v1",
+      "name": "password"
+    },
+    {
+      "index": 4,
+      "target": "note/v1",
+      "name": "note"
+    },
+    {
+      "index": 5,
+      "target": "text/v1",
+      "name": "extra"
+    },
+    {
+      "index": 6,
+      "target": "secret/v1",
+      "name": "extra"
+    },
+    {
+      "index": 7,
+      "target": "text/v1",
+      "name": ""
+    },
+    {
+      "index": 8,
+      "target": "totp/v1",
+      "name": "otp"
+    }
+  ]
+}

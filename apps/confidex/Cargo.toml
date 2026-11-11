@@ -1,0 +1,50 @@
+[package]
+name = "confidex"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[features]
+default = ["sync"]
+sync = ["confidex-native/sync", "tokio/net", "tokio/time"]
+import-check = []
+export-check = ["export-ui-check", "confidex-app/export-check"]
+export-ui-check = ["confidex-ui/export-check"]
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+confidex-app = { path = "../../crates/confidex-app" }
+confidex-ui = { path = "../../crates/confidex-ui", default-features = false }
+confidex-storage = { path = "../../crates/confidex-storage" }
+eframe = { version = "=0.37.0", default-features = false, features = ["persistence", "default_fonts", "wgpu", "accesskit", "clipboard", "links", "x11", "wayland"] }
+serde_json = "1"
+serde = "1"
+zeroize = "1"
+webp-rust = { version = "=0.3.2", default-features = false }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+confidex-ui = { path = "../../crates/confidex-ui", default-features = false, features = ["embedded-fonts"] }
+confidex-native = { path = "../../crates/confidex-native" }
+confidex-storage = { path = "../../crates/confidex-storage", features = ["sqlite"] }
+tokio = { version = "=1.54.1", default-features = false, features = ["rt-multi-thread", "sync"] }
+arboard = { version = "=3.7.0", default-features = false }
+sys-locale = "=0.3.2"
+rfd = "=0.17.2"
+tempfile = "3"
+image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg", "webp"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "=0.6.5"
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+confidex-device-secrets = { path = "../../crates/confidex-device-secrets" }
+confidex-vault = { path = "../../crates/confidex-vault", features = ["browser"] }
+wasm-bindgen = "=0.2.130"
+wasm-bindgen-futures = "=0.4.80"
+js-sys = "=0.3.107"
+web-sys = { version = "=0.3.107", features = ["HtmlCanvasElement", "HtmlInputElement", "FocusOptions", "InputEvent", "PointerEvent", "ClipboardEvent", "TouchEvent", "Touch", "TouchList", "AddEventListenerOptions", "DataTransfer", "Worker", "WorkerOptions", "WorkerType", "MessageEvent", "ErrorEvent", "Window", "Navigator", "Clipboard"] }
+serde-wasm-bindgen = "0.6"

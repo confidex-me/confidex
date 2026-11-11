@@ -1,0 +1,11 @@
+name = "confidex-app"
+main = "web/cloudflare.mjs"
+compatibility_date = "2026-11-08"
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "app.confidex.me", custom_domain = true }]
+
+[assets]
+directory = "web-dist"
+html_handling = "auto-trailing-slash"
+not_found_handling = "none"

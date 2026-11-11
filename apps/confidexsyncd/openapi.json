@@ -1,0 +1,223 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Confidex Sync API",
+    "version": "1.0.0",
+    "description": "Store signed encrypted locks and record revisions. The server does not create vaults or receive passwords or secret_key. A lock must be accepted before its records. The server computes the lock ID as UUIDv5(NAMESPACE_OID, raw 32-byte Ed25519 public key). Uploads use multipart/form-data with a configurable whole-body limit, including framing. The default and ceiling are 8,000,000 bytes. HTTP 413 reports the current limit in Sync-Max-Body-Bytes. Platform CPU and storage quotas also apply."
+  },
+  "servers": [{ "url": "/" }],
+  "security": [],
+  "paths": {
+    "/v1/sync": {
+      "post": {
+        "operationId": "acceptLock",
+        "summary": "Accept a signed lock and pin its verification key",
+        "description": "The detached Ed25519 signature covers ASCII confidex/sync/lock/v1 followed by a NUL byte, u64BE(len(previous)), previous, u64BE(len(lock)), and the exact lock bytes. For POST, previous is empty. A first upload returns 201. An identical upload returns 200. A different lock for an existing key returns 409. Passwords and secret_key remain on the client.",
+        "requestBody": { "$ref": "#/components/requestBodies/LockUpload" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/AcceptedLock" },
+          "201": { "$ref": "#/components/responses/AcceptedLock" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/TooLarge" },
+          "422": { "$ref": "#/components/responses/InvalidObject" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/sync/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/LockId" }],
+      "head": {
+        "operationId": "checkSync",
+        "summary": "Check the history cursor and lock version without reading object storage",
+        "description": "An advisory checkpoint for polling. Clients must still download and authenticate changes; these headers are not a proof of freshness.",
+        "responses": {
+          "200": {
+            "description": "Empty body with the current history cursor and lock digest.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Sync-Cursor": {
+                "description": "Current unsigned decimal history cursor.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "get": {
+        "operationId": "getLock",
+        "summary": "Read the encrypted lock and its detached signature",
+        "responses": {
+          "200": {
+            "description": "The stored lock, signature, and previous digest used to verify that signature.",
+            "headers": { "ETag": { "$ref": "#/components/headers/ETag" } },
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "required": ["lock", "signature", "base"],
+                  "properties": {
+                    "lock": { "type": "string", "format": "binary" },
+                    "signature": { "type": "string", "format": "binary", "description": "64 raw Ed25519 signature bytes." },
+                    "base": { "type": "string", "description": "The previous lock digest for this signature; empty for the initial lock." }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      },
+      "put": {
+        "operationId": "replaceLock",
+        "summary": "Replace the lock with an atomic ETag comparison",
+        "description": "The public key and vault scope must match the pinned values. Use the same signature framing as POST, but previous is the current ETag digest without quotes. This binds the replacement to its predecessor and rejects replay. Record history is preserved.",
+        "parameters": [{ "name": "If-Match", "in": "header", "required": true, "schema": { "type": "string" }, "description": "The current quoted lock ETag." }],
+        "requestBody": { "$ref": "#/components/requestBodies/LockUpload" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/AcceptedLock" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "412": { "description": "If-Match is absent or stale.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "413": { "$ref": "#/components/responses/TooLarge" },
+          "422": { "$ref": "#/components/responses/InvalidObject" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/sync/{id}/records": {
+      "parameters": [{ "$ref": "#/components/parameters/LockId" }],
+      "post": {
+        "operationId": "appendRecords",
+        "summary": "Append a batch of signed revisions atomically",
+        "description": "Send one base part and repeated record parts. Each record keeps its exact signed wire bytes. The lock must exist. Parents must be present in storage or precede their children in this batch and belong to the same record. Multiple branches of one record are accepted; a parent need not be the latest revision. Up to 256 revisions and 256 total parent references are accepted, subject to platform quotas. Duplicates are rejected. The maximum wire record is 4,065,668 bytes. All replicas are written before the index publishes the batch. On 409, fetch history and retry the missing revisions with the current base. A merge is not required.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["base", "record"],
+                "properties": {
+                  "base": { "$ref": "#/components/schemas/Cursor" },
+                  "record": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "type": "string", "format": "binary" } }
+                }
+              },
+              "encoding": { "record": { "contentType": "application/octet-stream", "style": "form", "explode": true } }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The whole batch was accepted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["cursor", "accepted"],
+                  "properties": {
+                    "cursor": { "$ref": "#/components/schemas/Cursor" },
+                    "accepted": { "type": "integer", "minimum": 1, "maximum": 256 }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "413": { "$ref": "#/components/responses/TooLarge" },
+          "422": { "$ref": "#/components/responses/InvalidObject" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      },
+      "get": {
+        "operationId": "getRecords",
+        "summary": "Read signed history after a server cursor",
+        "parameters": [{ "name": "after", "in": "query", "schema": { "allOf": [{ "$ref": "#/components/schemas/Cursor" }], "default": "0" } }],
+        "responses": {
+          "200": {
+            "description": "A page of at most 8,000,000 bytes, independent of the upload limit. The first part is meta JSON, followed by repeated binary record parts. Use meta.cursor for the next page. Signed deletions are ordinary revisions.",
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "required": ["meta"],
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "required": ["cursor", "has_more"],
+                      "properties": {
+                        "cursor": { "$ref": "#/components/schemas/Cursor" },
+                        "has_more": { "type": "boolean" }
+                      }
+                    },
+                    "record": { "type": "array", "maxItems": 256, "items": { "type": "string", "format": "binary" } }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "LockId": { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "Server-computed UUIDv5 of the verification key; not the wire vault_id." }
+    },
+    "headers": {
+      "ETag": { "description": "Quoted lowercase SHA-256 digest of the exact lock bytes.", "schema": { "type": "string" } }
+    },
+    "schemas": {
+      "Cursor": { "type": "string", "pattern": "^[0-9]{1,19}$", "description": "A decimal server sequence from 0 to 9223372036854775807." },
+      "Error": { "type": "object", "required": ["error"], "properties": { "error": { "type": "string", "enum": ["bad_request", "invalid_signature", "not_found", "merge_required", "lock_changed", "content_too_large", "invalid_object", "storage_unavailable"] } } }
+    },
+    "requestBodies": {
+      "LockUpload": {
+        "required": true,
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "type": "object",
+              "required": ["lock", "signature"],
+              "additionalProperties": false,
+              "properties": {
+                "lock": { "type": "string", "format": "binary", "description": "The original encrypted lock, including its public header." },
+                "signature": { "type": "string", "format": "binary", "description": "64 raw Ed25519 signature bytes, not base64 or hex." }
+              }
+            },
+            "encoding": { "lock": { "contentType": "application/octet-stream" }, "signature": { "contentType": "application/octet-stream" } }
+          }
+        }
+      }
+    },
+    "responses": {
+      "AcceptedLock": { "description": "The accepted lock identity and version.", "headers": { "ETag": { "$ref": "#/components/headers/ETag" } }, "content": { "application/json": { "schema": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string", "format": "uuid" } } } } } },
+      "BadRequest": { "description": "Invalid request framing or fields.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden": { "description": "The lock signature is invalid or its pinned identity changed.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "The lock is not present.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Conflict": { "description": "The base is stale, a revision is duplicated, or a different lock already exists. For record uploads, fetch history and retry only missing revisions with the current base; no merge is required. The legacy error code merge_required is retained for compatibility.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "TooLarge": { "description": "The upload exceeds the body, revision, or parent-reference limit. The header reports the configured whole-body limit in bytes.", "headers": { "Sync-Max-Body-Bytes": { "schema": { "type": "integer", "minimum": 1, "maximum": 8000000, "default": 8000000 } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "InvalidObject": { "description": "A signed object is invalid or has missing or unrelated parents.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unavailable": { "description": "The index, a required write replica, or every read replica is unavailable.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    }
+  }
+}

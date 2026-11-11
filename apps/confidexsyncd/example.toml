@@ -1,0 +1,12 @@
+[index]
+url = "confidexsyncd.sqlite"
+
+[listen]
+address = "127.0.0.1"
+port = 8080
+
+[[backend.posix]]
+path = "confidexsyncd-objects"
+
+[[backend.git]]
+path = "confidexsyncd.git"

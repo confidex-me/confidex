@@ -1,0 +1,8 @@
+{
+  "name": "confidex-build",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "devDependencies": { "wrangler": "4.160.0" }
+}

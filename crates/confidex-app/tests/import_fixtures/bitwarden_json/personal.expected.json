@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "source": {
+        "format": "bitwarden-json",
+        "account": null,
+        "vault": "personal",
+        "item": "11111111-1111-4111-8111-111111111111",
+        "instance": "public-fixture-source"
+      },
+      "status": "review",
+      "diagnostics": [
+        "source-data-preserved",
+        "notes-protected-by-default"
+      ],
+      "record": {
+        "entries": [
+          {
+            "name": "Username",
+            "type": "username/v1",
+            "value": {
+              "username": "alice@example.invalid"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Password",
+            "type": "password/v1",
+            "value": {
+              "password": "PUBLIC-FIXTURE-PASSWORD"
+            },
+            "extra": {}
+          },
+          {
+            "name": "URL",
+            "type": "url/v1",
+            "value": {
+              "url": "https://mail.example.invalid/a?x=1&x=2"
+            },
+            "extra": {}
+          },
+          {
+            "name": "URL",
+            "type": "url/v1",
+            "value": {
+              "url": "https://second.example.invalid"
+            },
+            "extra": {}
+          },
+          {
+            "name": "One-time code",
+            "type": "totp/v1",
+            "value": {
+              "secret": {
+                "$binary": "3132333435363738393031323334353637383930"
+              },
+              "algorithm": "SHA256",
+              "digits": 8,
+              "period": 45,
+              "t0": 0
+            },
+            "extra": {
+              "confidex.import.totp": {
+                "uri": "otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Fixture&algorithm=SHA256&digits=8&period=45"
+              }
+            }
+          },
+          {
+            "name": "Notes",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "Private fixture note\n\nSecond line"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Repeated",
+            "type": "text/v1",
+            "value": {
+              "text": "public first"
+            },
+            "extra": {
+              "confidex.import.field": {
+                "type": 0
+              }
+            }
+          },
+          {
+            "name": "Repeated",
+            "type": "secret/v1",
+            "value": {
+              "secret": "PUBLIC-FIXTURE-HIDDEN"
+            },
+            "extra": {
+              "metadata": {
+                "protected": true
+              },
+              "confidex.import.field": {
+                "type": 1
+              }
+            }
+          },
+          {
+            "name": "",
+            "type": "text/v1",
+            "value": {
+              "text": ""
+            },
+            "extra": {
+              "confidex.import.field": {
+                "type": 0
+              }
+            }
+          },
+          {
+            "name": "Enabled",
+            "type": "text/v1",
+            "value": {
+              "text": "true"
+            },
+            "extra": {
+              "confidex.import.field": {
+                "type": 2
+              }
+            }
+          },
+          {
+            "name": "Original data",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "{\"passwordHistory\":[{\"lastUsedDate\":\"2025-12-01T00:00:00.000Z\",\"password\":\"PUBLIC-FIXTURE-OLD\"}],\"uriMatch\":[0,null],\"favorite\":true,\"reprompt\":0}"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [
+          "Work/メール"
+        ],
+        "extra": {
+          "confidex.title": "Почта — 東京"
+        }
+      },
+      "source_attributes": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "organizationId": null,
+        "folderId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "type": 1,
+        "reprompt": 0,
+        "name": "Почта — 東京",
+        "favorite": true,
+        "creationDate": "2026-01-01T00:00:00.000Z",
+        "revisionDate": "2026-01-02T00:00:00.000Z",
+        "deletedDate": null
+      }
+    },
+    {
+      "source": {
+        "format": "bitwarden-json",
+        "account": null,
+        "vault": "personal",
+        "item": "22222222-2222-4222-8222-222222222222",
+        "instance": "public-fixture-source"
+      },
+      "status": "ready",
+      "diagnostics": [],
+      "record": {
+        "entries": [
+          {
+            "name": "Notes",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "PUBLIC-FIXTURE-SECURE-NOTE\n\nFin"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Private note"
+        }
+      },
+      "source_attributes": {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "type": 2,
+        "name": "Private note",
+        "secureNote": {
+          "type": 0
+        },
+        "folderId": null,
+        "favorite": false,
+        "reprompt": 0
+      }
+    },
+    {
+      "source": {
+        "format": "bitwarden-json",
+        "account": null,
+        "vault": "personal",
+        "item": "33333333-3333-4333-8333-333333333333",
+        "instance": "public-fixture-source"
+      },
+      "status": "review",
+      "diagnostics": [
+        "unknown-item-preserved"
+      ],
+      "record": {
+        "entries": [
+          {
+            "name": "Original data",
+            "type": "secure-note/v1",
+            "value": {
+              "text": "{\"id\":\"33333333-3333-4333-8333-333333333333\",\"type\":99,\"name\":\"Future item\",\"future\":{\"secret\":\"PUBLIC-FIXTURE-FUTURE\",\"enabled\":true},\"fields\":[]}"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [],
+        "extra": {
+          "confidex.title": "Future item"
+        }
+      },
+      "source_attributes": {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "type": 99,
+        "name": "Future item"
+      }
+    }
+  ]
+}

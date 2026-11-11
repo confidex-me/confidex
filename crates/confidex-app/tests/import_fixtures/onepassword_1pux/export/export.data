@@ -1,0 +1,193 @@
+{
+  "accounts": [
+    {
+      "attrs": {
+        "uuid": "account-1",
+        "accountName": "Public fixture",
+        "name": "Public Fixture",
+        "email": "alice@example.invalid",
+        "domain": "https://example.invalid"
+      },
+      "vaults": [
+        {
+          "attrs": {
+            "uuid": "vault-1",
+            "name": "Personal",
+            "type": "P"
+          },
+          "items": [
+            {
+              "uuid": "item-1",
+              "categoryUuid": "001",
+              "state": "active",
+              "favIndex": 1,
+              "createdAt": 1767225600,
+              "updatedAt": 1767312000,
+              "overview": {
+                "title": "Почта — 東京",
+                "url": "https://mail.example.invalid",
+                "urls": [
+                  {
+                    "label": "Primary",
+                    "url": "https://mail.example.invalid"
+                  },
+                  {
+                    "label": "Other",
+                    "url": "https://second.example.invalid"
+                  }
+                ],
+                "tags": [
+                  "Work",
+                  "メール"
+                ]
+              },
+              "details": {
+                "loginFields": [
+                  {
+                    "name": "username",
+                    "fieldType": "T",
+                    "designation": "username",
+                    "value": "alice@example.invalid"
+                  },
+                  {
+                    "name": "password",
+                    "fieldType": "P",
+                    "designation": "password",
+                    "value": "PUBLIC-FIXTURE-PASSWORD"
+                  }
+                ],
+                "notesPlain": "Private fixture note\n\nSecond line",
+                "sections": [
+                  {
+                    "title": "Security",
+                    "name": "section-1",
+                    "fields": [
+                      {
+                        "title": "PIN",
+                        "id": "pin-1",
+                        "value": {
+                          "concealed": "PUBLIC-FIXTURE-PIN"
+                        },
+                        "guarded": false,
+                        "indexAtSource": 0
+                      },
+                      {
+                        "title": "Repeated",
+                        "id": "public-1",
+                        "value": {
+                          "string": "public first"
+                        },
+                        "guarded": false,
+                        "indexAtSource": 1
+                      },
+                      {
+                        "title": "Repeated",
+                        "id": "private-1",
+                        "value": {
+                          "string": "PUBLIC-FIXTURE-GUARDED"
+                        },
+                        "guarded": true,
+                        "indexAtSource": 2
+                      },
+                      {
+                        "title": "",
+                        "id": "empty-1",
+                        "value": {
+                          "string": ""
+                        },
+                        "guarded": false,
+                        "indexAtSource": 3
+                      },
+                      {
+                        "title": "One-time code",
+                        "id": "otp-1",
+                        "value": {
+                          "totp": "otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Fixture&algorithm=SHA256&digits=8&period=45"
+                        },
+                        "indexAtSource": 4
+                      }
+                    ]
+                  }
+                ],
+                "passwordHistory": [
+                  {
+                    "value": "PUBLIC-FIXTURE-OLD",
+                    "time": 1764547200
+                  }
+                ]
+              }
+            },
+            {
+              "uuid": "document-item",
+              "categoryUuid": "006",
+              "state": "active",
+              "favIndex": 0,
+              "createdAt": 1767225600,
+              "updatedAt": 1767312000,
+              "overview": {
+                "title": "Public fixture document",
+                "tags": []
+              },
+              "details": {
+                "documentAttributes": {
+                  "fileName": "fixture.bin",
+                  "documentId": "document-1",
+                  "decryptedSize": 26
+                }
+              }
+            },
+            {
+              "uuid": "future-1",
+              "categoryUuid": "999",
+              "state": "archived",
+              "overview": {
+                "title": "Archived future",
+                "tags": []
+              },
+              "details": {
+                "sections": [
+                  {
+                    "name": "future-section",
+                    "title": "Future",
+                    "fields": [
+                      {
+                        "id": "future-field",
+                        "title": "Future",
+                        "value": {
+                          "future": {
+                            "secret": "PUBLIC-FIXTURE-FUTURE"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attrs": {
+            "uuid": "vault-2",
+            "name": "Other",
+            "type": "U"
+          },
+          "items": [
+            {
+              "uuid": "item-1",
+              "categoryUuid": "005",
+              "state": "active",
+              "overview": {
+                "title": "Same ID, other vault",
+                "tags": []
+              },
+              "details": {
+                "notesPlain": "PUBLIC-FIXTURE-OTHER-VAULT"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

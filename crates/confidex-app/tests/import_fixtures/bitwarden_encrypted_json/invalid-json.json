@@ -1,0 +1,9 @@
+{
+  "encrypted": true,
+  "passwordProtected": true,
+  "salt": "s3MNdown8zj48lY6ars46w==",
+  "kdfType": 0,
+  "kdfIterations": 5000,
+  "encKeyValidation_DO_NOT_EDIT": "2.NA4zFsHgRHLCVfyrvwzB/w==|s8gVAiRNOp0d9nwAaPIfiB6NwdGXuVjnTmTuiuObBR38ALrGQPWMNXSmFvp+4m9F|JeJ9oph/dK0sitDIFR4T963JLBj457A/YnmjhfD57xo=",
+  "data": "2.5Wseg/gVV+49km1X3/4WFQ==|dLizlYGKmXuzjKJbcMPrcA==|VYLs7kDkhD8FOTrppJfOcfLuQKUIzJbrYEVwJozCBpI="
+}

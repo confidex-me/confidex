@@ -1,0 +1,40 @@
+[package]
+name = "confidex-device-secrets"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[features]
+backend-check = []
+
+[dependencies]
+zeroize = "1"
+chacha20poly1305 = { version = "=0.11.0", default-features = false, features = ["alloc", "zeroize"] }
+getrandom = { version = "=0.4.3", features = ["wasm_js"] }
+sha2 = "0.11"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+directories = "6"
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security_Credentials", "Win32_Security_Cryptography"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "=0.10.0"
+security-framework-sys = "=2.17.0"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
+serde = { version = "1", features = ["derive"] }
+tss-esapi = "=7.7.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.130"
+wasm-bindgen-futures = "=0.4.80"
+js-sys = "=0.3.107"
+
+[dev-dependencies]
+futures-executor = "0.3"

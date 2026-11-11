@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "source": {
+        "format": "bitwarden-json",
+        "account": null,
+        "vault": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "item": "11111111-1111-4111-8111-111111111111",
+        "instance": "public-fixture-source"
+      },
+      "status": "ready",
+      "diagnostics": [],
+      "record": {
+        "entries": [
+          {
+            "name": "Username",
+            "type": "username/v1",
+            "value": {
+              "username": "operator"
+            },
+            "extra": {}
+          },
+          {
+            "name": "Password",
+            "type": "password/v1",
+            "value": {
+              "password": "PUBLIC-FIXTURE-ORG"
+            },
+            "extra": {}
+          }
+        ],
+        "tags": [
+          "Team/Operations"
+        ],
+        "extra": {
+          "confidex.title": "Organization login"
+        }
+      },
+      "source_attributes": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "organizationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "collectionIds": [
+          "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+        ],
+        "type": 1,
+        "name": "Organization login",
+        "notes": null
+      }
+    }
+  ]
+}

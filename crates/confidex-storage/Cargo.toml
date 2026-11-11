@@ -1,0 +1,26 @@
+[package]
+name = "confidex-storage"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[features]
+sqlite = ["dep:rusqlite", "dep:tokio"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { version = "=0.41.1", default-features = false, features = ["bundled"], optional = true }
+tokio = { version = "=1.54.1", default-features = false, features = ["rt"], optional = true }
+
+[[bin]]
+name = "confidex-store-probe"
+path = "src/probe.rs"
+required-features = ["sqlite"]
+
+[dev-dependencies]
+tokio = { version = "=1.54.1", default-features = false, features = ["rt"] }
+tempfile = "3"

@@ -1,0 +1,11 @@
+[workspace]
+members = ["crates/confidex-device-secrets", "crates/confidex-vault", "crates/confidex-ssh-agent", "crates/confidex-storage", "crates/confidex-app", "crates/confidex-native", "crates/confidex-ui", "apps/confidex", "apps/cfdex", "apps/confidexsyncd", "crates/confidex-image-codec"]
+exclude = ["vendor/keepass"]
+resolver = "3"
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"

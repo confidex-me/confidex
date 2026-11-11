@@ -1,0 +1,11 @@
+{
+  "ref": "confidex_public_sync_api",
+  "description": "Allow cookie-free sync API clients through browser checks",
+  "expression": "http.host eq \"sync.confidex.me\" and (http.request.uri.path eq \"/v1/sync\" or starts_with(http.request.uri.path, \"/v1/sync/\"))",
+  "action": "skip",
+  "action_parameters": {
+    "products": ["bic", "securityLevel"]
+  },
+  "logging": {"enabled": true},
+  "enabled": true
+}

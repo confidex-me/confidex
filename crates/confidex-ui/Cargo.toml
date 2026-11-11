@@ -1,0 +1,36 @@
+[package]
+name = "confidex-ui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[features]
+default = ["embedded-fonts"]
+embedded-fonts = []
+export-check = ["embedded-fonts"]
+
+[dependencies]
+confidex-app = { path = "../confidex-app" }
+confidex-storage = { path = "../confidex-storage" }
+confidex-vault = { path = "../confidex-vault" }
+flate2 = { version = "1.1.11", default-features = false, features = ["miniz_oxide"] }
+image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg", "webp"] }
+webp-rust = { version = "=0.3.2", default-features = false }
+eframe = { version = "=0.37.0", default-features = false, features = ["persistence", "default_fonts", "wgpu", "accesskit", "clipboard", "links", "x11", "wayland"] }
+fluent-bundle = "=0.16.0"
+fluent-langneg = { version = "=0.13.1", features = ["cldr"] }
+unic-langid = "=0.9.6"
+serde = { version = "1", features = ["derive"] }
+zeroize = "1"
+web-time = "1"
+url = "2"
+zxcvbn = { version = "=3.1.1", default-features = false }
+time = { version = "0.3", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+serde_json = "1"
+confidex-storage = { path = "../confidex-storage", features = ["sqlite"] }
+tokio = { version = "=1.54.1", default-features = false, features = ["rt"] }
+tempfile = "3"

@@ -1,0 +1,4 @@
+"url","username","password","httpRealm","formActionOrigin","guid","timeCreated","timeLastUsed","timePasswordChanged"
+"https://mail.example.invalid/a?x=1&x=2","alice@example.invalid","PUBLIC-FIXTURE-FIREFOX",,"https://mail.example.invalid/login","{11111111-2222-4333-8444-555555555555}","1700000000000","1700000001000","1700000002000"
+"https://service.example.invalid/日本語","Юзер, 東京","PUBLIC-""FIXTURE""
+SECOND-LINE","Public fixture realm",,"{22222222-3333-4444-8555-666666666666}","1700000003000","1700000004000","1700000005000"

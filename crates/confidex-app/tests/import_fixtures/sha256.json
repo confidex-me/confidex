@@ -1,0 +1,17 @@
+{
+  "bitwarden_json/organization.expected.json": "46a0d4392d25ab6845d2b3510ce4c68f759aca218a196296fab6a93a8688aa28",
+  "bitwarden_json/organization.json": "1fba93831d5e30af475287d6dfbd562dc30ef8eb4746319d304e4928d5e7c811",
+  "bitwarden_json/personal.expected.json": "88dcd1d7cb8d3b19c4a1965291854a4f2c9c79bb7b3a7431bcb6338af5c451eb",
+  "bitwarden_json/personal.json": "117512859fecca184720b1a9edf8f9b8002eb8002f784817ab60cc61c440cc98",
+  "csv/expected.json": "2f47fd6d98d743cb30df951fa062346bc14b0cca3815721082f7187f2109e230",
+  "csv/generic.csv": "8ff30a6c855a512369eadf31dc60e587f4aa9b809a94fabc7cd5c82fa8a79091",
+  "csv/mapping.json": "5e0aebe167c8954b95efe91456a4ad21804f249e2323edcaf8698133d5d02a08",
+  "keepass_xml/database.xml": "e6610e8d4f57fe9aea623ca6ae1899d6697a48b7c4fbf9b4fb1a2211c48faa6c",
+  "keepass_xml/expected.json": "11c70588cb40ec3fb83f5da9a19423e3a651ad6abe5f16ebcde0c81164815047",
+  "onepassword_1pux/account.1pux": "f340e2bb689b9f06c75529790b21445b3d5f72edba1bd0b412271cbad86e3519",
+  "onepassword_1pux/expected.json": "b77f23e96e974f6e971d8488482cb49be991a624ddf1ddfac988e7b1b0439f98",
+  "onepassword_1pux/export/export.attributes": "52648c5abb38da0ea2a83bba784f3e4250001ee89524516c780382502a2c76ca",
+  "onepassword_1pux/export/export.data": "821e7cbf42998299b574c4d371d71ec17cf95bdebeb61231010a54d172ffa4ae",
+  "onepassword_1pux/export/files/document-1___fixture.bin": "3732e8cd97ed7f314420b12c8b26352963b13981d9de08409347f6fa5089639a",
+  "sources.json": "a564a2f29e5b4d23cc43b3216597b57ada0c445cfd7f2efc29d10ea25d6f5b97"
+}

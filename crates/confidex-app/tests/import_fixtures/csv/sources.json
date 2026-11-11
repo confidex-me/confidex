@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "fixtures": [
+    {
+      "file": "chromium-upstream.csv",
+      "sha256": "802c8883e779435c298f3f9ffef9929ac633476e2eedbb61d75c65abf053ee1b",
+      "origin": "Published producer unit-test output, Linux/macOS LF variant",
+      "source": "https://github.com/chromium/chromium/blob/2895b9a20bfc379d767f3b253c3a0f780d15061f/components/password_manager/core/browser/export/password_csv_writer_unittest.cc",
+      "source_sha256": "1531eda0a9e71fc302dab9cf2d0931b2f058b81b28d54a374b013edeaa0180f1"
+    },
+    {
+      "file": "firefox.csv",
+      "sha256": "00175f834d20d3b28f1a0c369e6f11bb18b8037d742ee07590ea776585d00566",
+      "origin": "Unmodified Mozilla exporter executed with public supplied logins and IOUtils stub; not a browser UI capture",
+      "source": "https://github.com/mozilla/gecko-dev/blob/2483a0cbf2134f0696e2b8f62c61404116255ae7/toolkit/components/passwordmgr/LoginExport.sys.mjs",
+      "source_sha256": "2740e7d3af39d4022b74374ebca2017b90920d65e74bd638cf7c7191dde9fd61"
+    },
+    {
+      "file": "apple-passwords-upstream.csv",
+      "sha256": "7674d9c393796ca13a3bff6a8a8b8f9ecd2a7693692444588cb15075a77f3f2b",
+      "origin": "Exact data template from the published Bitwarden Safari reader fixture; not a local Apple capture",
+      "source": "https://github.com/bitwarden/clients/blob/8ad47071a77e41a694ab0939a733e051618e10a4/libs/importer/src/importers/spec-data/safari-csv/simple-password-data.csv.ts",
+      "source_sha256": "018aab3dff3716fe519cbbae0bb79e01972896ecbc30cccd5660e4dff6daa61d"
+    },
+    {
+      "file": "apple-passwords-legacy-upstream.csv",
+      "sha256": "f940545786c5d3bbaea0aedba42053d93d4a341cc0f683f8dd1d2b4f67a21fcb",
+      "origin": "Exact data template from the published Bitwarden Safari reader fixture; not a local Apple capture",
+      "source": "https://github.com/bitwarden/clients/blob/8ad47071a77e41a694ab0939a733e051618e10a4/libs/importer/src/importers/spec-data/safari-csv/old-simple-password-data.csv.ts",
+      "source_sha256": "ed2c369cc9917ef2c4f3d0020153c3c4ce87d5b2ce26331848d6b3e435e2e119"
+    },
+    {
+      "file": "chromium-100.csv",
+      "sha256": "1ac5095b5cafc251979970a9ca587f20426dbb2709c1b6fd9f190915f30d82f0",
+      "origin": "Schema-derived from the Chromium 100 producer and its synthetic test values; not a local browser capture",
+      "source": "https://chromium.googlesource.com/chromium/src/+/refs/tags/100.0.4896.127/components/password_manager/core/browser/export/password_csv_writer.cc",
+      "source_sha256": "02f1e0f3c1d070b3e72c342bef1b66af91d7781f51ba3ac0b172907962717b40"
+    }
+  ]
+}

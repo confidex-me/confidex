@@ -1,0 +1,30 @@
+{
+  "encrypted": false,
+  "collections": [
+    {
+      "id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "organizationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "name": "Team/Operations",
+      "externalId": null
+    }
+  ],
+  "items": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "collectionIds": [
+        "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+      ],
+      "type": 1,
+      "name": "Organization login",
+      "notes": null,
+      "fields": [],
+      "login": {
+        "username": "operator",
+        "password": "PUBLIC-FIXTURE-ORG",
+        "uris": [],
+        "totp": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeePassFile>
+	<Meta>
+		<Generator>Confidex public schema fixture</Generator>
+		<DatabaseName/>
+		<DatabaseNameChanged>S9mD4g4AAAA=</DatabaseNameChanged>
+		<DatabaseDescription/>
+		<DatabaseDescriptionChanged>S9mD4g4AAAA=</DatabaseDescriptionChanged>
+		<DefaultUserName/>
+		<DefaultUserNameChanged>S9mD4g4AAAA=</DefaultUserNameChanged>
+		<MaintenanceHistoryDays>365</MaintenanceHistoryDays>
+		<Color/>
+		<MasterKeyChanged>S9mD4g4AAAA=</MasterKeyChanged>
+		<MasterKeyChangeRec>-1</MasterKeyChangeRec>
+		<MasterKeyChangeForce>-1</MasterKeyChangeForce>
+		<MemoryProtection>
+			<ProtectTitle>False</ProtectTitle>
+			<ProtectUserName>False</ProtectUserName>
+			<ProtectPassword>True</ProtectPassword>
+			<ProtectURL>False</ProtectURL>
+			<ProtectNotes>False</ProtectNotes>
+		</MemoryProtection>
+		<CustomIcons/>
+		<RecycleBinEnabled>True</RecycleBinEnabled>
+		<RecycleBinUUID>AgICAgICAgICAgICAgICAg==</RecycleBinUUID>
+		<RecycleBinChanged>S9mD4g4AAAA=</RecycleBinChanged>
+		<EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
+		<EntryTemplatesGroupChanged>S9mD4g4AAAA=</EntryTemplatesGroupChanged>
+		<LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
+		<LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
+		<HistoryMaxItems>10</HistoryMaxItems>
+		<HistoryMaxSize>6291456</HistoryMaxSize>
+		<SettingsChanged>S9mD4g4AAAA=</SettingsChanged>
+		<CustomData>
+			<Item>
+				<Key>KPXC_RANDOM_SLUG</Key>
+				<Value>fb05f64c0b3a255ac3be62252ecbb61a263445c67369f22762b59c0b9cac682eda3be51d788ca4f3690c65c109d70458cd3b3e79a35e36c2236545745ec1f2b1c48118bda170dde701a05f7c59c1791055f700de93e35d01268a0739c80971bdd67220b884931684e6d934166ff0f5b4840a448d17abc321dd628a63a1f0cc78f01095b4b63a9cb61a626a39e328f0e1bf3e2678d068f1f561e6691e8c48893211ddbb9f017b0d537fa42f7e197514bfa2060e3257ae94b3c3cb0886a86c3bcb57b8159227802aa63dae5f610cf2</Value>
+			</Item>
+			<Item>
+				<Key>_LAST_MODIFIED</Key>
+				<Value>Mon Nov 9 15:10:04 2026 GMT</Value>
+			</Item>
+		</CustomData>
+	</Meta>
+	<Root>
+		<Group>
+			<UUID>MJa8XNC1Trqdl3d0OzHr/w==</UUID>
+			<Name>Public fixture</Name>
+			<Notes/>
+			<IconID>48</IconID>
+			<Times>
+				<LastModificationTime>S9mD4g4AAAA=</LastModificationTime>
+				<CreationTime>S9mD4g4AAAA=</CreationTime>
+				<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+				<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+				<Expires>False</Expires>
+				<UsageCount>0</UsageCount>
+				<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+			</Times>
+			<IsExpanded>True</IsExpanded>
+			<DefaultAutoTypeSequence/>
+			<EnableAutoType>null</EnableAutoType>
+			<EnableSearching>null</EnableSearching>
+			<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
+			<Group>
+				<UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+				<Name>Work メール</Name>
+				<Notes/>
+				<IconID>48</IconID>
+				<Times>
+					<LastModificationTime>S9mD4g4AAAA=</LastModificationTime>
+					<CreationTime>S9mD4g4AAAA=</CreationTime>
+					<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+					<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+				</Times>
+				<IsExpanded>True</IsExpanded>
+				<DefaultAutoTypeSequence/>
+				<EnableAutoType>null</EnableAutoType>
+				<EnableSearching>null</EnableSearching>
+				<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
+				<Entry>
+					<UUID>EREREREREREREREREREREQ==</UUID>
+					<IconID>0</IconID>
+					<ForegroundColor/>
+					<BackgroundColor/>
+					<OverrideURL/>
+					<Tags>Work,メール</Tags>
+					<Times>
+						<LastModificationTime>TNmD4g4AAAA=</LastModificationTime>
+						<CreationTime>ALDn4A4AAAA=</CreationTime>
+						<LastAccessTime>TNmD4g4AAAA=</LastAccessTime>
+						<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+						<Expires>False</Expires>
+						<UsageCount>0</UsageCount>
+						<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+					</Times>
+					<String>
+						<Key>Empty</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>Hidden custom</Key>
+						<Value ProtectInMemory="True">PUBLIC-FIXTURE-HIDDEN</Value>
+					</String>
+					<String>
+						<Key>Notes</Key>
+						<Value ProtectInMemory="True">Private fixture note
+
+Second line</Value>
+					</String>
+					<String>
+						<Key>Password</Key>
+						<Value ProtectInMemory="True">PUBLIC-FIXTURE-PASSWORD</Value>
+					</String>
+					<String>
+						<Key>Public custom</Key>
+						<Value>public first</Value>
+					</String>
+					<String>
+						<Key>Title</Key>
+						<Value>Почта — 東京</Value>
+					</String>
+					<String>
+						<Key>URL</Key>
+						<Value ProtectInMemory="True">https://mail.example.invalid</Value>
+					</String>
+					<String>
+						<Key>UserName</Key>
+						<Value>alice@example.invalid</Value>
+					</String>
+					<String>
+						<Key>otp</Key>
+						<Value ProtectInMemory="True">otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;issuer=Fixture&amp;algorithm=SHA256&amp;digits=8&amp;period=45</Value>
+					</String>
+					<Binary>
+						<Key>empty.bin</Key>
+						<Value Ref="0"/>
+					</Binary>
+					<Binary>
+						<Key>résumé.bin</Key>
+						<Value Ref="0"/>
+					</Binary>
+					<AutoType>
+						<Enabled>True</Enabled>
+						<DataTransferObfuscation>0</DataTransferObfuscation>
+						<DefaultSequence>{USERNAME}{TAB}{PASSWORD}{ENTER}</DefaultSequence>
+					</AutoType>
+					<CustomData>
+						<Item>
+							<Key>_LAST_MODIFIED</Key>
+							<Value>Mon Nov 9 15:10:04 2026 GMT</Value>
+						</Item>
+						<Item>
+							<Key>fixture-plugin</Key>
+							<Value>PUBLIC-FIXTURE-PLUGIN</Value>
+						</Item>
+					</CustomData>
+					<History>
+						<Entry>
+							<UUID>EREREREREREREREREREREQ==</UUID>
+							<IconID>0</IconID>
+							<ForegroundColor/>
+							<BackgroundColor/>
+							<OverrideURL/>
+							<Tags/>
+							<Times>
+								<LastModificationTime>S9mD4g4AAAA=</LastModificationTime>
+								<CreationTime>S9mD4g4AAAA=</CreationTime>
+								<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+								<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+								<Expires>False</Expires>
+								<UsageCount>0</UsageCount>
+								<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+							</Times>
+							<String>
+								<Key>Notes</Key>
+								<Value/>
+							</String>
+							<String>
+								<Key>Password</Key>
+								<Value ProtectInMemory="True">PUBLIC-FIXTURE-OLD</Value>
+							</String>
+							<String>
+								<Key>Title</Key>
+								<Value/>
+							</String>
+							<String>
+								<Key>URL</Key>
+								<Value/>
+							</String>
+							<String>
+								<Key>UserName</Key>
+								<Value/>
+							</String>
+							<AutoType>
+								<Enabled>True</Enabled>
+								<DataTransferObfuscation>0</DataTransferObfuscation>
+								<DefaultSequence/>
+							</AutoType>
+						</Entry>
+						<Entry>
+							<UUID>EREREREREREREREREREREQ==</UUID>
+							<IconID>0</IconID>
+							<ForegroundColor/>
+							<BackgroundColor/>
+							<OverrideURL/>
+							<Tags>Work,メール</Tags>
+							<Times>
+								<LastModificationTime>gAHp4A4AAAA=</LastModificationTime>
+								<CreationTime>ALDn4A4AAAA=</CreationTime>
+								<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+								<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+								<Expires>False</Expires>
+								<UsageCount>0</UsageCount>
+								<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+							</Times>
+							<String>
+								<Key>Empty</Key>
+								<Value/>
+							</String>
+							<String>
+								<Key>Hidden custom</Key>
+								<Value ProtectInMemory="True">PUBLIC-FIXTURE-HIDDEN</Value>
+							</String>
+							<String>
+								<Key>Notes</Key>
+								<Value ProtectInMemory="True">Private fixture note
+
+Second line</Value>
+							</String>
+							<String>
+								<Key>Password</Key>
+								<Value ProtectInMemory="True">PUBLIC-FIXTURE-PASSWORD</Value>
+							</String>
+							<String>
+								<Key>Public custom</Key>
+								<Value>public first</Value>
+							</String>
+							<String>
+								<Key>Title</Key>
+								<Value>Почта — 東京</Value>
+							</String>
+							<String>
+								<Key>URL</Key>
+								<Value ProtectInMemory="True">https://mail.example.invalid</Value>
+							</String>
+							<String>
+								<Key>UserName</Key>
+								<Value>alice@example.invalid</Value>
+							</String>
+							<String>
+								<Key>otp</Key>
+								<Value ProtectInMemory="True">otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;issuer=Fixture&amp;algorithm=SHA256&amp;digits=8&amp;period=45</Value>
+							</String>
+							<AutoType>
+								<Enabled>True</Enabled>
+								<DataTransferObfuscation>0</DataTransferObfuscation>
+								<DefaultSequence>{USERNAME}{TAB}{PASSWORD}{ENTER}</DefaultSequence>
+							</AutoType>
+							<CustomData>
+								<Item>
+									<Key>_LAST_MODIFIED</Key>
+									<Value>Mon Nov 9 15:10:04 2026 GMT</Value>
+								</Item>
+								<Item>
+									<Key>fixture-plugin</Key>
+									<Value>PUBLIC-FIXTURE-PLUGIN</Value>
+								</Item>
+							</CustomData>
+						</Entry>
+						<Entry>
+							<UUID>EREREREREREREREREREREQ==</UUID>
+							<IconID>0</IconID>
+							<ForegroundColor/>
+							<BackgroundColor/>
+							<OverrideURL/>
+							<Tags>Work,メール</Tags>
+							<Times>
+								<LastModificationTime>S9mD4g4AAAA=</LastModificationTime>
+								<CreationTime>ALDn4A4AAAA=</CreationTime>
+								<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+								<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+								<Expires>False</Expires>
+								<UsageCount>0</UsageCount>
+								<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+							</Times>
+							<String>
+								<Key>Empty</Key>
+								<Value/>
+							</String>
+							<String>
+								<Key>Hidden custom</Key>
+								<Value ProtectInMemory="True">PUBLIC-FIXTURE-HIDDEN</Value>
+							</String>
+							<String>
+								<Key>Notes</Key>
+								<Value ProtectInMemory="True">Private fixture note
+
+Second line</Value>
+							</String>
+							<String>
+								<Key>Password</Key>
+								<Value ProtectInMemory="True">PUBLIC-FIXTURE-PASSWORD</Value>
+							</String>
+							<String>
+								<Key>Public custom</Key>
+								<Value>public first</Value>
+							</String>
+							<String>
+								<Key>Title</Key>
+								<Value>Почта — 東京</Value>
+							</String>
+							<String>
+								<Key>URL</Key>
+								<Value ProtectInMemory="True">https://mail.example.invalid</Value>
+							</String>
+							<String>
+								<Key>UserName</Key>
+								<Value>alice@example.invalid</Value>
+							</String>
+							<String>
+								<Key>otp</Key>
+								<Value ProtectInMemory="True">otpauth://totp/Fixture:alice%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;issuer=Fixture&amp;algorithm=SHA256&amp;digits=8&amp;period=45</Value>
+							</String>
+							<Binary>
+								<Key>résumé.bin</Key>
+								<Value Ref="0"/>
+							</Binary>
+							<AutoType>
+								<Enabled>True</Enabled>
+								<DataTransferObfuscation>0</DataTransferObfuscation>
+								<DefaultSequence>{USERNAME}{TAB}{PASSWORD}{ENTER}</DefaultSequence>
+							</AutoType>
+							<CustomData>
+								<Item>
+									<Key>_LAST_MODIFIED</Key>
+									<Value>Mon Nov 9 15:10:04 2026 GMT</Value>
+								</Item>
+								<Item>
+									<Key>fixture-plugin</Key>
+									<Value>PUBLIC-FIXTURE-PLUGIN</Value>
+								</Item>
+							</CustomData>
+						</Entry>
+					</History>
+				</Entry>
+				<Entry>
+					<UUID>MzMzMzMzMzMzMzMzMzMzMw==</UUID>
+					<IconID>0</IconID>
+					<ForegroundColor/>
+					<BackgroundColor/>
+					<OverrideURL/>
+					<Tags>Work,メール</Tags>
+					<Times>
+						<LastModificationTime>TNmD4g4AAAA=</LastModificationTime>
+						<CreationTime>ALDn4A4AAAA=</CreationTime>
+						<LastAccessTime>TNmD4g4AAAA=</LastAccessTime>
+						<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+						<Expires>False</Expires>
+						<UsageCount>0</UsageCount>
+						<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+					</Times>
+					<String>
+						<Key>Notes</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>Password</Key>
+						<Value ProtectInMemory="True">{REF:P@I:11111111111111111111111111111111}</Value>
+					</String>
+					<String>
+						<Key>Title</Key>
+						<Value>Reference</Value>
+					</String>
+					<String>
+						<Key>URL</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>UserName</Key>
+						<Value/>
+					</String>
+					<Binary>
+						<Key>résumé.bin</Key>
+						<Value Ref="0"/>
+					</Binary>
+					<AutoType>
+						<Enabled>True</Enabled>
+						<DataTransferObfuscation>0</DataTransferObfuscation>
+						<DefaultSequence/>
+					</AutoType>
+					<History>
+						<Entry>
+							<UUID>MzMzMzMzMzMzMzMzMzMzMw==</UUID>
+							<IconID>0</IconID>
+							<ForegroundColor/>
+							<BackgroundColor/>
+							<OverrideURL/>
+							<Tags>Work,メール</Tags>
+							<Times>
+								<LastModificationTime>gAHp4A4AAAA=</LastModificationTime>
+								<CreationTime>ALDn4A4AAAA=</CreationTime>
+								<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+								<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+								<Expires>False</Expires>
+								<UsageCount>0</UsageCount>
+								<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+							</Times>
+							<String>
+								<Key>Notes</Key>
+								<Value/>
+							</String>
+							<String>
+								<Key>Password</Key>
+								<Value ProtectInMemory="True">{REF:P@I:11111111111111111111111111111111}</Value>
+							</String>
+							<String>
+								<Key>Title</Key>
+								<Value>Reference</Value>
+							</String>
+							<String>
+								<Key>URL</Key>
+								<Value/>
+							</String>
+							<String>
+								<Key>UserName</Key>
+								<Value/>
+							</String>
+							<AutoType>
+								<Enabled>True</Enabled>
+								<DataTransferObfuscation>0</DataTransferObfuscation>
+								<DefaultSequence/>
+							</AutoType>
+						</Entry>
+					</History>
+				</Entry>
+			</Group>
+			<Group>
+				<UUID>AgICAgICAgICAgICAgICAg==</UUID>
+				<Name>Recycle Bin</Name>
+				<Notes/>
+				<IconID>48</IconID>
+				<Times>
+					<LastModificationTime>S9mD4g4AAAA=</LastModificationTime>
+					<CreationTime>S9mD4g4AAAA=</CreationTime>
+					<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+					<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+				</Times>
+				<IsExpanded>True</IsExpanded>
+				<DefaultAutoTypeSequence/>
+				<EnableAutoType>null</EnableAutoType>
+				<EnableSearching>null</EnableSearching>
+				<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
+				<Entry>
+					<UUID>RERERERERERERERERERERA==</UUID>
+					<IconID>0</IconID>
+					<ForegroundColor/>
+					<BackgroundColor/>
+					<OverrideURL/>
+					<Tags>Work,メール</Tags>
+					<Times>
+						<LastModificationTime>gAHp4A4AAAA=</LastModificationTime>
+						<CreationTime>ALDn4A4AAAA=</CreationTime>
+						<LastAccessTime>S9mD4g4AAAA=</LastAccessTime>
+						<ExpiryTime>S9mD4g4AAAA=</ExpiryTime>
+						<Expires>False</Expires>
+						<UsageCount>0</UsageCount>
+						<LocationChanged>S9mD4g4AAAA=</LocationChanged>
+					</Times>
+					<String>
+						<Key>Notes</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>Password</Key>
+						<Value ProtectInMemory="True">PUBLIC-FIXTURE-DELETED</Value>
+					</String>
+					<String>
+						<Key>Title</Key>
+						<Value>Deleted</Value>
+					</String>
+					<String>
+						<Key>URL</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>UserName</Key>
+						<Value/>
+					</String>
+					<AutoType>
+						<Enabled>True</Enabled>
+						<DataTransferObfuscation>0</DataTransferObfuscation>
+						<DefaultSequence/>
+					</AutoType>
+					<History/>
+				</Entry>
+			</Group>
+		</Group>
+		<DeletedObjects/>
+	</Root>
+</KeePassFile>

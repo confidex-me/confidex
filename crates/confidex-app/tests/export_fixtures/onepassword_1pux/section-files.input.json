@@ -1,0 +1,26 @@
+{
+  "accounts": [{
+    "attrs": {"uuid": "public-account", "accountName": "Public"},
+    "vaults": [{
+      "attrs": {"uuid": "public-vault", "name": "Public", "type": "P"},
+      "items": [{
+        "uuid": "public-item", "categoryUuid": "003", "state": "active",
+        "overview": {"title": "Public attachments", "tags": ["demo"]},
+        "details": {
+          "sections": [{"name": "section-main", "title": "Files", "fields": [
+            {"id": "before", "title": "", "value": {"string": "before"}},
+            {"id": "file-one", "title": "Repeated", "value": {"file": {
+              "fileName": "same.bin", "documentId": "file-1", "decryptedSize": 3
+            }}},
+            {"id": "middle", "title": "Repeated", "value": {"concealed": "PUBLIC-SECRET"}},
+            {"id": "file-two", "title": "Repeated", "value": {"file": {
+              "fileName": "same.bin", "documentId": "file-2", "decryptedSize": 0
+            }}},
+            {"id": "after", "title": "", "value": {"string": "after"}}
+          ]}],
+          "documentAttributes": {"fileName": "main.bin", "documentId": "main-1", "decryptedSize": 1}
+        }
+      }]
+    }]
+  }]
+}

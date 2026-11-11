@@ -1,0 +1,8 @@
+/build/
+/.wrangler/
+/.dev.vars*
+/wrangler.production.toml
+/confidexsyncd.toml
+/confidexsyncd.sqlite*
+/confidexsyncd-objects/
+/confidexsyncd.git/

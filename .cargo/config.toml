@@ -1,0 +1,3 @@
+# reqwest requires this flag for HTTP/3 on native targets.
+[target.'cfg(not(target_arch = "wasm32"))']
+rustflags = ["--cfg", "reqwest_unstable"]

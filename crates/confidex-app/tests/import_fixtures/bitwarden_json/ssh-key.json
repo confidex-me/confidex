@@ -1,0 +1,17 @@
+{
+  "encrypted": false,
+  "folders": [],
+  "items": [
+    {
+      "id": "55555555-5555-4555-8555-555555555555",
+      "organizationId": null,
+      "type": 5,
+      "name": "Public synthetic SSH key",
+      "sshKey": {
+        "privateKey": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACAxlEqdtyvrOxgyjMMdz5igX/J4x6EaQdMn+G8xIILoAwAAAJhr2L3za9i9\n8wAAAAtzc2gtZWQyNTUxOQAAACAxlEqdtyvrOxgyjMMdz5igX/J4x6EaQdMn+G8xIILoAw\nAAAEDr7cYA8cZLl5VbX+xsakw+myWDBUXUo3lnpSGqEuxcwDGUSp23K+s7GDKMwx3PmKBf\n8njHoRpB0yf4bzEggugDAAAADnB1YmxpYy1maXh0dXJlAQIDBAUGBw==\n-----END OPENSSH PRIVATE KEY-----\n",
+        "publicKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDGUSp23K+s7GDKMwx3PmKBf8njHoRpB0yf4bzEggugD public-fixture",
+        "keyFingerprint": "SHA256:04jIowqMPrhnHBWHFE9ddDeCE1lwY+Nz/rTBMx6m2LM"
+      }
+    }
+  ]
+}

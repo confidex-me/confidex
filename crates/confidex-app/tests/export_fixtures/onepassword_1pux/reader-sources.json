@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/bitwarden/clients",
+  "commit": "2ff80e50951792379f970f65cd4fb585fc50bbd5",
+  "files": [
+    {
+      "path": "libs/importer/src/models/import-record-error.ts",
+      "sha256": "3e4f05e9d48c596b0555f3cae238724997f1d03382daa43981b4fe13a9458eb2"
+    },
+    {
+      "path": "libs/importer/src/importers/1password/types/onepassword-1pux-importer-types.ts",
+      "sha256": "dcbb52bffa7bbefe81382581f412b2dd9620782a11ba9ef5cb0a1f62fef026f1"
+    },
+    {
+      "path": "libs/importer/src/importers/1password/onepassword-1pux-importer.ts",
+      "sha256": "d1dbd5bd61bf658a069b64723c7063f096e0e6ef0b159c37dc756c0d227c735f"
+    }
+  ]
+}

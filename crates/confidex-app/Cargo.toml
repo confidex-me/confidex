@@ -1,0 +1,50 @@
+[package]
+name = "confidex-app"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[features]
+export-check = []
+
+[dependencies]
+confidex-vault = { path = "../confidex-vault" }
+confidex-storage = { path = "../confidex-storage" }
+serde = { version = "1", features = ["derive"] }
+zeroize = "1"
+serde_json = { version = "1", features = ["raw_value"] }
+quick-xml = "=0.41.0"
+keepass = { path = "../../vendor/keepass", default-features = false, features = ["save_kdbx4"] }
+base64 = "=0.22.1"
+bytes = "1"
+futures-util = "0.3"
+multer = "3"
+url = "2"
+sha2 = "0.11"
+aes = { version = "=0.9.4", features = ["zeroize"] }
+cbc = { version = "=0.2.1", features = ["zeroize"] }
+pbkdf2 = { version = "=0.13.0", default-features = false, features = ["hmac"] }
+argon2 = { version = "=0.6.0", default-features = false, features = ["alloc", "zeroize"] }
+hkdf = "=0.13.0"
+hmac = { version = "=0.13.0", features = ["zeroize"] }
+ed25519-dalek = { version = "3.0.0", default-features = false, features = ["alloc", "zeroize"] }
+zip = { version = "=9.0.4", default-features = false, features = ["deflate-flate2"] }
+flate2 = { version = "1.1.11", default-features = false, features = ["miniz_oxide"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { version = "=0.41.1", default-features = false, features = ["bundled"] }
+
+[dev-dependencies]
+ssh-key = { version = "=0.7.0-rc.11", default-features = false, features = ["alloc", "ed25519", "p256", "encryption"] }
+confidex-storage = { path = "../confidex-storage", features = ["sqlite"] }
+tokio = { version = "=1.54.1", default-features = false, features = ["rt"] }
+tempfile = "3"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+rusqlite = { version = "=0.41.1", default-features = false }
+confidexsyncd = { path = "../../apps/confidexsyncd" }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "tokio"] }
+tower = { version = "0.5", features = ["util"] }
+http = "1"

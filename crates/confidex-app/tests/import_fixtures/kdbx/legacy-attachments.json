@@ -1,0 +1,9 @@
+{
+  "producer": "KeePassXC 2.8.0",
+  "source_sha256": "0909889e838988f57bea9ed33ecf244c1fb40c6efb2ba2224592659c749b884a",
+  "files": {
+    "legacy-attachments.kdbx": "735b7e420b356a311eda91c2fc6b3cf35ed437c69b6285838e4fe39a4349aabe",
+    "legacy-attachments.xml": "9e90df3dbdfa86ea6a6fd354a498ea68d35e1f2245a4c9eb74538d101c2e0524"
+  },
+  "producer_executable_sha256": "3a738f4bfae8cd00b4561af80055e27711201b8ca8696550105304fb4f3b9b3e"
+}

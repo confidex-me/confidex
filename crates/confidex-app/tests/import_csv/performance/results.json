@@ -1,0 +1,391 @@
+{
+  "source_commit": "e86cea5f3cf2fee9ab4d86065986475d447ac37c",
+  "timestamp_utc": "2026-11-09T18:53:51.603532+00:00",
+  "host": {
+    "architecture": "arm64",
+    "os_version": "26.2",
+    "cpu": "Apple M4",
+    "logical_cpus": 10,
+    "physical_cpus": 10,
+    "ram_bytes": 25769803776
+  },
+  "tools": {
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+    "cargo": "cargo 1.98.0 (797e8a9bc 2026-08-05)",
+    "node": "v26.10.0"
+  },
+  "build": "release",
+  "native": [
+    {
+      "run": 1,
+      "timings": {
+        "records": 10000,
+        "input_bytes": 2050076,
+        "encoded_bytes": 11009048,
+        "retained_budget_bytes": 15007720,
+        "inspect_ms": 0.8397089999999849,
+        "read_ms": 4.338172999994953,
+        "map_ms": 20.83280000000542,
+        "validate_ms": 237.98027699999966,
+        "review_ms": 21.001374999999996,
+        "seal_ms": 14559.093832999999,
+        "commit_ms": 255.1265000000003,
+        "commit_release_ms": 6.838125000000218,
+        "index_ms": 1976.5568340000027,
+        "other_ms": 18.575540999999674,
+        "total_ms": 17101.183167000003,
+        "parse_checkpoints": [
+          1,
+          10034,
+          110000,
+          20002
+        ]
+      },
+      "max_rss_bytes": 124747776,
+      "peak_footprint_bytes": 114557336,
+      "proof_elapsed_ms": 23430.0
+    },
+    {
+      "run": 2,
+      "timings": {
+        "records": 10000,
+        "input_bytes": 2050076,
+        "encoded_bytes": 11009048,
+        "retained_budget_bytes": 15007720,
+        "inspect_ms": 0.8415419999999898,
+        "read_ms": 4.872542999993414,
+        "map_ms": 23.66330600000468,
+        "validate_ms": 266.48860900000193,
+        "review_ms": 25.49649999999997,
+        "seal_ms": 22783.449291999998,
+        "commit_ms": 1158.824790999999,
+        "commit_release_ms": 22.432542000002286,
+        "index_ms": 5146.6470839999965,
+        "other_ms": 171.4923330000009,
+        "total_ms": 29604.208542,
+        "parse_checkpoints": [
+          1,
+          10034,
+          110000,
+          20002
+        ]
+      },
+      "max_rss_bytes": 125763584,
+      "peak_footprint_bytes": 110068096,
+      "proof_elapsed_ms": 36920.0
+    },
+    {
+      "run": 3,
+      "timings": {
+        "records": 10000,
+        "input_bytes": 2050076,
+        "encoded_bytes": 11009048,
+        "retained_budget_bytes": 15007720,
+        "inspect_ms": 0.8567919999999845,
+        "read_ms": 4.802171999996148,
+        "map_ms": 23.530049000002066,
+        "validate_ms": 268.9474040000018,
+        "review_ms": 24.98670800000002,
+        "seal_ms": 12864.080542000002,
+        "commit_ms": 216.17737500000112,
+        "commit_release_ms": 5.652790999998615,
+        "index_ms": 1741.571915999999,
+        "other_ms": 15.588584000000239,
+        "total_ms": 15166.194333,
+        "parse_checkpoints": [
+          1,
+          10034,
+          110000,
+          20002
+        ]
+      },
+      "max_rss_bytes": 124387328,
+      "peak_footprint_bytes": 114573696,
+      "proof_elapsed_ms": 20660.0
+    }
+  ],
+  "browser": [
+    {
+      "run": 1,
+      "timings": {
+        "records": 10000,
+        "input_bytes": 2050076,
+        "encoded_bytes": 11009048,
+        "retained_budget_bytes": 13753384,
+        "inspect_ms": 3.2549999952316284,
+        "read_ms": 8.785000383853912,
+        "map_ms": 41.380000323057175,
+        "validate_ms": 260.05999928712845,
+        "review_ms": 71.46500000357628,
+        "seal_ms": 10075.810000002384,
+        "commit_ms": 1483.8350000083447,
+        "commit_release_ms": 7.905000001192093,
+        "index_ms": 4582.764999985695,
+        "other_ms": 321.7350000143051,
+        "total_ms": 16856.99500000477,
+        "parse_checkpoints": [
+          1,
+          10034,
+          110000,
+          20002
+        ]
+      },
+      "proof_elapsed_ms": 33554.99000000954,
+      "wasm_linear_bytes": 135725056,
+      "clock": {
+        "isolated": true,
+        "resolutionMs": 0.004999995231628418
+      },
+      "heartbeat": 3360,
+      "stages": [
+        {
+          "phase": "start",
+          "at": 42.889999985694885
+        },
+        {
+          "phase": "create",
+          "at": 227.38499999046326
+        },
+        {
+          "phase": "parse-map-validate",
+          "at": 544.2899999916553
+        },
+        {
+          "phase": "review",
+          "at": 606.5300000011921
+        },
+        {
+          "phase": "seal-commit",
+          "at": 12501.609999984503
+        },
+        {
+          "phase": "index-search",
+          "at": 17084.37000000477
+        },
+        {
+          "phase": "reopen-unlock",
+          "at": 18618.85499998927
+        },
+        {
+          "phase": "repeat-parse",
+          "at": 18856.384999990463
+        },
+        {
+          "phase": "repeat-review",
+          "at": 22170.00499999523
+        },
+        {
+          "phase": "verify-all-fields",
+          "at": 25162.335000008345
+        },
+        {
+          "phase": "repeat-skip",
+          "at": 25282.889999985695
+        },
+        {
+          "phase": "reopened-index-search",
+          "at": 29299.810000002384
+        }
+      ],
+      "browserRss": {
+        "baselineBytes": 973225984,
+        "peakBytes": 1734115328,
+        "maxProcesses": 12,
+        "samples": 342,
+        "intervalMs": 100
+      },
+      "browser": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "hardwareConcurrency": 10
+      }
+    },
+    {
+      "run": 2,
+      "timings": {
+        "records": 10000,
+        "input_bytes": 2050076,
+        "encoded_bytes": 11009048,
+        "retained_budget_bytes": 13753384,
+        "inspect_ms": 2.5349999964237213,
+        "read_ms": 7.684999704360962,
+        "map_ms": 35.96999976038933,
+        "validate_ms": 235.3250005543232,
+        "review_ms": 64.75999999046326,
+        "seal_ms": 8750.365000009537,
+        "commit_ms": 716.1999999880791,
+        "commit_release_ms": 4.375,
+        "index_ms": 3922.475000023842,
+        "other_ms": 139.875,
+        "total_ms": 13879.565000027418,
+        "parse_checkpoints": [
+          1,
+          10034,
+          110000,
+          20002
+        ]
+      },
+      "proof_elapsed_ms": 29332.409999996424,
+      "wasm_linear_bytes": 135725056,
+      "clock": {
+        "isolated": true,
+        "resolutionMs": 0.004999995231628418
+      },
+      "heartbeat": 2935,
+      "stages": [
+        {
+          "phase": "start",
+          "at": 21.569999992847443
+        },
+        {
+          "phase": "create",
+          "at": 186.19999998807907
+        },
+        {
+          "phase": "parse-map-validate",
+          "at": 470.5900000035763
+        },
+        {
+          "phase": "review",
+          "at": 526.9749999940395
+        },
+        {
+          "phase": "seal-commit",
+          "at": 10143.269999980927
+        },
+        {
+          "phase": "index-search",
+          "at": 14065.75
+        },
+        {
+          "phase": "reopen-unlock",
+          "at": 15530.90000000596
+        },
+        {
+          "phase": "repeat-parse",
+          "at": 15754.389999985695
+        },
+        {
+          "phase": "repeat-review",
+          "at": 18696.32499998808
+        },
+        {
+          "phase": "verify-all-fields",
+          "at": 21747.680000007153
+        },
+        {
+          "phase": "repeat-skip",
+          "at": 21880.42499998212
+        },
+        {
+          "phase": "reopened-index-search",
+          "at": 25557.340000003576
+        }
+      ],
+      "browserRss": {
+        "baselineBytes": 1215168512,
+        "peakBytes": 1683718144,
+        "maxProcesses": 12,
+        "samples": 301,
+        "intervalMs": 100
+      },
+      "browser": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "hardwareConcurrency": 10
+      }
+    },
+    {
+      "run": 3,
+      "timings": {
+        "records": 10000,
+        "input_bytes": 2050076,
+        "encoded_bytes": 11009048,
+        "retained_budget_bytes": 13753384,
+        "inspect_ms": 3.6800000071525574,
+        "read_ms": 10.07999986410141,
+        "map_ms": 51.195000141859055,
+        "validate_ms": 323.205000013113,
+        "review_ms": 82.8449999988079,
+        "seal_ms": 11918.685000002384,
+        "commit_ms": 1058.419999986887,
+        "commit_release_ms": 6.185000002384186,
+        "index_ms": 4089.520000010729,
+        "other_ms": 201.69999998807907,
+        "total_ms": 17745.515000015497,
+        "parse_checkpoints": [
+          1,
+          10034,
+          110000,
+          20002
+        ]
+      },
+      "proof_elapsed_ms": 37613.534999996424,
+      "wasm_linear_bytes": 135725056,
+      "clock": {
+        "isolated": true,
+        "resolutionMs": 0.004999995231628418
+      },
+      "heartbeat": 3764,
+      "stages": [
+        {
+          "phase": "start",
+          "at": 30.435000002384186
+        },
+        {
+          "phase": "create",
+          "at": 239.125
+        },
+        {
+          "phase": "parse-map-validate",
+          "at": 632.0650000274181
+        },
+        {
+          "phase": "review",
+          "at": 704.5400000214577
+        },
+        {
+          "phase": "seal-commit",
+          "at": 13895.105000019073
+        },
+        {
+          "phase": "index-search",
+          "at": 17984.625
+        },
+        {
+          "phase": "reopen-unlock",
+          "at": 19557.350000023842
+        },
+        {
+          "phase": "repeat-parse",
+          "at": 19794.94500002265
+        },
+        {
+          "phase": "repeat-review",
+          "at": 22929.855000019073
+        },
+        {
+          "phase": "verify-all-fields",
+          "at": 26772.705000013113
+        },
+        {
+          "phase": "repeat-skip",
+          "at": 26919.225000023842
+        },
+        {
+          "phase": "reopened-index-search",
+          "at": 33528.24500000477
+        }
+      ],
+      "browserRss": {
+        "baselineBytes": 1208975360,
+        "peakBytes": 1650458624,
+        "maxProcesses": 12,
+        "samples": 382,
+        "intervalMs": 100
+      },
+      "browser": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "hardwareConcurrency": 10
+      }
+    }
+  ]
+}

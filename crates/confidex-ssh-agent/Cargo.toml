@@ -1,0 +1,21 @@
+[package]
+name = "confidex-ssh-agent"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+repository = "https://github.com/confidex-me/confidex"
+
+[dependencies]
+confidex-vault = { path = "../confidex-vault" }
+interprocess = "=2.4.7"
+zeroize = { version = "1.8.2", features = ["alloc"] }
+
+[dev-dependencies]
+ssh-key = { version = "=0.7.0-rc.11", default-features = false, features = ["alloc", "ed25519"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+widestring = "1.2"
