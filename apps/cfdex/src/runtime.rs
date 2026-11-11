@@ -232,9 +232,27 @@ impl Location {
         request: &protocol::Request,
         start: bool,
     ) -> io::Result<(protocol::Response, zeroize::Zeroizing<Vec<u8>>)> {
-        let mut connection = self.connect(start)?;
-        protocol::write_request(&mut connection, request)?;
-        protocol::read_response(&mut connection, request)
+        let call = || {
+            let mut connection = self.connect(start)?;
+            protocol::write_request(&mut connection, request)?;
+            protocol::read_response(&mut connection, request)
+        };
+        let result = call();
+        match &result {
+            // An idle deadline can close IPC while a status reply is in flight.
+            Err(error)
+                if matches!(request.command, protocol::Operation::Status {})
+                    && matches!(
+                        error.kind(),
+                        io::ErrorKind::UnexpectedEof
+                            | io::ErrorKind::ConnectionReset
+                            | io::ErrorKind::BrokenPipe
+                    ) =>
+            {
+                call()
+            }
+            _ => result,
+        }
     }
 }
 
@@ -346,6 +364,62 @@ pub fn protocol_failure(error: io::Error) -> protocol::Failure {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    #[test]
+    fn only_status_retries_a_closed_connection_once() {
+        use protocol::{Operation, Reply, Request, Response};
+        for (command, connections, reply) in [
+            (Operation::Status {}, 2, true),
+            (Operation::Status {}, 2, false),
+            (Operation::Stop {}, 1, false),
+        ] {
+            let directory = tempfile::tempdir().unwrap();
+            let location = Location::new(directory.path().join("vault.sqlite")).unwrap();
+            let listener = location.listener().unwrap();
+            let server = std::thread::spawn(move || {
+                for index in 0..connections {
+                    let mut connection = listener.accept().unwrap();
+                    let request = protocol::read_request(&mut connection).unwrap();
+                    if reply && index == 1 {
+                        let response = Response {
+                            version: protocol::VERSION,
+                            id: request.id,
+                            vault: request.vault,
+                            result: Ok(Reply::Status { unlocked: false }),
+                        };
+                        protocol::write_response(&mut connection, &response, &[]).unwrap();
+                    }
+                }
+            });
+            let vault = matches!(command, Operation::Status {}).then_some([1; 16]);
+            let result = location.call(
+                &Request {
+                    version: protocol::VERSION,
+                    id: 72,
+                    vault,
+                    command,
+                },
+                false,
+            );
+            server.join().unwrap();
+            match result {
+                Ok((response, payload)) => {
+                    assert!(reply);
+                    assert!(matches!(
+                        response.result,
+                        Ok(Reply::Status { unlocked: false })
+                    ));
+                    assert!(payload.is_empty());
+                }
+                Err(error) => {
+                    assert!(!reply);
+                    assert_eq!(error.kind(), io::ErrorKind::UnexpectedEof);
+                }
+            }
+            assert!(!location.endpoint.exists());
+            fs::remove_dir(location.endpoint.parent().unwrap()).unwrap();
+        }
+    }
     #[test]
     fn stable_ids_are_strict_and_roundtrip() {
         assert_eq!(
