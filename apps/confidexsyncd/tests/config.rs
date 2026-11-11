@@ -12,6 +12,8 @@ fn environment_paths_and_listen_fields_start_the_actual_binary() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_confidexsyncd"))
         .env_clear()
         .env("PATH", std::env::var_os("PATH").unwrap())
+        // Windows needs SystemRoot to load the Winsock service provider.
+        .envs(std::env::var_os("SystemRoot").map(|root| ("SystemRoot", root)))
         .env("INDEX_URL", temp.path().join("index.sqlite"))
         .env("LISTEN_ADDRESS", "127.0.0.1")
         .env("LISTEN_PORT", "0")
