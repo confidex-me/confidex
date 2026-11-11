@@ -3,6 +3,10 @@ members = ["crates/confidex-device-secrets", "crates/confidex-vault", "crates/co
 exclude = ["vendor/keepass"]
 resolver = "3"
 
+# Test fixtures run real cryptographic KDFs.
+[profile.test.package."*"]
+opt-level = 3
+
 [profile.wasm-release]
 inherits = "release"
 opt-level = "z"

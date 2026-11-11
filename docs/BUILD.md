@@ -28,6 +28,11 @@ before tests. Test data is synthetic, except for the supplied public image
 fixture. Tests that contact PostgreSQL, S3 or a Worker are opt-in and require
 disposable services; see the daemon configuration guide.
 
+The test profile optimizes dependencies outside the workspace, including the
+vendored KeePass reader. Real KDF fixtures keep their original parameters;
+workspace test code keeps its normal debug checks. CI limits each workspace test
+step to 60 minutes, including compilation.
+
 For a machine with little disk space, set `CARGO_BUILD_JOBS=2`,
 `CARGO_INCREMENTAL=0` and `CARGO_PROFILE_TEST_DEBUG=0`. Build directories are
 ignored. Changing a target directory affects where packaging looks for binaries.
