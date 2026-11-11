@@ -5,9 +5,9 @@ import json
 import os
 import tarfile
 import tempfile
-import types
 import unittest
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from unittest.mock import patch
 
 import common
@@ -28,6 +28,55 @@ def archive(path, files):
 
 
 class CloudflareTests(unittest.TestCase):
+    def test_worker_index_reads_only_the_existing_d1_binding(self):
+        environment = {'CLOUDFLARE_API_TOKEN': 'public-test-token', 'CLOUDFLARE_ACCOUNT_ID': 'public-test-account'}
+        database_id = '12345678-1234-4234-8234-123456789abc'
+        for key in ['database_id', 'id']:
+            bindings = [
+                {'name': 'INDEX', 'type': 'plain_text', 'text': 'unrelated'},
+                {'name': 'OTHER', 'type': 'd1', key: '00000000-0000-0000-0000-000000000000'},
+                {'name': 'INDEX', 'type': 'd1', key: database_id},
+            ]
+            response = {'success': True, 'result': {'bindings': bindings}}
+            with self.subTest(key=key), patch.dict(os.environ, environment, clear=True), patch.object(
+                deploy, 'urlopen', return_value=io.BytesIO(json.dumps(response).encode())
+            ) as request:
+                self.assertEqual(deploy.worker_index('syncd'), database_id)
+                args, kwargs = request.call_args
+                self.assertEqual(args[0].get_method(), 'GET')
+                self.assertEqual(args[0].full_url, 'https://api.cloudflare.com/client/v4/accounts/public-test-account/workers/scripts/syncd/settings')
+                self.assertEqual(args[0].get_header('Authorization'), 'Bearer public-test-token')
+                self.assertEqual(kwargs, {'timeout': 30})
+
+    def test_worker_index_rejects_missing_ambiguous_or_invalid_bindings(self):
+        binding = {'name': 'INDEX', 'type': 'd1', 'id': '12345678-1234-4234-8234-123456789abc'}
+        responses = [None, [], {'success': False}, {'success': True, 'result': None},
+                     {'success': True, 'result': {'bindings': None}}]
+        for bindings in [[], [binding, binding], [dict(binding, type='plain_text')],
+                         [dict(binding, id='invalid')], [dict(binding, id=None)],
+                         [dict(binding, id=42)]]:
+            responses.append({'success': True, 'result': {'bindings': bindings}})
+        environment = {'CLOUDFLARE_API_TOKEN': 'public-test-token', 'CLOUDFLARE_ACCOUNT_ID': 'public-test-account'}
+        for response in responses:
+            with self.subTest(response=response), patch.dict(os.environ, environment, clear=True), patch.object(
+                deploy, 'urlopen', return_value=io.BytesIO(json.dumps(response).encode())
+            ), self.assertRaises(SystemExit):
+                deploy.worker_index('syncd')
+
+    def test_worker_index_reports_http_errors_without_credentials(self):
+        environment = {'CLOUDFLARE_API_TOKEN': 'public-test-token', 'CLOUDFLARE_ACCOUNT_ID': 'public-test-account'}
+        for error in [HTTPError('https://api.cloudflare.com/', 403, 'Forbidden', {}, None),
+                      URLError('public-test-token'), ValueError('public-test-token')]:
+            with self.subTest(error=type(error).__name__), patch.dict(os.environ, environment, clear=True), patch.object(
+                deploy, 'urlopen', side_effect=error
+            ), self.assertRaises(SystemExit) as caught:
+                deploy.worker_index('syncd')
+            self.assertIn('Cannot read Worker syncd', str(caught.exception))
+            self.assertNotIn('public-test-token', str(caught.exception))
+            if isinstance(error, HTTPError):
+                self.assertIn('HTTP 403', str(caught.exception))
+                self.assertIn('Workers Scripts permissions', str(caught.exception))
+
     def test_no_token_skips_all_commands(self):
         with patch.dict(os.environ, {}, clear=True), patch.object(deploy, 'run') as run, patch('builtins.print'):
             deploy.main()
@@ -74,35 +123,36 @@ enabled = true
             archive(directory / 'confidex-1.2.3+gaaaaaa-web.tar.gz', {'BUILD.json': json.dumps(SOURCE).encode(), 'index.html': b'public fixture'})
             archive(directory / 'confidexsyncd-1.2.3+gaaaaaa-worker.tar.gz', {'SOURCE.json': json.dumps(SOURCE).encode(), 'index.js': b'public fixture', 'index_bg.wasm': b'\0asm\1\0\0\0'})
             commands = []
-            database = {'name': 'existing-index', 'uuid': '12345678-1234-4234-8234-123456789abc'}
+            database = {'name': 'INDEX', 'type': 'd1', 'id': '12345678-1234-4234-8234-123456789abc'}
 
-            databases = [database]
+            bindings = [database]
 
             def run(*command, **kwargs):
                 values = [str(value) for value in command]
                 commands.append(values)
-                if values[2:4] == ['d1', 'list']:
-                    return types.SimpleNamespace(stdout=json.dumps(databases))
                 self.assertEqual(values[2], 'deploy')
                 self.assertIn('--keep-vars', values)
                 selected = Path(values[values.index('--config') + 1])
                 if selected != app:
                     text = selected.read_text()
-                    self.assertIn(database['uuid'], text)
+                    self.assertIn(database['id'], text)
                     self.assertIn('[observability]', text)
                     self.assertNotIn('[vars]', text)
                     self.assertNotIn('placeholder.invalid', text)
 
             environment = {'CLOUDFLARE_API_TOKEN': 'public-test-token', 'CLOUDFLARE_ACCOUNT_ID': 'public-test-account', 'RELEASE_TAG': 'v1.2.3'}
-            with patch.dict(os.environ, environment, clear=True), patch.object(deploy.subprocess, 'check_output', return_value='a' * 40), patch.object(deploy, 'run', side_effect=run):
+            def response(*args, **kwargs):
+                return io.BytesIO(json.dumps({'success': True, 'result': {'bindings': bindings}}).encode())
+
+            with patch.dict(os.environ, environment, clear=True), patch.object(deploy.subprocess, 'check_output', return_value='a' * 40), patch.object(deploy, 'run', side_effect=run), patch.object(deploy, 'urlopen', side_effect=response):
                 deploy.main()
-                self.assertEqual(len(commands), 3)
+                self.assertEqual(len(commands), 2)
                 commands.clear()
-                databases.clear()
+                bindings.clear()
                 with self.assertRaises(SystemExit):
                     deploy.main()
-                self.assertEqual(len(commands), 1)
-            self.assertEqual(len(commands), 1)
+                self.assertEqual(len(commands), 0)
+            self.assertEqual(len(commands), 0)
             self.assertEqual(config.read_text(), original)
             self.assertFalse(list(config.parent.glob('wrangler.release-*.toml')))
             self.assertTrue((root / 'dist/web/index.html').is_file())

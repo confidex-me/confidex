@@ -11,6 +11,9 @@ import tempfile
 import tomllib
 import uuid
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import ROOT, run
@@ -29,6 +32,41 @@ def unpack(path, destination, metadata, expected):
         archive.extractall(destination, filter='data')
 
 
+def worker_index(name):
+    account = quote(os.environ['CLOUDFLARE_ACCOUNT_ID'], safe='')
+    script = quote(name, safe='')
+    request = Request(
+        f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/{script}/settings',
+        headers={'Authorization': 'Bearer ' + os.environ['CLOUDFLARE_API_TOKEN']},
+    )
+    try:
+        with urlopen(request, timeout=30) as response:
+            payload = json.load(response)
+    except HTTPError as error:
+        error.close()
+        raise SystemExit(
+            f'Cannot read Worker {name}: Cloudflare HTTP {error.code}. '
+            'Check CLOUDFLARE_ACCOUNT_ID and the token\'s Workers Scripts permissions.'
+        ) from None
+    except (URLError, ValueError):
+        raise SystemExit(f'Cannot read Worker {name}: invalid or unavailable Cloudflare response.') from None
+    result = payload.get('result') if isinstance(payload, dict) else None
+    if not isinstance(payload, dict) or payload.get('success') is not True or not isinstance(result, dict):
+        raise SystemExit(f'Cannot read Worker {name}: Cloudflare rejected the settings request.')
+    bindings = result.get('bindings')
+    if not isinstance(bindings, list):
+        raise SystemExit(f'Cannot read Worker {name}: missing bindings in Cloudflare response.')
+    matches = [binding for binding in bindings
+               if isinstance(binding, dict) and binding.get('name') == 'INDEX' and binding.get('type') == 'd1']
+    if len(matches) != 1:
+        raise SystemExit(f'Configure one INDEX D1 binding on Worker {name} before deployment.')
+    binding = matches[0]
+    try:
+        return str(uuid.UUID(binding.get('database_id') or binding.get('id', '')))
+    except (ValueError, AttributeError, TypeError):
+        raise SystemExit(f'Worker {name} has an invalid INDEX database ID.') from None
+
+
 def main():
     if not os.environ.get('CLOUDFLARE_API_TOKEN'):
         print('Cloudflare deployment skipped: CLOUDFLARE_API_TOKEN is not set.')
@@ -43,16 +81,12 @@ def main():
     unpack(directory / filename('confidexsyncd', version, 'worker', 'tar.gz'), ROOT / 'apps/confidexsyncd/build', 'SOURCE.json', expected)
     config = ROOT / 'apps/confidexsyncd/wrangler.toml'
     text = config.read_text()
-    bindings = tomllib.loads(text)['d1_databases']
+    configuration = tomllib.loads(text)
+    bindings = configuration['d1_databases']
     if len(bindings) != 1 or bindings[0]['binding'] != 'INDEX':
         raise ValueError('Expected one INDEX D1 binding')
     binding = bindings[0]
-    result = run('npx', 'wrangler', 'd1', 'list', '--json', '--config', config, capture_output=True, text=True)
-    databases = json.loads(result.stdout)
-    matches = [db for db in databases if db['name'] == binding['database_name']]
-    if len(matches) != 1:
-        raise SystemExit(f'Create D1 database {binding["database_name"]} before deployment.')
-    text = text.replace(binding['database_id'], str(uuid.UUID(matches[0]['uuid'])))
+    text = text.replace(binding['database_id'], worker_index(configuration['name']))
     # Keep the existing S3 URLs and Worker secrets.
     text = re.sub(r'(?ms)^\[vars\]\n.*?(?=^\[|\Z)', '', text)
     text = re.sub(r'(?ms)^\[build\]\n.*?(?=^\[|\Z)', '', text)
