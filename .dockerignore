@@ -1,0 +1,7 @@
+.git
+.tools
+node_modules
+target
+dist
+**/.wrangler
+**/__pycache__
