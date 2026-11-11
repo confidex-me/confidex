@@ -1,9 +1,13 @@
-name: Build and release
+name: Build
 on:
+  workflow_call:
+    inputs:
+      release-tag:
+        type: string
+        default: ''
   pull_request:
   push:
     branches: [main]
-    tags: ['v*']
 permissions:
   contents: read
 concurrency:
@@ -13,7 +17,7 @@ env:
   CARGO_INCREMENTAL: '0'
   CARGO_BUILD_JOBS: '2'
   CARGO_PROFILE_TEST_DEBUG: '0'
-  RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}
+  RELEASE_VERSION: ${{ inputs.release-tag }}
 jobs:
   checks:
     runs-on: ubuntu-24.04
@@ -21,52 +25,91 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
+          ref: ${{ inputs.release-tag && format('refs/tags/{0}', inputs.release-tag) || github.ref }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y libtss2-dev libxkbcommon-dev libwayland-dev libx11-dev libxi-dev libxcursor-dev libxrandr-dev libgl1-mesa-dev
       - run: cargo fmt --all --check
-      - run: python3 -m unittest discover -s tools -p 'test_*.py'
+      - run: cargo test --locked --workspace
+      - run: python3 -m unittest discover -s builders -p 'test_*.py'
       - run: node --test apps/confidex/web/*.test.mjs
   native:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-          - runner: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
           - runner: macos-15
-            target: aarch64-apple-darwin
+            platform: macos
+            arch: arm64
           - runner: macos-15-intel
-            target: x86_64-apple-darwin
+            platform: macos
+            arch: amd64
           - runner: windows-2022
-            target: x86_64-pc-windows-msvc
+            platform: windows
+            arch: amd64
+          - runner: windows-11-arm
+            platform: windows
+            arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
+          ref: ${{ inputs.release-tag && format('refs/tags/{0}', inputs.release-tag) || github.ref }}
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
-      - if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y build-essential pkg-config libtss2-dev libxkbcommon-dev libwayland-dev libx11-dev libxi-dev libxcursor-dev libxrandr-dev libgl1-mesa-dev
+      - if: runner.os == 'Windows'
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: builders/windows/global.json
       - run: cargo test --locked --workspace
       - run: cargo check --locked -p confidex --no-default-features
       - run: cargo check --locked -p cfdex --no-default-features
-      - run: cargo build --locked --release -p confidex -p cfdex -p confidexsyncd
-      - name: Package native binaries
-        env:
-          BUILD_TARGET: ${{ matrix.target }}
-        shell: bash
-        run: python3 tools/package.py "$BUILD_TARGET" "$RELEASE_VERSION"
+      - run: python builders/${{ matrix.platform }}/build.py --arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: native-${{ matrix.target }}
+          name: native-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/releases/*
+          if-no-files-found: error
+          retention-days: 7
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+            libc: gnu
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+            libc: gnu
+          - runner: ubuntu-24.04
+            arch: amd64
+            libc: musl
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+            libc: musl
+    runs-on: ${{ matrix.runner }}
+    env:
+      CONFIDEX_LIBC: ${{ matrix.libc }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: true
+          ref: ${{ inputs.release-tag && format('refs/tags/{0}', inputs.release-tag) || github.ref }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - run: python3 builders/linux/build.py --arch ${{ matrix.arch }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-linux-${{ matrix.arch }}-${{ matrix.libc }}
           path: dist/releases/*
           if-no-files-found: error
           retention-days: 7
@@ -76,6 +119,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
+          ref: ${{ inputs.release-tag && format('refs/tags/{0}', inputs.release-tag) || github.ref }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
@@ -83,48 +127,17 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
-      - run: python3 tools/install-wasm-tools.py
-      - run: echo "$PWD/.tools/bin" >> "$GITHUB_PATH"
       - run: npm ci
-      - run: make web
-      - run: node apps/confidex/web/check.mjs /usr/bin/google-chrome dist/wasm
-      - run: node apps/confidex/web/storage-check.mjs /usr/bin/google-chrome dist/wasm
+      - run: python3 builders/wasm/build.py
+      - run: node apps/confidex/web/check.mjs /usr/bin/google-chrome dist/web
+      - run: node apps/confidex/web/input-check.mjs /usr/bin/google-chrome dist/wasm
+      - run: node apps/confidex/web/storage-check.mjs /usr/bin/google-chrome
       - run: npx wrangler deploy --dry-run --config apps/confidex/wrangler.toml
-      - run: cargo install --locked worker-build --version 0.8.7
-      - run: worker-build --release
-        working-directory: apps/confidexsyncd
+      - run: python3 builders/syncd/build.py
       - run: npx wrangler deploy --dry-run --config apps/confidexsyncd/wrangler.toml
-      - name: Package browser app and sync Worker
-        run: |
-          mkdir -p dist/releases
-          cp LICENSE dist/web/LICENSE
-          tar -czf "dist/releases/confidex-${RELEASE_VERSION}-web.tar.gz" -C dist/web .
-          cp apps/confidexsyncd/LICENSE apps/confidexsyncd/build/worker/LICENSE
-          mkdir -p apps/confidexsyncd/build/worker/NOTICES
-          cp apps/confidexsyncd/swagger-ui/LICENSE apps/confidexsyncd/swagger-ui/NOTICE apps/confidexsyncd/swagger-ui/*.LICENSE.txt apps/confidexsyncd/build/worker/NOTICES/
-          tar -czf "dist/releases/confidexsyncd-${RELEASE_VERSION}-worker.tar.gz" -C apps/confidexsyncd/build/worker .
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: web
           path: dist/releases/*
           if-no-files-found: error
           retention-days: 7
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [checks, native, web]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          path: dist/releases
-          merge-multiple: true
-      - name: Write checksums
-        working-directory: dist/releases
-        run: sha256sum *.zip *.tar.gz > SHA256SUMS
-      - name: Create draft release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$RELEASE_VERSION" dist/releases/* --verify-tag --draft --title "Confidex $RELEASE_VERSION" --notes-file .github/release-notes.md

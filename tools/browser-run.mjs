@@ -32,6 +32,8 @@ export async function runBrowser(chromePath, assets, expression, { windowSize = 
   const pageUrl = remoteUrl ?? `http://${host}:${server.address().port}/`;
   const chrome = spawn(chromePath, [
     '--headless=new', '--remote-debugging-port=0', '--remote-debugging-address=127.0.0.1',
+    // Allow software rendering for trusted test fixtures.
+    '--enable-unsafe-swiftshader',
     '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
     '--disable-component-update', '--disable-sync', `--user-data-dir=${profile}`,
     `--window-size=${windowSize.join(',')}`,
