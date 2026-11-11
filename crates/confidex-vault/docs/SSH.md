@@ -7,9 +7,11 @@ ceiling only. Call `ssh::Key::from_value(value, budget)` to validate the key;
 Record reading never imports, decrypts, or signs with an SSH key automatically.
 
 `Key::import(pem_bytes, passphrase, budget)` accepts OpenSSH PEM for Ed25519 and
-ECDSA P-256. The pinned pure Rust ssh-key 0.7.0-rc.11 parser handles framing,
-padding and key material; no custom PEM parser is used. Traditional RSA/PKCS#8,
-FIDO keys and other curves are outside this profile. RSA cryptography is disabled
+ECDSA P-256, and unencrypted Ed25519 PKCS#8 PEM. PKCS#8 decoding uses the existing
+RustCrypto ed25519-dalek parser and normalizes to the same binary OpenSSH identity.
+The pinned pure Rust ssh-key 0.7.0-rc.11 parser handles OpenSSH framing,
+padding and key material; no custom PEM parser is used. RSA, encrypted PKCS#8,
+PKCS#8 for other algorithms, FIDO keys and other curves are outside this profile. RSA cryptography is disabled
 in this initial algorithm profile. The newer
 [rsa 0.10.0-rc.22 release](https://github.com/RustCrypto/RSA/blob/v0.10.0-rc.22/README.md)
 reports side-channel fixes and a separate opt-in warning for PKCS#1 v1.5;

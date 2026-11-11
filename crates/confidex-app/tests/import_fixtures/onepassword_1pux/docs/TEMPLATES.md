@@ -28,4 +28,5 @@ The ZIP stores the four source files without compression, in sorted path order,
 with timestamp `2026-01-01 00:00:00` and Unix mode `100644`.
 
 Run `cargo test -p confidex-app --test import_onepassword templates::` to check
-category coverage, source scope, protected fallback and exact attachment bytes.
+category coverage, source scope, all 175 editable section fields, SSH signing,
+protected rejection of malformed values and exact attachment bytes.

@@ -28,6 +28,32 @@ fn projections_are_derived_and_never_written_back_as_independent_values() {
 }
 
 #[test]
+fn ed25519_pkcs8_normalizes_to_the_same_ssh_identity() {
+    use ed25519_dalek::pkcs8::EncodePrivateKey;
+    let signing = ed25519_dalek::SigningKey::from_bytes(&[42; 32]);
+    let pem = signing.to_pkcs8_pem(ssh_key::LineEnding::LF).unwrap();
+    let field = import(pem.as_bytes(), None).unwrap();
+    let expected = fixture()
+        .public_key()
+        .fingerprint(ssh_key::HashAlg::Sha256)
+        .to_string();
+    assert_eq!(field.values["fingerprint"], expected);
+    assert_eq!(field.values["key_type"], "Ed25519");
+    let record = crate::field_record(&field).unwrap();
+    let key = ssh::Key::from_value(&record.entries[0].value, ssh::REQUIRED_MEMORY).unwrap();
+    let message = b"public PKCS8 identity fixture";
+    let signature = key.sign(message).unwrap();
+    ssh::verify(&key.public_blob().unwrap(), message, &signature).unwrap();
+    assert!(
+        import(
+            b"-----BEGIN PRIVATE KEY-----\nPUBLIC-FIXTURE\n-----END PRIVATE KEY-----",
+            None
+        )
+        .is_err()
+    );
+}
+
+#[test]
 fn encrypted_input_requires_a_password_and_bad_input_does_not_produce_a_field() {
     let encrypted = fixture()
         .encrypt_with(

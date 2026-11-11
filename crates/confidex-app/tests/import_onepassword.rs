@@ -115,6 +115,44 @@ fn fixture_maps_order_protection_totp_binary_and_vault_scope() {
         fixture()["accounts"][0]["vaults"][0]["items"][0]
     );
 }
+
+#[test]
+fn login_designations_work_without_html_field_names() {
+    let mut data = fixture();
+    data["accounts"][0]["vaults"][0]["items"][0]["details"]["loginFields"] = json!([
+        {"value":"https://login.example.invalid", "id":"", "fieldType":"T", "designation":"username"},
+        {"value":"PUBLIC-FIXTURE-PASSWORD", "id":"", "fieldType":"P", "designation":"password"},
+        {"value":"", "name":"", "fieldType":"T", "guarded":true},
+        {"value":"public null-name fixture", "name":null, "id":"custom", "fieldType":"T"}
+    ]);
+    let url = &mut data["accounts"][0]["vaults"][0]["items"][0]["overview"]["urls"][0];
+    url.as_object_mut().unwrap().remove("label");
+    url["mode"] = json!("default");
+    let plan = run(&mutated(&data)).unwrap();
+    let record = plan.items[0].record(MAX_OPEN_MEMORY).unwrap();
+    assert_eq!(record.entries[0].type_name, "username/v1");
+    assert_eq!(record.entries[0].name, "username");
+    assert_eq!(
+        record.entries[0].value["username"].as_str(),
+        Some("https://login.example.invalid")
+    );
+    assert_eq!(record.entries[1].type_name, "password/v1");
+    assert_eq!(record.entries[1].name, "password");
+    assert_eq!(
+        record.entries[1].value["password"].as_str(),
+        Some("PUBLIC-FIXTURE-PASSWORD")
+    );
+    assert_eq!(record.entries[2].name, "");
+    assert_eq!(record.entries[3].name, "custom");
+    assert_eq!(record.entries[4].type_name, "url/v1");
+    assert_eq!(record.entries[4].name, "URL");
+    assert!(record.entries.iter().all(|e| {
+        e.extra
+            .get("confidex.import.original")
+            .and_then(Value::as_str)
+            .is_none_or(|p| !p.starts_with("/details/loginFields/"))
+    }));
+}
 #[test]
 fn missing_and_wrong_size_documents_do_not_succeed() {
     let missing = run(&pack(ATTRIBUTES, DATA, &[])).unwrap();

@@ -33,7 +33,6 @@ pub(super) fn login(field: &Json) -> Option<Entry> {
     }) {
         return None;
     }
-    let name = field.get("name")?.as_str()?;
     let value = field.get("value")?.as_str()?;
     let field_type = match (field.get("fieldType"), field.get("type")) {
         (Some(a), Some(b)) if a == b => a.as_str()?,
@@ -60,18 +59,40 @@ pub(super) fn login(field: &Json) -> Option<Entry> {
     if designation.is_some_and(|v| !matches!(v, "username" | "password")) {
         return None;
     }
+    let name = match field.get("name") {
+        Some(Json::String(name)) => name,
+        None | Some(Json::Null) => designation
+            .or_else(|| {
+                field
+                    .get("id")
+                    .and_then(Json::as_str)
+                    .filter(|id| !id.is_empty())
+            })
+            .unwrap_or(match key {
+                "password" => "password",
+                "url" => "URL",
+                _ => "Text",
+            }),
+        _ => return None,
+    };
     Some(entry(name, kind, key, value, protected))
 }
 pub(super) fn url(value: &Json) -> Option<Entry> {
     let object = value.as_object()?;
     if object
         .keys()
-        .any(|key| !matches!(key.as_str(), "label" | "url" | "guarded"))
+        .any(|key| !matches!(key.as_str(), "label" | "url" | "guarded" | "mode"))
+        || object
+            .get("mode")
+            .is_some_and(|v| !v.is_null() && !v.is_string())
     {
         return None;
     }
     Some(entry(
-        value.get("label")?.as_str()?,
+        match value.get("label") {
+            None | Some(Json::Null) => "URL",
+            Some(value) => value.as_str()?,
+        },
         "url/v1",
         "url",
         value.get("url")?.as_str()?,
@@ -115,7 +136,7 @@ pub(super) fn section(field: &Json, section: &Json) -> Option<Entry> {
     }
     if field
         .get("clipboardFilter")
-        .is_some_and(|v| !v.is_null() && v.as_str() != Some(""))
+        .is_some_and(|v| !v.is_null() && !v.is_string())
     {
         return None;
     }
@@ -140,6 +161,11 @@ pub(super) fn section(field: &Json, section: &Json) -> Option<Entry> {
         result
     } else if kind == "totp" {
         otp(name, value.as_str()?)?
+    } else if matches!(
+        kind.as_str(),
+        "date" | "monthYear" | "email" | "address" | "sshKey"
+    ) {
+        typed(name, kind, value, protected)?
     } else {
         let text = value.as_str()?;
         let (target, key) = match kind.as_str() {
@@ -173,6 +199,141 @@ pub(super) fn section(field: &Json, section: &Json) -> Option<Entry> {
         ]),
     );
     Some(result)
+}
+
+fn typed(name: &str, kind: &str, value: &Json, protected: bool) -> Option<Entry> {
+    match kind {
+        "date" | "monthYear" => {
+            use confidex_vault::date::{Civil, Precision, read};
+            let (civil, precision, type_name) = if kind == "date" {
+                let date = time::OffsetDateTime::from_unix_timestamp(value.as_i64()?)
+                    .ok()?
+                    .date();
+                (
+                    Civil {
+                        year: date.year().try_into().ok()?,
+                        month: date.month() as u8,
+                        day: Some(date.day()),
+                    },
+                    Precision::Day,
+                    "date/v1",
+                )
+            } else {
+                let number = value.as_u64()?;
+                (
+                    Civil {
+                        year: (number / 100).try_into().ok()?,
+                        month: (number % 100).try_into().ok()?,
+                        day: None,
+                    },
+                    Precision::Month,
+                    "month-year/v1",
+                )
+            };
+            let mut result = entry(name, type_name, "", "", protected);
+            result.value = civil.value();
+            read(&result.value, precision).ok()?;
+            Some(result)
+        }
+        "email" => {
+            let object = value.as_object()?;
+            if object
+                .keys()
+                .any(|k| !matches!(k.as_str(), "email_address" | "provider"))
+                || object
+                    .get("provider")
+                    .is_some_and(|p| !p.is_null() && !p.is_string())
+            {
+                return None;
+            }
+            Some(entry(
+                name,
+                "text/v1",
+                "text",
+                object.get("email_address")?.as_str()?,
+                protected,
+            ))
+        }
+        "address" => {
+            let keys = ["street", "city", "state", "zip", "country"];
+            let object = value.as_object()?;
+            if object
+                .iter()
+                .any(|(k, v)| !keys.contains(&k.as_str()) || !v.is_string())
+            {
+                return None;
+            }
+            let mut text = zeroize::Zeroizing::new(String::new());
+            for key in keys {
+                if let Some(value) = object
+                    .get(key)
+                    .and_then(Json::as_str)
+                    .filter(|v| !v.is_empty())
+                {
+                    if !text.is_empty() {
+                        text.push('\n');
+                    }
+                    text.push_str(key);
+                    text.push_str(": ");
+                    text.push_str(value);
+                }
+            }
+            Some(entry(name, "note/v1", "text", &text, protected))
+        }
+        "sshKey" => {
+            let object = value.as_object()?;
+            if object
+                .keys()
+                .any(|k| !matches!(k.as_str(), "privateKey" | "metadata"))
+            {
+                return None;
+            }
+            let private = object.get("privateKey")?.as_str()?;
+            let key = confidex_vault::ssh::Key::import(
+                private.as_bytes(),
+                None,
+                confidex_vault::ssh::REQUIRED_MEMORY,
+            )
+            .ok()?;
+            if let Some(metadata) = object.get("metadata").filter(|v| !v.is_null()) {
+                let metadata = metadata.as_object()?;
+                if metadata.iter().any(|(k, v)| {
+                    !matches!(
+                        k.as_str(),
+                        "privateKey" | "publicKey" | "fingerprint" | "keyType"
+                    ) || !v.is_string()
+                }) {
+                    return None;
+                }
+                if metadata
+                    .get("privateKey")
+                    .is_some_and(|v| v.as_str() != Some(private))
+                {
+                    return None;
+                }
+                if let Some(public) = metadata
+                    .get("publicKey")
+                    .and_then(Json::as_str)
+                    .filter(|p| !p.is_empty())
+                {
+                    if public.split_whitespace().take(2).collect::<Vec<_>>()
+                        != key
+                            .public_text()
+                            .ok()?
+                            .split_whitespace()
+                            .take(2)
+                            .collect::<Vec<_>>()
+                    {
+                        return None;
+                    }
+                }
+            }
+            let mut result = entry(name, "ssh/v1", "", "", true);
+            result.value = key.to_value().ok()?;
+            Some(result)
+        }
+        _ => None,
+    }
 }
 fn otp(name: &str, input: &str) -> Option<Entry> {
     let mut entry = crate::import::totp::entry(input)?;

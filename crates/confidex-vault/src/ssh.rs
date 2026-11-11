@@ -40,7 +40,16 @@ impl Key {
         if passphrase.is_some_and(|p| p.len() > 4096) {
             return Err(Error::Limit);
         }
-        let mut key = PrivateKey::from_openssh(pem).map_err(|_| Error::Invalid)?;
+        let mut key = if pem.starts_with(b"-----BEGIN PRIVATE KEY-----") {
+            use ed25519_dalek::pkcs8::DecodePrivateKey;
+            let text = std::str::from_utf8(pem).map_err(|_| Error::Invalid)?;
+            let signing =
+                ed25519_dalek::SigningKey::from_pkcs8_pem(text).map_err(|_| Error::Invalid)?;
+            let pair = ssh_key::private::Ed25519Keypair::from_seed(signing.as_bytes());
+            PrivateKey::new(pair.into(), "").map_err(|_| Error::Invalid)?
+        } else {
+            PrivateKey::from_openssh(pem).map_err(|_| Error::Invalid)?
+        };
         Self::algorithm(&key)?;
         if key.is_encrypted() {
             if key.cipher() != ssh_key::Cipher::Aes256Ctr {

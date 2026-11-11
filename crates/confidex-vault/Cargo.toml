@@ -13,7 +13,7 @@ browser = ["getrandom/wasm_js"]
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize"] }
 chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 chacha20 = { version = "0.10.2", default-features = false, features = ["rng", "zeroize"] }
-ed25519-dalek = { version = "3.0.0", default-features = false, features = ["alloc", "zeroize"] }
+ed25519-dalek = { version = "3.0.0", default-features = false, features = ["alloc", "zeroize", "pem"] }
 flate2 = { version = "1.1.11", default-features = false, features = ["miniz_oxide"] }
 hkdf = "0.13.0"
 hmac = { version = "0.13.0", features = ["zeroize"] }

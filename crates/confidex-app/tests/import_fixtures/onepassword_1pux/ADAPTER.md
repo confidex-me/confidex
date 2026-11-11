@@ -19,16 +19,22 @@ note. Standard TOTP parsing uses the shared import helper.
 | --- | --- |
 | loginFields fieldType/type | Both documented spellings; conflicting values stay protected for review |
 | Username/password | Independent entries; password type/designation always remains secret |
+| Missing loginFields.name | Label from designation, then nonempty HTML id, then field kind; explicit empty names remain empty |
 | Text/email/number/phone/checkbox web form strings | Text entries, with protection retained |
 | Textarea/notes/multiline text | Secure notes by default |
-| URLs | Independent entries in source order; an identical primary URL is represented once |
+| URLs | Independent entries in source order; an identical primary URL is represented once; optional labels and string mode hints remain in encrypted provenance |
 | Sections | Order, repeated/empty titles and empty groups in canonical current layout; optional source IDs and field context retained |
 | string/phone/menu/gender/creditCardType | Scalar text, original source type retained in encrypted provenance |
 | concealed/creditCardNumber | Secret regardless of guarded:false; concealed multiline values become secure notes |
 | guarded:true | Protected metadata, including URLs |
 | TOTP | Valid base32 seed or strict otpauth TOTP URI; binary seed and explicit parameters, original text retained |
 | HOTP/Steam/unknown OTP parameters | Protected original fragment and review, no guessed default TOTP |
-| email/address objects, dates/monthYear, SSH key objects, future values | Protected original fragments and review; no lossy flattening or invented field type |
+| email objects | Text email address; provider remains in encrypted source provenance |
+| address objects | Multiline note with named street/city/state/zip/country components; protection retained |
+| date/monthYear | UTC calendar date and numeric year/month, without an invented day for month precision |
+| SSH key objects | Functional ssh/v1 identity; OpenSSH and Ed25519 PKCS#8; conflicting private/public metadata requires protected review |
+| Future or malformed values | Protected original fragments and review |
+| clipboardFilter | String source hint remains in encrypted provenance; imported values are not filtered or rewritten |
 | Unresolved reference field | Blocked with protected original data |
 | Unknown item/overview control fields | Blocked; neutral title and protected source data |
 | Missing document | Blocked; a declared-size mismatch rejects the input |
@@ -63,6 +69,9 @@ assumed from successful import.
   TOTP and binary bytes. Its original golden contract remains unchanged; adapter
   checks additionally verify full provenance, per-fragment reports and default
   archived exclusion.
+- [Captured template archive](docs/TEMPLATES.md) covers 22 items and 175 section
+  fields from a 1Password UI export after sanitization. Every section field maps
+  to a normal editable field, with no JSON Original data entries for this capture.
 - The published [KeePassXC test export](https://github.com/keepassxreboot/keepassxc/blob/6bcb901aefdd6c7a525466d7dfe099c5ebc13c0e/tests/data/1PasswordExport.1pux)
   has SHA-256 `6b47d336892273870380dac87b63014c0de65f2f4b6bd11c5cba0fd277725b02`.
   It was introduced with [the importer](https://github.com/keepassxreboot/keepassxc/pull/9815)
@@ -91,7 +100,7 @@ limitation does not change the ordered 1PUX source model.
 ```sh
 cargo test -p confidex-app --test import_onepassword
 cargo test -p confidex-app --test export_onepassword_1pux
-CARGO_TARGET_WASM32_WASIP1_RUNNER="node crates/confidex-app/tests/run-wasi.mjs" cargo test -p confidex-app --test import_onepassword --target wasm32-wasip1 -- --test-threads=1
+CARGO_TARGET_WASM32_WASIP1_RUNNER="node $PWD/crates/confidex-app/tests/run-wasi.mjs" cargo test -p confidex-app --test import_onepassword --target wasm32-wasip1 -- --test-threads=1
 ```
 
 The separate ten_thousand_login_items calibration maps 10,000 logins with
