@@ -94,7 +94,8 @@ application and sync Worker. Create and publish a GitHub Release to start
 `.github/workflows/release.yml`, as with the release process in the repository's
 GitHub interface. The workflow builds the release tag, derives the version as `tag+gSHA6`
 without changing Cargo manifests, packages the outputs and uploads them to the existing
-release. A tag push alone does not create or publish a release.
+release. Tests and feature checks run on main pushes and pull requests; release
+builds do not repeat them. A tag push alone does not create or publish a release.
 
 macOS app packages are two DMG images, for Apple Silicon and Intel. Each contains
 `Confidex.app` and a link to `/Applications`. The copied website icon and its
@@ -120,7 +121,7 @@ tag and `latest`. Use a tag without `+` metadata. For local image builds and the
 one-time GHCR Public visibility setting, see the
 [container builder](../builders/containers/README.md).
 
-`confidex-selfhost-{version}.zip` combines the tested web and Worker packages,
+`confidex-selfhost-{version}.zip` combines the web and Worker packages,
 Linux servers for both architectures/libcs, Compose, native and Cloudflare
 configuration, D1 schema and pinned Wrangler tooling. It needs no Rust compiler
 for installation. See the [bundle builder](../builders/selfhost/README.md).
