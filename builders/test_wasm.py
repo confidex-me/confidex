@@ -26,6 +26,21 @@ installer = load('wasm_tools', 'tools/install-wasm-tools.py')
 
 
 class WasmTests(unittest.TestCase):
+    def test_worker_fetches_all_targets_before_offline_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tool = root / '.tools/bin' / ('worker-build.exe' if syncd.os.name == 'nt' else 'worker-build')
+            tool.parent.mkdir(parents=True)
+            tool.touch()
+            with patch.object(syncd, 'ROOT', root), patch.object(syncd, 'options'), \
+                 patch.object(syncd, 'prepare_version'), patch.object(syncd, 'package'), \
+                 patch.object(syncd, 'run', return_value=types.SimpleNamespace(stdout='0.8.7')) as run:
+                syncd.main()
+            self.assertEqual(run.call_args_list[1].args, ('cargo', 'fetch', '--locked'))
+            worker = run.call_args_list[2]
+            self.assertEqual(worker.args, (tool, '--release'))
+            self.assertEqual(worker.kwargs['env']['CARGO_NET_OFFLINE'], 'true')
+
     def test_cached_tools_accept_only_pinned_versions(self):
         for optimizer in ['wasm-opt version 133', 'wasm-opt version 133 (version_133)']:
             outputs = [types.SimpleNamespace(stdout='wasm-bindgen 0.2.130\n'), types.SimpleNamespace(stdout=optimizer)]

@@ -22,7 +22,7 @@ def main():
         raise ValueError(f'Expected worker-build 0.8.7, found {actual}')
     environment = dict(os.environ)
     environment['PATH'] = str(tools) + os.pathsep + environment['PATH']
-    run('cargo', 'fetch', '--locked', '--target', 'wasm32-unknown-unknown')
+    run('cargo', 'fetch', '--locked')
     environment['CARGO_NET_OFFLINE'] = 'true'
     source = ROOT / 'apps/confidexsyncd'
     run(worker_build, '--release', cwd=source, env=environment)
