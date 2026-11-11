@@ -16,3 +16,4 @@
 **/wrangler.production.toml
 /apps/confidex/web-dist/
 /apps/confidexsyncd/build/
+**/wrangler.release-*.toml
