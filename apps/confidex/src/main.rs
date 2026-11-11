@@ -5,12 +5,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         confidex_native::database_path()?
     };
+    let icon = image::load_from_memory(include_bytes!(
+        "../assets/icons/Confidex.iconset/icon_256x256.png"
+    ))?
+    .into_rgba8();
+    let icon = eframe::egui::IconData {
+        width: icon.width(),
+        height: icon.height(),
+        rgba: icon.into_raw(),
+    };
     eframe::run_native(
         "Confidex",
         eframe::NativeOptions {
             viewport: eframe::egui::ViewportBuilder::default()
                 .with_inner_size([1180., 780.])
-                .with_min_inner_size([320., 400.]),
+                .with_min_inner_size([320., 400.])
+                .with_icon(icon),
             ..Default::default()
         },
         Box::new(move |cc| {
