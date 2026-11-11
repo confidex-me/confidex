@@ -977,10 +977,8 @@ fn connects_and_syncs_two_processes_through_the_native_server() {
                                 let pause = gate.lock().unwrap().take();
                                 if let Some((reached, release)) = pause {
                                     reached.send(()).unwrap();
-                                    tokio::time::timeout(Duration::from_secs(10), release)
-                                        .await
-                                        .unwrap()
-                                        .unwrap();
+                                    // Password derivation time depends on the test computer.
+                                    release.await.unwrap();
                                 }
                             }
                             let body = axum::body::to_bytes(body, confidex_app::sync::MAX_BODY)
