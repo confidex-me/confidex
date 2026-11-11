@@ -57,6 +57,10 @@ class CommonTests(unittest.TestCase):
             self.assertIn(artifact.name, (root / 'SHA256SUMS').read_text())
             self.assertNotIn('SHA256SUMS', (root / 'SHA256SUMS').read_text())
             self.assertIn('NOTICE', ''.join(common.metadata('0.1.0+gaaaaaa', 'amd64-linux-gnu')))
+            notices = common.metadata('0.1.0+gaaaaaa', 'amd64-linux-gnu')
+            for name in ['Egui-Hack-LICENSE.txt', 'Egui-Noto-OFL.txt', 'Egui-Ubuntu-LICENSE.txt',
+                         'Egui-icons-LICENSE.txt', 'Egui-icons-NOTICE.txt']:
+                self.assertIn('NOTICES/crates/confidex-ui/assets/fonts/' + name, notices)
 
 
 if __name__ == '__main__':

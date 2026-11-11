@@ -32,3 +32,8 @@ from Google Fonts commit `5bb28733cec313b63fbd415b574b5ae35c8aa8b8`, directory
 `ofl/notosanstelugu`, under the adjacent `NotoSansTelugu-OFL.txt` license.
 SHA-256: `e618af7bf999df192ed4f388eba2e563f2b5015034e9cbb317b5bd793bd7334d`.
 The font file is 888,808 bytes.
+
+The `Egui-*` text files preserve the licenses and notices for fonts embedded by
+`epaint_default_fonts` 0.37.0: Hack, Ubuntu, Noto Emoji and the icon font. They are
+copied unchanged from that crate's `fonts/` directory. Both native packages and
+the web app distribute these notices beside their other font licenses.
