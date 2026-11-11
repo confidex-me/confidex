@@ -119,3 +119,8 @@ Releases also publish `ghcr.io/confidex-me/confidexsyncd` and
 tag and `latest`. Use a tag without `+` metadata. For local image builds and the
 one-time GHCR Public visibility setting, see the
 [container builder](../builders/containers/README.md).
+
+`confidex-selfhost-{version}.zip` combines the tested web and Worker packages,
+Linux servers for both architectures/libcs, Compose, native and Cloudflare
+configuration, D1 schema and pinned Wrangler tooling. It needs no Rust compiler
+for installation. See the [bundle builder](../builders/selfhost/README.md).

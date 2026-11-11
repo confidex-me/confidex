@@ -31,6 +31,11 @@ def identity(path, metadata):
     return source
 
 
+def check_architecture(binary, arch):
+    if not binary.startswith(b'\x7fELF\x02\x01') or int.from_bytes(binary[18:20], 'little') != {'amd64': 62, 'arm64': 183}[arch]:
+        raise ValueError(f'Expected a {arch} Linux ELF64 executable')
+
+
 def prepare(directory, output):
     if output.exists():
         shutil.rmtree(output)
@@ -47,8 +52,7 @@ def prepare(directory, output):
                 raise ValueError(f'Release source mismatch: {source.name}')
             expected = revision
             binary = archive.extractfile('bin/confidexsyncd').read()
-            if not binary.startswith(b'\x7fELF\x02\x01') or int.from_bytes(binary[18:20], 'little') != {'amd64': 62, 'arm64': 183}[arch]:
-                raise ValueError(f'Wrong executable architecture: {source.name}')
+            check_architecture(binary, arch)
             path.write_bytes(binary)
             (path.parent / 'SOURCE.json').write_bytes(metadata)
             if arch == 'amd64':

@@ -1,0 +1,6 @@
+{
+  "name": "confidex-selfhost",
+  "private": true,
+  "version": "0.1.0",
+  "devDependencies": { "wrangler": "4.160.0" }
+}
