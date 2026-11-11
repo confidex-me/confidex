@@ -22,3 +22,7 @@ storage additionally requires Git. See the image package lists for build depende
 `CARGO_BUILD_JOBS` defaults to 2 inside the container. Cargo registry data is
 cached in `.tools/cargo-linux/`; build output uses `target/gnu/` or `target/musl/`.
 See the [artifact contract](../docs/ARTIFACTS.md) for names and versions.
+
+Ubuntu CI installs its test libraries with `sudo python3 builders/linux/ci_dependencies.py`.
+It prefers the kernel.org Ubuntu mirror, keeps the runner's fallback mirrors and
+package signature checks, and limits APT retries and network timeouts.

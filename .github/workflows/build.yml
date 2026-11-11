@@ -32,8 +32,9 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
-      - run: sudo apt-get -o Acquire::Retries=3 update
-      - run: sudo apt-get -o Acquire::Retries=3 install -y libtss2-dev libxkbcommon-dev libwayland-dev libx11-dev libxi-dev libxcursor-dev libxrandr-dev libgl1-mesa-dev
+      - name: Install Linux test dependencies
+        timeout-minutes: 5
+        run: sudo python3 builders/linux/ci_dependencies.py
       - run: cargo fmt --all --check
       - run: cargo test --locked --workspace
       - run: python3 -m unittest discover -s builders -p 'test_*.py'

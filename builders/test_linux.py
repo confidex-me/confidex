@@ -17,8 +17,30 @@ spec = importlib.util.spec_from_file_location('linux_build', common.ROOT / 'buil
 linux = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(linux)
 
+spec = importlib.util.spec_from_file_location('ci_dependencies', common.ROOT / 'builders/linux/ci_dependencies.py')
+ci = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ci)
+
 
 class LinuxTests(unittest.TestCase):
+    def test_ci_keeps_fallbacks_and_stops_when_update_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            mirrors = Path(temporary) / 'apt-mirrors.txt'
+            original = 'http://azure.archive.ubuntu.com/ubuntu/\tpriority:1\n'
+            mirrors.write_text(original)
+            with patch.object(ci, 'MIRRORS', mirrors), patch.object(ci, 'run') as run:
+                ci.main()
+                ci.main()
+                self.assertEqual(mirrors.read_text(), ci.PREFERRED + original)
+                self.assertEqual([call.args[-1] for call in run.call_args_list[::2]], ['update', 'update'])
+                self.assertIn('APT::Update::Error-Mode=any', run.call_args_list[0].args)
+                self.assertIn('Acquire::http::Timeout=10', run.call_args_list[0].args)
+            with patch.object(ci, 'MIRRORS', mirrors), patch.object(ci, 'run',
+                    side_effect=subprocess.CalledProcessError(100, 'apt-get')) as run:
+                with self.assertRaises(subprocess.CalledProcessError):
+                    ci.main()
+                self.assertEqual(run.call_count, 1)
+
     def test_help_does_not_need_docker_or_git(self):
         result = subprocess.run([sys.executable, str(common.ROOT / 'builders/linux/build.py'), '--help'],
                                 env=dict(os.environ, PATH=''), capture_output=True, text=True)
