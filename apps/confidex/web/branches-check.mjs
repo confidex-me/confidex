@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 const [playwright, chrome] = process.argv.slice(2);
 if (!playwright) throw Error('usage: branches-check.mjs /path/to/playwright [chrome]');
 const {chromium} = await import(pathToFileURL(playwright).href);
-const source = await readFile(new URL('./storage.js', import.meta.url));
+const source = await readFile(new URL('../../../crates/confidex-browser/web/storage.js', import.meta.url));
 const server = createServer((req, res) => {
   const script = req.url.startsWith('/storage.js');
   res.setHeader('Content-Type', script ? 'text/javascript' : 'text/html');

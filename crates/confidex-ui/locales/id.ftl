@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = Pribadi: tag pertama menjadi folder. Organisasi:
 settings-auto-lock = Kunci saat tidak aktif
 settings-auto-lock-hint = Pengaturan ini hanya berlaku untuk brankas ini di perangkat ini. Anda perlu membuka kuncinya untuk membukanya lagi.
 settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan perangkat. Coba lagi.
+
+extension-session-hint = Biarkan tab sesi ini tetap terbuka saat menggunakan Confidex di browser.

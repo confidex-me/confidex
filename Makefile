@@ -1,10 +1,13 @@
-.PHONY: native web check
+.PHONY: native web extension check
 
 native:
 	cargo build --locked --release -p confidex -p cfdex -p confidexsyncd
 
 web:
 	python3 builders/wasm/build.py
+
+extension:
+	python3 builders/wasm/build_extension.py
 
 check:
 	cargo fmt --all --check

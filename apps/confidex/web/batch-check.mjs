@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 const [playwright, chrome] = process.argv.slice(2);
 if (!playwright) throw Error('usage: batch-check.mjs /path/to/playwright [chrome]');
 const {chromium} = await import(pathToFileURL(playwright).href);
-const source = await readFile(new URL('./storage.js', import.meta.url));
+const source = await readFile(new URL('../../../crates/confidex-browser/web/storage.js', import.meta.url));
 const server = createServer((req, res) => {
   res.setHeader('Content-Type', req.url === '/storage.js' ? 'text/javascript' : 'text/html');
   res.end(req.url === '/storage.js' ? source : '<title>Public batch fixtures</title>');

@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = 個人：第一個標籤將成為資料夾。組
 settings-auto-lock = 閒置時鎖定
 settings-auto-lock-hint = 此設定僅適用於此裝置上的此保險庫。再次開啟時需要解鎖保險庫。
 settings-device-unlock-error = 無法變更裝置解鎖設定。請重試。
+
+extension-session-hint = 在瀏覽器中使用 Confidex 時，請保持此工作階段分頁開啟。

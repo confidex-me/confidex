@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Persoonlijk: de eerste tag wordt een map. Organi
 settings-auto-lock = Vergrendelen bij inactiviteit
 settings-auto-lock-hint = Deze instelling geldt alleen voor deze kluis op dit apparaat. Je moet de kluis ontgrendelen om deze opnieuw te openen.
 settings-device-unlock-error = Ontgrendeling met het apparaat kon niet worden gewijzigd. Probeer het opnieuw.
+
+extension-session-hint = Houd dit sessietabblad open zolang je Confidex in je browser gebruikt.

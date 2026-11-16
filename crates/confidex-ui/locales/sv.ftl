@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Personlig: den första taggen blir en mapp. Orga
 settings-auto-lock = Lås vid inaktivitet
 settings-auto-lock-hint = Inställningen gäller bara det här valvet på den här enheten. Du måste låsa upp valvet för att öppna det igen.
 settings-device-unlock-error = Det gick inte att ändra upplåsning med enheten. Försök igen.
+
+extension-session-hint = Låt den här sessionsfliken vara öppen medan du använder Confidex i webbläsaren.

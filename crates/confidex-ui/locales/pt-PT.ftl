@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Pessoal: a primeira etiqueta torna-se uma pasta.
 settings-auto-lock = Bloquear por inatividade
 settings-auto-lock-hint = Esta definição aplica-se apenas a este cofre neste dispositivo. Terá de o desbloquear para o abrir novamente.
 settings-device-unlock-error = Não foi possível alterar o desbloqueio com o dispositivo. Tente novamente.
+
+extension-session-hint = Mantenha este separador da sessão aberto enquanto utiliza o Confidex no navegador.

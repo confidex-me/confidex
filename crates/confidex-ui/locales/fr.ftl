@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Personnel : la première étiquette devient un d
 settings-auto-lock = Verrouiller en cas d’inactivité
 settings-auto-lock-hint = Ce réglage s’applique uniquement à ce coffre sur cet appareil. Vous devrez le déverrouiller pour le rouvrir.
 settings-device-unlock-error = Impossible de modifier le déverrouillage avec l’appareil. Réessayez.
+
+extension-session-hint = Gardez cet onglet de session ouvert pendant que vous utilisez Confidex dans le navigateur.

@@ -1,0 +1,25 @@
+[package]
+name = "confidex-browser"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../LICENSE"
+
+[features]
+wire = ["dep:confidex-app", "dep:confidex-storage", "dep:serde", "dep:serde_json", "dep:zeroize"]
+
+[dependencies]
+confidex-app = { path = "../confidex-app", optional = true }
+confidex-storage = { path = "../confidex-storage", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
+zeroize = { version = "1", optional = true }
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+confidex-app = { path = "../confidex-app" }
+confidex-storage = { path = "../confidex-storage" }
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+wasm-bindgen = "=0.2.130"
+wasm-bindgen-futures = "=0.4.80"
+js-sys = "=0.3.107"

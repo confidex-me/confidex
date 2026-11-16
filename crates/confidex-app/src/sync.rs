@@ -25,6 +25,7 @@ pub trait Transport {
         body: Vec<u8>,
     ) -> Result<Reply, Error>;
 }
+#[derive(Default)]
 pub struct Offline;
 impl Transport for Offline {
     async fn send(&mut self, _: &str, _: &str, _: &str, _: Vec<u8>) -> Result<Reply, Error> {

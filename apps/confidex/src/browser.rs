@@ -1,7 +1,11 @@
 use crate::browser_store::{self, BrowserKeys, BrowserStore};
-use confidex_app::{Command, Engine, Error, Output, Request, Response, import_flow as flow};
+#[cfg(not(feature = "sync"))]
+use confidex_app::sync::Offline as Transport;
+use confidex_app::{Command, Error, Output, Request, Response, import_flow as flow};
+#[cfg(feature = "sync")]
+use confidex_browser::Net as Transport;
+use confidex_browser::Runtime as EngineRuntime;
 use confidex_ui::{Runtime, VaultApp};
-use eframe::egui;
 use js_sys::{Array, Uint8Array};
 use std::{
     cell::{Cell, RefCell},
@@ -11,32 +15,6 @@ use std::{
 use wasm_bindgen::{JsCast, prelude::*};
 use web_sys::{ErrorEvent, MessageEvent, Worker, WorkerOptions, WorkerType};
 use zeroize::Zeroizing;
-
-#[wasm_bindgen(module = "/web/fonts.js")]
-extern "C" {
-    #[wasm_bindgen(catch, js_name = loadFonts)]
-    async fn load_fonts(names: Array) -> Result<Array, JsValue>;
-}
-
-async fn browser_fonts() -> Result<egui::FontDefinitions, JsValue> {
-    use confidex_ui::ui_kit::fonts;
-    let names = fonts::FILES
-        .into_iter()
-        .map(JsValue::from_str)
-        .collect::<Array>();
-    let faces = load_fonts(names)
-        .await?
-        .iter()
-        .map(|value| {
-            let bytes = value.dyn_into::<Uint8Array>()?;
-            Ok(egui::FontData::from_owned(bytes.to_vec()))
-        })
-        .collect::<Result<Vec<_>, JsValue>>()?;
-    let faces = faces
-        .try_into()
-        .map_err(|_| JsValue::from_str("Incorrect font file count"))?;
-    Ok(fonts::definitions(faces))
-}
 
 #[wasm_bindgen(module = "/web/import.js")]
 extern "C" {
@@ -152,9 +130,7 @@ impl flow::Control for ImportControl {
 #[wasm_bindgen]
 #[derive(Default)]
 pub struct WorkerService {
-    engine: Engine,
-    #[cfg(feature = "sync")]
-    transport: crate::sync_transport::Net,
+    runtime: EngineRuntime<Transport>,
 }
 #[wasm_bindgen]
 impl WorkerService {
@@ -165,23 +141,17 @@ impl WorkerService {
     pub async fn execute(&mut self, input: Vec<u8>) -> Result<Uint8Array, JsValue> {
         let input = Zeroizing::new(input);
         if input.len() > crate::browser_wire::MAX_PACKET {
-            let _ = self.engine.cancel_export(None);
+            let _ = self.runtime.engine_mut().cancel_export(None);
             return Err(JsValue::from_str("request limit"));
         }
         let mut request: Request = match crate::browser_wire::decode_request(&input) {
             Ok(request) => request,
             Err(_) => {
-                let _ = self.engine.cancel_export(None);
+                let _ = self.runtime.engine_mut().cancel_export(None);
                 return Err(JsValue::from_str("invalid request"));
             }
         };
         drop(input);
-        #[cfg(not(feature = "sync"))]
-        let mut transport = confidex_app::sync::Offline;
-        #[cfg(not(feature = "sync"))]
-        let transport = &mut transport;
-        #[cfg(feature = "sync")]
-        let transport = &mut self.transport;
         let response = if let Command::VendorImport(command) = &mut request.command {
             let mut control = ImportControl {
                 operation: command.operation().unwrap_or(0),
@@ -194,7 +164,8 @@ impl WorkerService {
             Response {
                 generation: request.generation,
                 result: Ok(Output::VendorImport(
-                    self.engine
+                    self.runtime
+                        .engine_mut()
                         .execute_import(&mut BrowserStore, command, &mut control)
                         .await,
                 )),
@@ -211,19 +182,15 @@ impl WorkerService {
             Response {
                 generation: request.generation,
                 result: Ok(Output::VendorExport(
-                    self.engine
+                    self.runtime
+                        .engine_mut()
                         .execute_export(&mut BrowserStore, command, &mut control)
                         .await,
                 )),
             }
         } else {
-            self.engine
-                .execute_with_transport(
-                    &mut BrowserStore,
-                    &mut BrowserKeys::default(),
-                    transport,
-                    &mut request,
-                )
+            self.runtime
+                .execute(&mut BrowserKeys::default(), &mut request)
                 .await
         };
         let bytes = Zeroizing::new(
@@ -253,7 +220,7 @@ impl BrowserRuntime {
     fn new(ctx: eframe::egui::Context) -> Result<Self, JsValue> {
         let options = WorkerOptions::new();
         options.set_type(WorkerType::Module);
-        let worker = Worker::new_with_options("/worker.js", &options)?;
+        let worker = Worker::new_with_options("worker.js", &options)?;
         confidex_device_secrets::platform::attach_passkey_host(worker.as_ref());
         browser_store::attach_key_fallback(&worker);
         let (sender, replies) = mpsc::channel();
@@ -371,7 +338,7 @@ impl Runtime for BrowserRuntime {
             &request.command,
             Command::Create { .. } | Command::RestoreBackup { .. }
         ) {
-            browser_store::request_persistence();
+            confidex_browser::storage::request_persistence();
         }
         self.generation.set(request.generation);
         let bytes = Zeroizing::new(crate::browser_wire::encode_request(request)?);
@@ -421,7 +388,7 @@ impl WebHandle {
         Self::default()
     }
     pub async fn start(&self, canvas: web_sys::HtmlCanvasElement) -> Result<(), JsValue> {
-        let fonts = browser_fonts().await?;
+        let fonts = confidex_ui::ui_kit::fonts::load_browser().await?;
         let input_id = format!("{}-text-input", canvas.id());
         let plugin_input_id = input_id.clone();
         self.runner
@@ -438,7 +405,7 @@ impl WebHandle {
                     app.restore_auto_lock_settings(cc.storage);
                     app.restore_generator_preferences(cc.storage);
                     cc.egui_ctx
-                        .add_plugin(crate::browser_input::TextInput::new(plugin_input_id));
+                        .add_plugin(confidex_ui::browser_input::TextInput::new(plugin_input_id));
                     crate::motion::install(&cc.egui_ctx);
                     crate::backup_files::install(&mut app);
                     crate::import_files::install(&mut app);
@@ -470,7 +437,7 @@ impl WebHandle {
                 }),
             )
             .await?;
-        crate::browser_input::install(&self.runner, &canvas, &input_id)
+        confidex_ui::browser_input::install(&self.runner, &canvas, &input_id)
     }
     #[cfg(feature = "export-ui-check")]
     pub async fn start_folder_check(
@@ -478,7 +445,7 @@ impl WebHandle {
         canvas: web_sys::HtmlCanvasElement,
         language: String,
     ) -> Result<(), JsValue> {
-        let fonts = browser_fonts().await?;
+        let fonts = confidex_ui::ui_kit::fonts::load_browser().await?;
         self.runner
             .start(
                 canvas,

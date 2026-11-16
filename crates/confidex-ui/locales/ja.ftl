@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = 個人用：最初のタグがフォルダーに
 settings-auto-lock = 操作がない場合にロック
 settings-auto-lock-hint = この設定は、このデバイス上のこの保管庫にのみ適用されます。再び開くにはロックを解除する必要があります。
 settings-device-unlock-error = デバイスによるロック解除を変更できませんでした。もう一度お試しください。
+
+extension-session-hint = ブラウザーで Confidex を使用している間は、このセッションタブを開いたままにしてください。

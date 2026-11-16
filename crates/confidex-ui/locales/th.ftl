@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = ส่วนบุคคล: แท็กแร�
 settings-auto-lock = ล็อกเมื่อไม่มีการใช้งาน
 settings-auto-lock-hint = การตั้งค่านี้ใช้กับตู้นิรภัยนี้บนอุปกรณ์นี้เท่านั้น คุณต้องปลดล็อกตู้นิรภัยเพื่อเปิดอีกครั้ง
 settings-device-unlock-error = ไม่สามารถเปลี่ยนการปลดล็อกด้วยอุปกรณ์ได้ ลองอีกครั้ง
+
+extension-session-hint = เปิดแท็บเซสชันนี้ไว้ขณะใช้ Confidex ในเบราว์เซอร์

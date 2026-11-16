@@ -619,3 +619,5 @@ export-bitwarden-profile-hint = Personal: prima etichetă devine un dosar. Organ
 settings-auto-lock = Blochează la inactivitate
 settings-auto-lock-hint = Această setare se aplică doar acestui seif pe acest dispozitiv. Va trebui să îl deblocați pentru a-l deschide din nou.
 settings-device-unlock-error = Nu s-a putut modifica deblocarea cu dispozitivul. Încercați din nou.
+
+extension-session-hint = Lasă această filă a sesiunii deschisă cât timp folosești Confidex în browser.

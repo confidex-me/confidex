@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = 个人：第一个标签将成为文件夹。组
 settings-auto-lock = 无操作时锁定
 settings-auto-lock-hint = 此设置仅适用于此设备上的此保险库。再次打开时需要解锁保险库。
 settings-device-unlock-error = 无法更改设备解锁设置。请重试。
+
+extension-session-hint = 在浏览器中使用 Confidex 时，请保持此会话标签页打开。

@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = ব্যক্তিগত: প্রথম ট
 settings-auto-lock = নিষ্ক্রিয় থাকলে লক করুন
 settings-auto-lock-hint = এই সেটিং শুধু এই ডিভাইসে এই ভল্টের জন্য প্রযোজ্য। আবার খুলতে ভল্ট আনলক করতে হবে।
 settings-device-unlock-error = ডিভাইস দিয়ে আনলক করার সেটিং বদলানো যায়নি। আবার চেষ্টা করুন।
+
+extension-session-hint = ব্রাউজারে Confidex ব্যবহার করার সময় এই সেশন ট্যাবটি খোলা রাখুন।

@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = Kişisel: ilk etiket bir klasör olur. Kuruluş:
 settings-auto-lock = Etkinlik yokken kilitle
 settings-auto-lock-hint = Bu ayar yalnızca bu cihazdaki bu kasa için geçerlidir. Tekrar açmak için kasanın kilidini açmanız gerekir.
 settings-device-unlock-error = Cihazla kilit açma ayarı değiştirilemedi. Tekrar deneyin.
+
+extension-session-hint = Confidex’i tarayıcıda kullanırken bu oturum sekmesini açık tutun.

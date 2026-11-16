@@ -139,3 +139,35 @@ mod tests {
         output.textures_delta.clear();
     }
 }
+
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub use browser::load as load_browser;
+
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+mod browser {
+    use super::*;
+    use js_sys::{Array, Uint8Array};
+    use wasm_bindgen::{JsCast, prelude::*};
+
+    #[wasm_bindgen(module = "/web/fonts.js")]
+    extern "C" {
+        #[wasm_bindgen(catch, js_name = loadFonts)]
+        async fn load_fonts(names: Array) -> Result<Array, JsValue>;
+    }
+
+    pub async fn load() -> Result<egui::FontDefinitions, JsValue> {
+        let names = FILES.into_iter().map(JsValue::from_str).collect::<Array>();
+        let faces = load_fonts(names)
+            .await?
+            .iter()
+            .map(|value| {
+                let bytes = value.dyn_into::<Uint8Array>()?;
+                Ok(egui::FontData::from_owned(bytes.to_vec()))
+            })
+            .collect::<Result<Vec<_>, JsValue>>()?;
+        let faces = faces
+            .try_into()
+            .map_err(|_| JsValue::from_str("Incorrect font file count"))?;
+        Ok(definitions(faces))
+    }
+}

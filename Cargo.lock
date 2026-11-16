@@ -1065,6 +1065,7 @@ version = "0.1.0"
 dependencies = [
  "arboard",
  "confidex-app",
+ "confidex-browser",
  "confidex-device-secrets",
  "confidex-native",
  "confidex-storage",
@@ -1126,6 +1127,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "confidex-browser"
+version = "0.1.0"
+dependencies = [
+ "confidex-app",
+ "confidex-storage",
+ "js-sys",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "zeroize",
+]
+
+[[package]]
 name = "confidex-device-secrets"
 version = "0.1.0"
 dependencies = [
@@ -1144,6 +1160,33 @@ dependencies = [
  "windows-sys 0.61.2",
  "zbus",
  "zeroize",
+]
+
+[[package]]
+name = "confidex-extension"
+version = "0.1.0"
+dependencies = [
+ "confidex-app",
+ "confidex-browser",
+ "confidex-storage",
+ "confidex-ui",
+ "confidex-vault",
+ "eframe",
+ "js-sys",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "zeroize",
+]
+
+[[package]]
+name = "confidex-extension-content"
+version = "0.1.0"
+dependencies = [
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -1203,6 +1246,7 @@ dependencies = [
  "fluent-bundle",
  "fluent-langneg",
  "image",
+ "js-sys",
  "serde",
  "serde_json",
  "tempfile",
@@ -1210,6 +1254,9 @@ dependencies = [
  "tokio",
  "unic-langid",
  "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
  "web-time",
  "webp-rust",
  "zeroize",

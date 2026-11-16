@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Personale: il primo tag diventa una cartella. Or
 settings-auto-lock = Blocca per inattività
 settings-auto-lock-hint = Questa impostazione vale solo per questo caveau su questo dispositivo. Per riaprirlo dovrai sbloccarlo.
 settings-device-unlock-error = Impossibile modificare lo sblocco con il dispositivo. Riprova.
+
+extension-session-hint = Tieni aperta questa scheda della sessione mentre usi Confidex nel browser.

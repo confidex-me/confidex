@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Binafsi: lebo ya kwanza inakuwa folda. Shirika: 
 settings-auto-lock = Funga usipotumika
 settings-auto-lock-hint = Mpangilio huu unatumika kwa sefu hii kwenye kifaa hiki pekee. Utahitaji kuifungua tena ili kuitumia.
 settings-device-unlock-error = Imeshindikana kubadilisha ufunguaji kwa kifaa. Jaribu tena.
+
+extension-session-hint = Acha kichupo hiki cha kipindi kikiwa wazi unapotumia Confidex kwenye kivinjari.

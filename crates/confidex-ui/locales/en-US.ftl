@@ -678,3 +678,5 @@ export-bitwarden-profile-hint = Personal: the first tag becomes a folder. Organi
 settings-auto-lock = Lock when inactive
 settings-auto-lock-hint = This setting applies only to this vault on this device. You will need to unlock the vault to open it again.
 settings-device-unlock-error = Could not change device unlock. Try again.
+
+extension-session-hint = Keep this session tab open while using Confidex in your browser.

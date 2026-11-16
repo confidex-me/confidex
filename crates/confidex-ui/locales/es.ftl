@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Personal: la primera etiqueta se convierte en un
 settings-auto-lock = Bloquear por inactividad
 settings-auto-lock-hint = Este ajuste solo se aplica a esta bóveda en este dispositivo. Deberás desbloquearla para volver a abrirla.
 settings-device-unlock-error = No se pudo cambiar el desbloqueo con el dispositivo. Inténtalo de nuevo.
+
+extension-session-hint = Mantén abierta esta pestaña de sesión mientras usas Confidex en el navegador.

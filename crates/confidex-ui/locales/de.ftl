@@ -618,3 +618,5 @@ export-bitwarden-profile-hint = Persönlich: Das erste Tag wird zu einem Ordner.
 settings-auto-lock = Bei Inaktivität sperren
 settings-auto-lock-hint = Diese Einstellung gilt nur für diesen Tresor auf diesem Gerät. Zum erneuten Öffnen muss der Tresor entsperrt werden.
 settings-device-unlock-error = Die Geräteentsperrung konnte nicht geändert werden. Versuchen Sie es erneut.
+
+extension-session-hint = Lassen Sie diesen Sitzungstab geöffnet, solange Sie Confidex im Browser verwenden.

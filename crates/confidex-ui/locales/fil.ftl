@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = Pansarili: magiging folder ang unang tag. Organi
 settings-auto-lock = I-lock kapag walang aktibidad
 settings-auto-lock-hint = Para lang sa vault na ito sa device na ito ang setting. Kailangan mong i-unlock ang vault para buksan itong muli.
 settings-device-unlock-error = Hindi mabago ang pag-unlock gamit ang device. Subukan muli.
+
+extension-session-hint = Panatilihing bukas ang tab ng sesyon habang ginagamit ang Confidex sa browser.

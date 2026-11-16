@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = Peribadi: tag pertama menjadi folder. Organisasi
 settings-auto-lock = Kunci apabila tidak aktif
 settings-auto-lock-hint = Tetapan ini hanya terpakai pada peti besi ini pada peranti ini. Anda perlu membuka kuncinya untuk membukanya semula.
 settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan peranti. Cuba lagi.
+
+extension-session-hint = Biarkan tab sesi ini terbuka semasa menggunakan Confidex dalam pelayar.

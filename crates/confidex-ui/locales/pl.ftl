@@ -620,3 +620,5 @@ export-bitwarden-profile-hint = Osobisty: pierwszy tag stanie się folderem. Org
 settings-auto-lock = Blokuj przy braku aktywności
 settings-auto-lock-hint = To ustawienie dotyczy tylko tego sejfu na tym urządzeniu. Aby otworzyć go ponownie, trzeba go odblokować.
 settings-device-unlock-error = Nie udało się zmienić odblokowywania urządzeniem. Spróbuj ponownie.
+
+extension-session-hint = Pozostaw tę kartę sesji otwartą, gdy korzystasz z Confidex w przeglądarce.

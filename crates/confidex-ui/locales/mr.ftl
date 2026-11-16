@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = वैयक्तिक: पहिला टॅ
 settings-auto-lock = निष्क्रिय असताना लॉक करा
 settings-auto-lock-hint = ही सेटिंग फक्त या डिव्हाइसवरील या व्हॉल्टसाठी आहे. पुन्हा उघडण्यासाठी व्हॉल्ट अनलॉक करावा लागेल.
 settings-device-unlock-error = डिव्हाइसने अनलॉक करण्याची सेटिंग बदलता आली नाही. पुन्हा प्रयत्न करा.
+
+extension-session-hint = ब्राउझरमध्ये Confidex वापरताना हा सत्र टॅब उघडा ठेवा.

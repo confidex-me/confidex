@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = 개인: 첫 번째 태그가 폴더가 됩니다
 settings-auto-lock = 사용하지 않을 때 잠금
 settings-auto-lock-hint = 이 설정은 이 기기의 이 보관함에만 적용됩니다. 다시 열려면 보관함의 잠금을 해제해야 합니다.
 settings-device-unlock-error = 기기를 사용한 잠금 해제를 변경할 수 없습니다. 다시 시도하세요.
+
+extension-session-hint = 브라우저에서 Confidex를 사용하는 동안 이 세션 탭을 열어 두세요.

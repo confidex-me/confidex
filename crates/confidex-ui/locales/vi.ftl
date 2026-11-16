@@ -615,3 +615,5 @@ export-bitwarden-profile-hint = Cá nhân: thẻ đầu tiên trở thành thư 
 settings-auto-lock = Khóa khi không hoạt động
 settings-auto-lock-hint = Cài đặt này chỉ áp dụng cho két này trên thiết bị này. Bạn cần mở khóa két để mở lại.
 settings-device-unlock-error = Không thể thay đổi tính năng mở khóa bằng thiết bị. Hãy thử lại.
+
+extension-session-hint = Giữ tab phiên này mở trong khi sử dụng Confidex trên trình duyệt.

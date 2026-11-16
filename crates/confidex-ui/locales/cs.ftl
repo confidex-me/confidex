@@ -620,3 +620,5 @@ export-bitwarden-profile-hint = Osobní: první štítek se změní na složku. 
 settings-auto-lock = Zamknout při nečinnosti
 settings-auto-lock-hint = Toto nastavení platí pouze pro tento trezor na tomto zařízení. Při dalším otevření bude nutné trezor odemknout.
 settings-device-unlock-error = Odemknutí pomocí zařízení nelze změnit. Zkuste to znovu.
+
+extension-session-hint = Při používání Confidexu v prohlížeči nechte tuto kartu relace otevřenou.
