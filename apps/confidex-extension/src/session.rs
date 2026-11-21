@@ -236,13 +236,13 @@ impl Session {
                     sync: self.sync.status(),
                 })
             }
-            Action::LoginTags { target } if self.is_open() => {
-                let tags = self
+            Action::LoginEditor { target } if self.is_open() => {
+                let fields = self
                     .runtime
                     .engine_mut()
-                    .browser_login_tags(&mut BrowserStore, &target)
+                    .browser_login_editor(&mut BrowserStore, &target)
                     .await?;
-                Ok(Reply::LoginTags { target, tags })
+                Ok(Reply::LoginEditor { target, fields })
             }
             Action::CreateLogin { record, login } if self.is_open() => {
                 let head = self

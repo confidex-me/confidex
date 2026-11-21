@@ -41,16 +41,14 @@ or granting any session authority to the background.
 
 ## Logins and synchronization
 
-Use **New login** to create a record from the standard Login template. The
-record stores the HTTPS origin of the supplied URL. Use **Edit** to update the
-username and password of one listed login. Each edit checks the revision
-selected when the form was opened and preserves the other record fields,
-including the original website, sections, and notes. Ambiguous separate
-fields and records with conflicting revisions require the main Confidex app.
-
-The **Tags** editor uses the same controls as the main app. Add or remove tags
-when creating or editing a login. A tag-only edit can be saved with the password
-field empty.
+**New login** and **Edit** share the Login template's title, username,
+password, website, notes and tag controls. The editor loads the current
+saved values and accepts a new password in the empty password field.
+Saving a new or changed website stores its HTTPS origin. Edits check the
+selected revision and preserve sections and unrelated record fields.
+An ordinary note can be edited when it can be identified unambiguously.
+Use the main Confidex app for protected or ambiguous fields and for
+records with conflicting revisions.
 
 A saved login is committed to the encrypted IndexedDB vault before
 synchronization. Pending writes survive locking and browser restarts.

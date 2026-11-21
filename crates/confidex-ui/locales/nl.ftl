@@ -626,6 +626,7 @@ extension-sync-pending = Synchronisatie in afwachting.
 extension-login-conflicts = Los conflicten tussen items op in de hoofdapp van Confidex.
 extension-login-ambiguous = Corrigeer onduidelijke inlogvelden in de hoofdapp van Confidex.
 extension-login-changed = Het item is gewijzigd. Selecteer het opnieuw om de huidige versie te bewerken.
+extension-password-replacement-hint = Voer een nieuw wachtwoord in om het opgeslagen wachtwoord te vervangen.
 
 extension-startup-error = Confidex kon niet starten. Laad de extensie opnieuw en probeer het nogmaals.
 

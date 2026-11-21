@@ -623,6 +623,7 @@ extension-sync-pending = Menunggu sinkronisasi.
 extension-login-conflicts = Selesaikan konflik entri di aplikasi utama Confidex.
 extension-login-ambiguous = Perbaiki kolom login yang ambigu di aplikasi utama Confidex.
 extension-login-changed = Entri telah berubah. Pilih kembali untuk mengedit versi terbaru.
+extension-password-replacement-hint = Masukkan kata sandi baru untuk mengganti yang tersimpan.
 
 extension-startup-error = Confidex tidak dapat dimulai. Muat ulang ekstensi dan coba lagi.
 

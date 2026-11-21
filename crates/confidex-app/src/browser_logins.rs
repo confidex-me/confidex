@@ -74,18 +74,31 @@ impl NewLogin {
     }
 }
 
+/// The saved values the session editor can display. Passwords stay in the worker.
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
+pub struct EditLogin {
+    pub title: String,
+    pub username: Option<String>,
+    pub url: Option<String>,
+    pub notes: Option<String>,
+    pub tags: Vec<String>,
+}
+
+#[derive(Default, Deserialize, Serialize, ZeroizeOnDrop)]
 #[serde(deny_unknown_fields)]
 pub struct Change {
+    pub title: Option<String>,
     pub username: Option<String>,
     pub password: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    pub notes: Option<String>,
     pub tags: Option<Vec<String>>,
 }
 
 struct Pair {
     username: usize,
     password: usize,
+    url: usize,
 }
 
 fn text<'a>(entry: &'a Entry, key: &str) -> Option<&'a str> {
@@ -112,7 +125,11 @@ fn pairs(record: &Record) -> (impl Iterator<Item = Pair> + '_, bool) {
                 && nonempty(&record.entries[password], "password")
                 && nonempty(&record.entries[url], "url") =>
         {
-            Some(Pair { username, password })
+            Some(Pair {
+                username,
+                password,
+                url,
+            })
         }
         _ => None,
     };
@@ -128,6 +145,7 @@ fn pairs(record: &Record) -> (impl Iterator<Item = Pair> + '_, bool) {
             .then_some(Pair {
                 username: index,
                 password: index,
+                url: index,
             })
         });
     (compound.chain(separate), ambiguous)
@@ -151,15 +169,7 @@ fn new_content(login: &NewLogin) -> Result<Record, Error> {
     if !login.has_valid_lengths() {
         return Err(Error::Input);
     }
-    let url = url::Url::parse(login.url.trim()).map_err(|_| Error::Input)?;
-    if url.scheme() != "https"
-        || url.host_str().is_none()
-        || !url.username().is_empty()
-        || url.password().is_some()
-    {
-        return Err(Error::Input);
-    }
-    let origin = url.origin().ascii_serialization();
+    let origin = login_origin(&login.url)?;
     let template = templates::get("login").ok_or(Error::Integrity)?;
     let mut fields = template.fields()?;
     for field in &mut fields {
@@ -182,6 +192,18 @@ fn new_content(login: &NewLogin) -> Result<Record, Error> {
     Ok(record)
 }
 
+fn login_origin(input: &str) -> Result<String, Error> {
+    let url = url::Url::parse(input.trim()).map_err(|_| Error::Input)?;
+    if url.scheme() != "https"
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+    {
+        return Err(Error::Input);
+    }
+    Ok(url.origin().ascii_serialization())
+}
+
 fn valid_password(password: &str) -> bool {
     !password.is_empty() && password.len() <= MAX_LOGIN_TEXT
 }
@@ -196,32 +218,122 @@ fn set_tags(record: &mut Record, tags: &[String]) -> Result<(), Error> {
     Ok(())
 }
 
+fn login_pair(record: &Record, field: usize) -> Result<Pair, Error> {
+    pairs(record)
+        .0
+        .find(|pair| pair.password == field)
+        .ok_or(Error::Input)
+}
+
+fn editable_text<'a>(entry: &'a Entry, key: &str) -> Option<&'a str> {
+    text(entry, key).filter(|value| !field_protected(entry) && value.len() <= MAX_LOGIN_TEXT)
+}
+
+// An unambiguous ordinary note is record-wide, even for a compound login.
+fn note_field(record: &Record) -> Result<Option<usize>, Error> {
+    let mut notes = record
+        .entries
+        .iter()
+        .enumerate()
+        .filter(|(_, entry)| entry.type_name == "note/v1");
+    match notes.next() {
+        Some((index, entry))
+            if notes.next().is_none() && editable_text(entry, "text").is_some() =>
+        {
+            Ok(Some(index))
+        }
+        None if record.entries.len() < confidex_vault::record::MAX_ENTRIES => Ok(None),
+        _ => Err(Error::Input),
+    }
+}
+
+fn editor_content(mut record: Record, field: usize) -> Result<EditLogin, Error> {
+    let pair = login_pair(&record, field)?;
+    let username = editable_text(&record.entries[pair.username], "username").map(str::to_owned);
+    let url = editable_text(&record.entries[pair.url], "url").map(str::to_owned);
+    let notes = note_field(&record).ok().map(|index| {
+        index
+            .and_then(|i| text(&record.entries[i], "text"))
+            .unwrap_or("")
+            .to_owned()
+    });
+    Ok(EditLogin {
+        title: title(&record)?,
+        username,
+        url,
+        notes,
+        tags: std::mem::take(&mut record.tags),
+    })
+}
+
 fn update_content(record: &mut Record, field: usize, change: &Change) -> Result<(), Error> {
+    let pair = login_pair(record, field)?;
     if change
-        .password
-        .as_deref()
-        .is_some_and(|password| !valid_password(password))
+        .title
+        .as_ref()
+        .is_some_and(|title| title.trim().is_empty() || title.len() > MAX_LOGIN_TEXT)
         || change
-            .username
+            .password
+            .as_deref()
+            .is_some_and(|password| !valid_password(password))
+        || change.username.as_ref().is_some_and(|name| {
+            name.len() > MAX_LOGIN_TEXT
+                || editable_text(&record.entries[pair.username], "username").is_none()
+        })
+        || change.url.as_ref().is_some_and(|url| {
+            url.len() > MAX_LOGIN_TEXT || editable_text(&record.entries[pair.url], "url").is_none()
+        })
+        || change
+            .notes
             .as_ref()
-            .is_some_and(|name| name.len() > MAX_LOGIN_TEXT)
-        || (change.password.is_none() && change.username.is_none() && change.tags.is_none())
+            .is_some_and(|notes| notes.len() > MAX_LOGIN_TEXT)
+        || (change.title.is_none()
+            && change.username.is_none()
+            && change.password.is_none()
+            && change.url.is_none()
+            && change.notes.is_none()
+            && change.tags.is_none())
     {
         return Err(Error::Input);
     }
-    let pair = pairs(record)
-        .0
-        .find(|pair| pair.password == field)
-        .ok_or(Error::Input)?;
+    let origin = change.url.as_deref().map(login_origin).transpose()?;
+    let note = change
+        .notes
+        .as_ref()
+        .map(|_| note_field(record))
+        .transpose()?
+        .flatten();
+    let mut retired = Record::default();
     if let Some(tags) = &change.tags {
         set_tags(record, tags)?;
     }
-    let mut retired = Record::default();
+    if let Some(title) = &change.title
+        && let Some(old) = record
+            .extra
+            .insert(TITLE_KEY.into(), Value::from(title.trim()))
+    {
+        retired.extra.insert(TITLE_KEY.into(), old);
+    }
     if let Some(username) = &change.username {
         replace(record, pair.username, "username", username, &mut retired);
     }
     if let Some(password) = &change.password {
         replace(record, pair.password, "password", password, &mut retired);
+    }
+    if let Some(origin) = origin {
+        replace(record, pair.url, "url", &origin, &mut retired);
+    }
+    if let Some(notes) = &change.notes {
+        if let Some(index) = note {
+            replace(record, index, "text", notes, &mut retired);
+        } else {
+            let mut note = template("login")?
+                .into_iter()
+                .find(|field| field.type_name == "note/v1")
+                .ok_or(Error::Integrity)?;
+            note.values.insert("text".into(), notes.clone());
+            record.entries.append(&mut field_record(&note)?.entries);
+        }
     }
     Ok(())
 }
@@ -291,17 +403,14 @@ impl Engine {
         Ok(page)
     }
 
-    pub async fn browser_login_tags(
+    pub async fn browser_login_editor(
         &self,
         store: &mut impl Store,
         target: &Selection,
-    ) -> Result<Vec<String>, Error> {
+    ) -> Result<EditLogin, Error> {
         let vault = self.vault.as_ref().ok_or(Error::Locked)?;
-        let mut content = read_current_login(store, vault, &target.head).await?;
-        if !pairs(&content).0.any(|pair| pair.password == target.field) {
-            return Err(Error::Input);
-        }
-        Ok(std::mem::take(&mut content.tags))
+        let content = read_current_login(store, vault, &target.head).await?;
+        editor_content(content, target.field)
     }
 
     pub async fn create_browser_login(

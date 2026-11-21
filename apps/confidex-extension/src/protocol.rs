@@ -1,6 +1,6 @@
 use confidex_app::{
     Error,
-    browser_logins::{Change, Cursor, NewLogin, Page, Selection},
+    browser_logins::{Change, Cursor, EditLogin, NewLogin, Page, Selection},
 };
 use confidex_storage::{Head, RecordId};
 use serde::{Deserialize, Serialize};
@@ -41,7 +41,7 @@ pub enum Action {
     Logins {
         after: Option<Cursor>,
     },
-    LoginTags {
+    LoginEditor {
         target: Selection,
     },
     CreateLogin {
@@ -86,9 +86,9 @@ pub enum Reply {
         page: Page,
         sync: SyncStatus,
     },
-    LoginTags {
+    LoginEditor {
         target: Selection,
-        tags: Vec<String>,
+        fields: EditLogin,
     },
     Saved(Head),
 }

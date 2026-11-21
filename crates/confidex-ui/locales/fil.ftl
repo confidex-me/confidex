@@ -623,6 +623,7 @@ extension-sync-pending = Naghihintay ng pag-sync.
 extension-login-conflicts = Ayusin ang mga salungatan ng record sa pangunahing Confidex app.
 extension-login-ambiguous = Ayusin ang mga malabong field ng login sa pangunahing Confidex app.
 extension-login-changed = Nagbago ang record. Piliin ito muli upang i-edit ang pinakabagong bersyon.
+extension-password-replacement-hint = Maglagay ng bagong password upang palitan ang naka-save.
 
 extension-startup-error = Hindi masimulan ang Confidex. I-reload ang extension at subukang muli.
 

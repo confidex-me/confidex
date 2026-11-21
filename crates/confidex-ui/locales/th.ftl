@@ -623,6 +623,7 @@ extension-sync-pending = รอการซิงค์
 extension-login-conflicts = แก้ไขรายการที่ขัดแย้งกันในแอปหลักของ Confidex
 extension-login-ambiguous = แก้ไขช่องข้อมูลเข้าสู่ระบบที่กำกวมในแอปหลักของ Confidex
 extension-login-changed = รายการมีการเปลี่ยนแปลง เลือกอีกครั้งเพื่อแก้ไขเวอร์ชันปัจจุบัน
+extension-password-replacement-hint = ป้อนรหัสผ่านใหม่เพื่อแทนที่รหัสผ่านที่บันทึกไว้
 
 extension-startup-error = ไม่สามารถเริ่ม Confidex ได้ โปรดโหลดส่วนขยายใหม่แล้วลองอีกครั้ง
 

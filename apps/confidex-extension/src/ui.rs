@@ -3,7 +3,9 @@ use crate::protocol::{
 };
 use confidex_app::{
     Error,
-    browser_logins::{Change, Cursor, Issues, Login, MAX_LOGIN_TEXT, NewLogin, Selection},
+    browser_logins::{
+        Change, Cursor, EditLogin, Issues, Login, MAX_LOGIN_TEXT, NewLogin, Selection,
+    },
     new_record, templates,
 };
 use confidex_storage::RecordId;
@@ -139,11 +141,73 @@ type Pending = Rc<RefCell<Option<Response>>>;
 
 struct Editor {
     record: RecordId,
-    target: Option<(Selection, Zeroizing<String>)>,
+    original: Option<(Selection, EditLogin)>,
     form: NewLogin,
     focus_title: bool,
     tag_editor: tags::Editor,
-    tags_changed: bool,
+}
+
+impl Editor {
+    fn can_save(&self) -> bool {
+        let Some((_, original)) = &self.original else {
+            return self.form.has_valid_lengths();
+        };
+        let form = &self.form;
+        let title_changed = form.title != original.title;
+        let url_changed = differs(&form.url, original.url.as_deref());
+        let username_changed = differs(&form.username, original.username.as_deref());
+        let notes_changed = differs(&form.notes, original.notes.as_deref());
+        (title_changed
+            || url_changed
+            || username_changed
+            || notes_changed
+            || form.tags != original.tags
+            || self.tag_editor.has_pending_tag()
+            || !form.password.is_empty())
+            && (!title_changed
+                || !form.title.trim().is_empty() && form.title.len() <= MAX_LOGIN_TEXT)
+            && (!url_changed || !form.url.trim().is_empty() && form.url.len() <= MAX_LOGIN_TEXT)
+            && (!username_changed || form.username.len() <= MAX_LOGIN_TEXT)
+            && (!notes_changed || form.notes.len() <= MAX_LOGIN_TEXT)
+            && form.password.len() <= MAX_LOGIN_TEXT
+    }
+
+    fn save_action(&self) -> Action {
+        let form = &self.form;
+        if let Some((target, original)) = &self.original {
+            Action::UpdateLogin {
+                target: target.clone(),
+                change: Change {
+                    title: changed_text(&form.title, Some(&original.title)),
+                    username: changed_text(&form.username, original.username.as_deref()),
+                    password: (!form.password.is_empty()).then(|| form.password.clone()),
+                    url: changed_text(&form.url, original.url.as_deref()),
+                    notes: changed_text(&form.notes, original.notes.as_deref()),
+                    tags: (form.tags != original.tags).then(|| form.tags.clone()),
+                },
+            }
+        } else {
+            Action::CreateLogin {
+                record: self.record,
+                login: NewLogin {
+                    title: form.title.clone(),
+                    url: form.url.clone(),
+                    username: form.username.clone(),
+                    password: form.password.clone(),
+                    notes: form.notes.clone(),
+                    tags: form.tags.clone(),
+                },
+            }
+        }
+    }
+}
+
+fn differs(current: &str, original: Option<&str>) -> bool {
+    original.is_some_and(|value| value != current)
+}
+
+fn changed_text(current: &str, original: Option<&str>) -> Option<String> {
+    differs(current, original).then(|| current.to_owned())
 }
 
 struct App {
@@ -223,24 +287,21 @@ impl App {
                 self.issues.ambiguous |= page.issues.ambiguous;
                 self.issues.conflicts |= page.issues.conflicts;
             }
-            Ok(Reply::LoginTags { target, tags }) => {
-                if let Some(login) = self.rows.iter().find(|login| login.target == target) {
-                    self.editor = Some(Editor {
-                        record: target.head.record,
-                        target: Some((target, Zeroizing::new(login.username.clone()))),
-                        form: NewLogin {
-                            title: login.title.clone(),
-                            username: login.username.clone(),
-                            url: String::new(),
-                            password: String::new(),
-                            notes: String::new(),
-                            tags,
-                        },
-                        focus_title: false,
-                        tag_editor: tags::Editor::default(),
-                        tags_changed: false,
-                    });
-                }
+            Ok(Reply::LoginEditor { target, fields }) => {
+                self.editor = Some(Editor {
+                    record: target.head.record,
+                    form: NewLogin {
+                        title: fields.title.clone(),
+                        username: fields.username.clone().unwrap_or_default(),
+                        url: fields.url.clone().unwrap_or_default(),
+                        password: String::new(),
+                        notes: fields.notes.clone().unwrap_or_default(),
+                        tags: fields.tags.clone(),
+                    },
+                    original: Some((target, fields)),
+                    focus_title: true,
+                    tag_editor: tags::Editor::default(),
+                });
             }
             Ok(Reply::Saved(_)) => {
                 self.editor = None;
@@ -254,11 +315,11 @@ impl App {
         let Some(editor) = &mut self.editor else {
             return;
         };
-        let existing = editor.target.is_some();
+        let original = editor.original.as_ref().map(|(_, fields)| fields);
         record::toolbar(
             ui,
             self.colors,
-            &self.locale.text(if existing {
+            &self.locale.text(if original.is_some() {
                 "vault-record"
             } else {
                 "vault-unsaved"
@@ -268,7 +329,7 @@ impl App {
         let title = record::heading(
             ui,
             &mut editor.form.title,
-            !existing,
+            true,
             &self.locale.text("vault-record-title"),
         );
         if std::mem::take(&mut editor.focus_title) {
@@ -280,11 +341,26 @@ impl App {
         let template = templates::get("login").expect("login template");
         let list = ui.make_persistent_id(editor.record);
         for spec in template.fields {
-            let (value, secret, multiline) = match spec.type_name {
-                "username/v1" => (&mut editor.form.username, false, false),
-                "password/v1" => (&mut editor.form.password, true, false),
-                "url/v1" if !existing => (&mut editor.form.url, false, false),
-                "note/v1" if !existing => (&mut editor.form.notes, false, true),
+            let (value, secret, multiline, enabled) = match spec.type_name {
+                "username/v1" => (
+                    &mut editor.form.username,
+                    false,
+                    false,
+                    original.is_none_or(|f| f.username.is_some()),
+                ),
+                "password/v1" => (&mut editor.form.password, true, false, true),
+                "url/v1" => (
+                    &mut editor.form.url,
+                    false,
+                    false,
+                    original.is_none_or(|f| f.url.is_some()),
+                ),
+                "note/v1" => (
+                    &mut editor.form.notes,
+                    false,
+                    true,
+                    original.is_none_or(|f| f.notes.is_some()),
+                ),
                 _ => continue,
             };
             let id = list.with(spec.type_name);
@@ -298,7 +374,18 @@ impl App {
                 remove_label: "",
             };
             let response = card.show(ui, self.colors, |ui| {
-                ui_kit::field_with_id(ui, id.with("value"), value, secret, multiline, true)
+                let response =
+                    ui_kit::field_with_id(ui, id.with("value"), value, secret, multiline, enabled);
+                if secret && original.is_some() {
+                    ui_kit::muted(
+                        ui,
+                        self.colors,
+                        self.locale.text("extension-password-replacement-hint"),
+                    );
+                } else if !enabled {
+                    ui_kit::muted(ui, self.colors, self.locale.text("vault-opaque-fields"));
+                }
+                response
             });
             let value = response.inner.labelled_by(response.name.id);
             if value.gained_focus() {
@@ -306,28 +393,17 @@ impl App {
             }
         }
 
-        editor.tags_changed |= editor
-            .tag_editor
-            .show(
-                ui,
-                self.colors,
-                &self.locale,
-                editor.record,
-                &mut editor.form.tags,
-            )
-            .changed;
+        editor.tag_editor.show(
+            ui,
+            self.colors,
+            &self.locale,
+            editor.record,
+            &mut editor.form.tags,
+        );
         let tag_problem = editor.tag_editor.problem(&editor.form.tags);
-        let tags_changed = editor.tags_changed || editor.tag_editor.has_pending_tag();
+        let ready = tag_problem.is_none() && editor.can_save();
 
         ui.add_space(Metrics::LG);
-        let ready = tag_problem.is_none()
-            && if existing {
-                (tags_changed || !editor.form.password.is_empty())
-                    && editor.form.password.len() <= MAX_LOGIN_TEXT
-                    && editor.form.username.len() <= MAX_LOGIN_TEXT
-            } else {
-                editor.form.has_valid_lengths()
-            };
         let (submit, cancel) = ui
             .horizontal_wrapped(|ui| {
                 let submit = ui_kit::button(
@@ -367,30 +443,7 @@ impl App {
             if !editor.tag_editor.apply(&mut editor.form.tags) {
                 return;
             }
-            editor.tags_changed = tags_changed;
-            let password = std::mem::take(&mut editor.form.password);
-            let action = match &editor.target {
-                Some((target, original_username)) => Action::UpdateLogin {
-                    target: target.clone(),
-                    change: Change {
-                        username: (editor.form.username.as_str() != original_username.as_str())
-                            .then(|| editor.form.username.clone()),
-                        password: (!password.is_empty()).then_some(password),
-                        tags: tags_changed.then(|| editor.form.tags.clone()),
-                    },
-                },
-                None => Action::CreateLogin {
-                    record: editor.record,
-                    login: NewLogin {
-                        title: editor.form.title.clone(),
-                        url: editor.form.url.clone(),
-                        username: editor.form.username.clone(),
-                        password,
-                        notes: editor.form.notes.clone(),
-                        tags: editor.form.tags.clone(),
-                    },
-                },
-            };
+            let action = editor.save_action();
             self.status = None;
             self.request(ui.ctx(), action);
         }
@@ -580,11 +633,10 @@ impl App {
                             Ok(draft) => {
                                 self.editor = Some(Editor {
                                     record: draft.record,
-                                    target: None,
+                                    original: None,
                                     form: NewLogin::default(),
                                     focus_title: true,
                                     tag_editor: tags::Editor::default(),
-                                    tags_changed: false,
                                 })
                             }
                             Err(error) => self.status = Some((error_label(error), true)),
@@ -608,7 +660,7 @@ impl App {
                         ui.label(&login.username);
                         if ui.button(self.locale.text("vault-edit")).clicked() {
                             self.status = None;
-                            selected = Some(Action::LoginTags {
+                            selected = Some(Action::LoginEditor {
                                 target: login.target.clone(),
                             });
                         }

@@ -623,6 +623,7 @@ extension-sync-pending = Đang chờ đồng bộ.
 extension-login-conflicts = Giải quyết xung đột giữa các mục trong ứng dụng Confidex chính.
 extension-login-ambiguous = Sửa các trường đăng nhập không rõ ràng trong ứng dụng Confidex chính.
 extension-login-changed = Mục đã thay đổi. Hãy chọn lại để chỉnh sửa phiên bản mới nhất.
+extension-password-replacement-hint = Nhập mật khẩu mới để thay thế mật khẩu đã lưu.
 
 extension-startup-error = Không thể khởi động Confidex. Hãy tải lại tiện ích mở rộng và thử lại.
 

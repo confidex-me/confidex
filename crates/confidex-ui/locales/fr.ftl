@@ -626,6 +626,7 @@ extension-sync-pending = Synchronisation en attente.
 extension-login-conflicts = Résolvez les conflits de fiches dans l’application principale Confidex.
 extension-login-ambiguous = Corrigez les champs de connexion ambigus dans l’application principale Confidex.
 extension-login-changed = La fiche a changé. Sélectionnez-la de nouveau pour modifier la version actuelle.
+extension-password-replacement-hint = Saisissez un nouveau mot de passe pour remplacer celui qui est enregistré.
 
 extension-startup-error = Confidex n’a pas pu démarrer. Rechargez l’extension et réessayez.
 

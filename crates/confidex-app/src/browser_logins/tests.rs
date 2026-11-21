@@ -108,11 +108,9 @@ fn update_changes_only_the_selected_raw_keys() {
         .extra
         .insert("vendor".into(), Value::from(true));
     let before = record.encode_content(MAX_OPEN_MEMORY).unwrap();
-    let change = Change {
-        username: Some("updated".into()),
-        password: Some("replacement".into()),
-        tags: None,
-    };
+    let mut change = Change::default();
+    change.username = Some("updated".into());
+    change.password = Some("replacement".into());
     update_content(&mut record, 0, &change).unwrap();
     assert_eq!(text(&record.entries[0], "username"), Some("updated"));
     assert_eq!(text(&record.entries[0], "password"), Some("replacement"));
@@ -120,16 +118,9 @@ fn update_changes_only_the_selected_raw_keys() {
         update_content(&mut record, 2, &change),
         Err(Error::Input)
     ));
-    update_content(
-        &mut record,
-        0,
-        &Change {
-            username: Some("first".into()),
-            password: Some("fixture-secret".into()),
-            tags: None,
-        },
-    )
-    .unwrap();
+    change.username = Some("first".into());
+    change.password = Some("fixture-secret".into());
+    update_content(&mut record, 0, &change).unwrap();
     let after = record.encode_content(MAX_OPEN_MEMORY).unwrap();
     assert_eq!(*before.bytes, *after.bytes);
 }
@@ -141,11 +132,8 @@ fn tags_can_be_replaced_without_touching_credentials_or_other_fields() {
         tags: vec!["original".into()],
         extra: BTreeMap::new(),
     };
-    let mut change = Change {
-        username: None,
-        password: None,
-        tags: Some(vec!["work".into(), "work".into()]),
-    };
+    let mut change = Change::default();
+    change.tags = Some(vec!["work".into(), "work".into()]);
     assert!(matches!(
         update_content(&mut record, 0, &change),
         Err(Error::Input)
@@ -160,6 +148,84 @@ fn tags_can_be_replaced_without_touching_credentials_or_other_fields() {
     change.tags = Some(vec![]);
     update_content(&mut record, 0, &change).unwrap();
     assert!(record.tags.is_empty());
+}
+
+#[test]
+fn editor_reads_full_values_without_the_saved_password() {
+    let mut login = compound(&"u".repeat(256));
+    login
+        .value
+        .insert("vendor-password".into(), Value::from("vendor-secret"));
+    let record = Record {
+        entries: vec![login, entry("note/v1", &[("text", "Project notes")])],
+        tags: vec!["work".into()],
+        extra: BTreeMap::from([(TITLE_KEY.into(), Value::from(" Full title"))]),
+    };
+    let fields = editor_content(record, 0).unwrap();
+    assert_eq!(fields.title, " Full title");
+    assert_eq!(fields.username.as_deref(), Some("u".repeat(256).as_str()));
+    assert_eq!(
+        fields.url.as_deref(),
+        Some("https://example.test/path?q=keep")
+    );
+    assert_eq!(fields.notes.as_deref(), Some("Project notes"));
+    assert_eq!(fields.tags, ["work"]);
+    let json = serde_json::to_string(&fields).unwrap();
+    assert!(
+        !json.contains("password")
+            && !json.contains("fixture-secret")
+            && !json.contains("vendor-secret")
+    );
+}
+
+#[test]
+fn edits_selected_website_and_title_and_only_an_unambiguous_note() {
+    let mut record = Record {
+        entries: vec![
+            compound("first"),
+            compound("second"),
+            entry("secure-note/v1", &[("text", "private")]),
+        ],
+        tags: vec![],
+        extra: BTreeMap::new(),
+    };
+    sections::apply(
+        &mut record,
+        Some(&[sections::Section::new("Login fields", 0, 2)]),
+        3,
+    )
+    .unwrap();
+    let original_sections = record.extra[sections::KEY].clone();
+    let mut change = Change::default();
+    change.title = Some(" Edited ".into());
+    change.url = Some("https://new.example.test/path?ignored=1".into());
+    change.notes = Some("New note".into());
+    update_content(&mut record, 1, &change).unwrap();
+    assert_eq!(title(&record).unwrap(), "Edited");
+    assert_eq!(
+        text(&record.entries[0], "url"),
+        Some("https://example.test/path?q=keep")
+    );
+    assert_eq!(
+        text(&record.entries[1], "url"),
+        Some("https://new.example.test")
+    );
+    assert_eq!(text(&record.entries[1], "password"), Some("fixture-secret"));
+    assert_eq!(text(&record.entries[2], "text"), Some("private"));
+    assert_eq!(text(&record.entries[3], "text"), Some("New note"));
+    assert_eq!(record.entries[3].name, "Notes");
+    assert_eq!(record.extra[sections::KEY], original_sections);
+
+    record
+        .entries
+        .push(entry("note/v1", &[("text", "Other note")]));
+    assert!(matches!(
+        update_content(&mut record, 1, &change),
+        Err(Error::Input)
+    ));
+    assert_eq!(text(&record.entries[3], "text"), Some("New note"));
+    assert_eq!(text(&record.entries[4], "text"), Some("Other note"));
+    assert!(editor_content(record, 1).unwrap().notes.is_none());
 }
 
 #[test]

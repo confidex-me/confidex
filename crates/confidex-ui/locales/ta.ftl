@@ -626,6 +626,7 @@ extension-sync-pending = ஒத்திசைவு நிலுவையில
 extension-login-conflicts = முரண்பட்ட பதிவுகளை முதன்மை Confidex செயலியில் சரிசெய்யவும்.
 extension-login-ambiguous = குழப்பமான உள்நுழைவுப் புலங்களை முதன்மை Confidex செயலியில் சரிசெய்யவும்.
 extension-login-changed = பதிவு மாறியுள்ளது. தற்போதைய பதிப்பைத் திருத்த மீண்டும் தேர்ந்தெடுக்கவும்.
+extension-password-replacement-hint = சேமித்த கடவுச்சொல்லை மாற்றப் புதிய கடவுச்சொல்லை உள்ளிடவும்.
 
 extension-startup-error = Confidex ஐத் தொடங்க முடியவில்லை. நீட்டிப்பை மீண்டும் ஏற்றி முயற்சிக்கவும்.
 

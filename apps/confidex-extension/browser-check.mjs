@@ -470,30 +470,62 @@ path = ${JSON.stringify(blobPath)}
   await press(reopened, 'Tab', 9);
   await press(reopened, 'Enter', 13);
 
-  const offline = await until(async () => {
+  const waitForLogin = title => until(async () => {
     try {
-      return (await list(reopened)).rows.find(row => row.title === login.title);
+      return (await list(reopened)).rows.find(row => row.title === title);
     } catch (error) {
       if (!error.message.includes('Confidex session request already pending')) throw error;
       return false;
     }
-  }, 'login saved through the offline session UI');
+  }, `saved login ${title}`);
+  const offline = await waitForLogin(login.title);
   const {record} = offline.target.head;
   const create = {CreateLogin: {record, login}};
   assert.deepEqual(await action(reopened, create), {Err: {Storage: 'Conflict'}});
-  const readTags = (page, target) => action(page, {LoginTags: {target}});
-  assert.deepEqual((await readTags(reopened, offline.target)).Ok?.LoginTags?.tags, tags);
+  const openEditor = (page, target) => action(page, {LoginEditor: {target}});
+  const {fields: savedFields} = (await openEditor(reopened, offline.target)).Ok.LoginEditor;
+  assert.deepEqual(savedFields, {
+    title: login.title, username: login.username, url: 'https://example.test', notes: login.notes, tags,
+  });
+
+  // Open Edit on this row. The toolbar contributes three tab stops.
+  const rowIndex = (await list(reopened)).rows.findIndex(row => row.title === login.title);
+  assert(rowIndex >= 0);
+  await click(reopened, '#session');
+  for (let stop = 0; stop < rowIndex + 4; stop++) await press(reopened, 'Tab', 9);
+  await press(reopened, 'Enter', 13);
+  await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'edit title focus');
+  const edited = {
+    title: 'Edited offline login',
+    url: 'https://edited.example.test/path',
+    origin: 'https://edited.example.test',
+    notes: 'Edited notes from Chromium',
+  };
+  await replaceFocusedText(reopened, edited.title);
+  for (const field of ['username', 'password', 'website']) {
+    await press(reopened, 'Tab', 9);
+    assert(await reopened.evaluate("document.activeElement.id === 'session-text-input'"),
+      `Browser did not focus edit ${field}`);
+  }
+  await replaceFocusedText(reopened, edited.url);
+  await press(reopened, 'Tab', 9);
+  await replaceFocusedText(reopened, edited.notes);
+  for (let stop = 0; stop < tags.length + 2; stop++) await press(reopened, 'Tab', 9);
+  await press(reopened, 'Enter', 13);
+
+  const editedLogin = await waitForLogin(edited.title);
+  assert.deepEqual((await openEditor(reopened, editedLogin.target)).Ok?.LoginEditor?.fields, {
+    ...savedFields, title: edited.title, url: edited.origin, notes: edited.notes,
+  });
   const change = {username: null, password: updatedPassword};
-  const passwordUpdate = (await action(reopened, {UpdateLogin: {target: offline.target, change}})).Ok?.Saved;
-  assert(passwordUpdate, 'Offline update did not finish');
   assert.deepEqual(await action(reopened, {UpdateLogin: {target: offline.target, change}}), {Err: {Storage: 'Conflict'}});
-  assert.deepEqual(await readTags(reopened, offline.target), {Err: {Storage: 'Conflict'}});
+  assert.deepEqual(await openEditor(reopened, offline.target), {Err: {Storage: 'Conflict'}});
   const updated = (await action(reopened, {UpdateLogin: {
-    target: {...offline.target, head: passwordUpdate}, change: {username: null, password: null, tags: editedTags},
+    target: editedLogin.target, change: {username: null, password: null, tags: editedTags},
   }})).Ok?.Saved;
   assert(updated, 'Tag-only write did not finish');
   await checkStorage(reopened, [password, credentials.key, loginPassword, offlinePassword,
-    updatedPassword, noteLines[0], 'chromium-fixture@example.test', 'offline-fixture@example.test']);
+    updatedPassword, noteLines[0], edited.notes, 'chromium-fixture@example.test', 'offline-fixture@example.test']);
 
   // Shut down Chromium while the server is still unreachable. Reuse only the
   // temporary profile, just as a user would after a browser restart.
@@ -507,7 +539,7 @@ path = ${JSON.stringify(blobPath)}
   assert((await status(recovered)).Ok?.Locked, 'Browser restart restored an unlocked session');
   assert.deepEqual(await action(recovered, create), {Err: 'Locked'});
   assert((await action(recovered, {Unlock: credentials})).Ok?.Opened, 'Restarted offline unlock failed');
-  assert.deepEqual((await list(recovered)).rows.find(row => row.title === 'Offline login')?.target.head, updated);
+  assert.deepEqual((await list(recovered)).rows.find(row => row.title === edited.title)?.target.head, updated);
 
   networkBlocked = false;
   await current(recovered);
@@ -519,12 +551,12 @@ path = ${JSON.stringify(blobPath)}
   await syncWeb(web, origin);
   const read = () => web({Open: {record}});
   const {Draft: draft} = (await read()).Ok;
-  assert.equal(draft.title, 'Offline login');
+  assert.equal(draft.title, edited.title);
   assert.deepEqual(draft.fields.map(field => field.type_name), ['username/v1', 'password/v1', 'url/v1', 'note/v1']);
-  assert(draft.fields[1].values.password === updatedPassword, 'Web cache did not receive the offline update');
-  assert.equal(draft.fields[2].values.url, 'https://example.test');
+  assert(draft.fields[1].values.password === offlinePassword, 'Editing with the password blank changed the saved password');
+  assert.equal(draft.fields[2].values.url, edited.origin);
   assert.deepEqual(draft.fields.map(field => field.name), ['Username', 'Password', 'Website', 'Notes']);
-  assert.equal(draft.fields[3].values.text, login.notes);
+  assert.equal(draft.fields[3].values.text, edited.notes);
   assert.deepEqual(draft.tags, editedTags);
   assert.deepEqual(draft.revision, updated.revision);
 
@@ -536,10 +568,10 @@ path = ${JSON.stringify(blobPath)}
   await syncWeb(web, origin);
   await syncExtension(recovered, action);
   assert.deepEqual(await action(recovered, {UpdateLogin: {target: {head: updated, field: 1}, change}}), {Err: {Storage: 'Conflict'}});
-  const common = (await list(recovered)).rows.find(row => row.title === 'Offline login');
+  const common = (await list(recovered)).rows.find(row => row.title === edited.title);
   assert.equal(common.username, 'edited-in-web@example.test');
   assert.deepEqual(common.target.head, fromWeb);
-  assert.deepEqual((await readTags(recovered, common.target)).Ok?.LoginTags?.tags, [...editedTags, 'web']);
+  assert.deepEqual((await openEditor(recovered, common.target)).Ok?.LoginEditor?.fields.tags, [...editedTags, 'web']);
 
   networkBlocked = true;
   const localBranch = (await action(recovered, {UpdateLogin: {target: common.target, change: {
@@ -555,7 +587,7 @@ path = ${JSON.stringify(blobPath)}
   await syncExtension(recovered, action);
   const conflicted = await list(recovered);
   assert(conflicted.issues.conflicts, 'Conflict was not reported');
-  assert(!conflicted.rows.some(row => row.title === 'Offline login'), 'Conflicted login remained selectable');
+  assert(!conflicted.rows.some(row => row.title === edited.title), 'Conflicted login remained selectable');
   assert.deepEqual(await action(recovered, {UpdateLogin: {target: {head: localBranch, field: 1}, change}}), {Err: {Storage: 'Conflict'}});
   const conflict = (await syncWeb(web, origin)).conflicts.find(entry => entry.record.every((byte, i) => byte === record[i]));
   assert(conflict, 'The main client did not offer conflict resolution');
@@ -571,7 +603,7 @@ path = ${JSON.stringify(blobPath)}
   await syncExtension(recovered, action);
   const resolved = await list(recovered);
   assert(!resolved.issues.conflicts, 'Resolved login still showed a conflict');
-  const resolvedLogin = resolved.rows.find(row => row.title === 'Offline login');
+  const resolvedLogin = resolved.rows.find(row => row.title === edited.title);
   assert.equal(resolvedLogin?.username, 'remote-branch@example.test');
 
   const onlineWrite = (await action(recovered, {UpdateLogin: {target: resolvedLogin.target, change: {
@@ -583,10 +615,11 @@ path = ${JSON.stringify(blobPath)}
   const finalDraft = (await read()).Ok.Draft;
   assert.deepEqual(finalDraft.revision, onlineWrite.revision);
   assert.equal(finalDraft.fields[3].values.text, 'Note edited in the main app');
+  assert(finalDraft.fields[1].values.password === updatedPassword, 'Password replacement did not synchronize');
   assert.deepEqual(finalDraft.tags, [...editedTags, 'web']);
 
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
-    offlineUnlock: true, newLoginThroughUi: true, tagsSyncedBothWays: true,
+    offlineUnlock: true, newLoginThroughUi: true, editedLoginThroughUi: true, tagsSyncedBothWays: true,
     offlineWritesSurviveBrowserRestart: true, automaticSync: true,
     duplicateCreateRejected: true, staleUpdateRejected: true, conflictPreservedAndResolved: true,
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
@@ -762,11 +795,18 @@ async function click(page, selector) {
   }
 }
 
-async function press(page, key, windowsVirtualKeyCode) {
+async function press(page, key, windowsVirtualKeyCode, modifiers = 0) {
   for (const type of ['rawKeyDown', 'keyUp']) {
-    await page.call('Input.dispatchKeyEvent', {type, key, code: key, windowsVirtualKeyCode});
+    await page.call('Input.dispatchKeyEvent', {type, key, code: key, windowsVirtualKeyCode, modifiers});
   }
   await page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+}
+
+async function replaceFocusedText(page, text) {
+  assert(await page.evaluate("document.activeElement.id === 'session-text-input'"),
+    'Expected a focused text field');
+  await press(page, 'a', 65, process.platform === 'darwin' ? 4 : 2);
+  await page.call('Input.insertText', {text});
 }
 
 async function tabAndType(page, text, field) {
