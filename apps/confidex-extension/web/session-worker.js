@@ -12,7 +12,7 @@ function openSession() {
       await init();
       lease = new SessionLease();
       resolve(new Session(lease));
-      self.postMessage('ready');
+      self.postMessage({ready: lock.name});
       // The worker holds ownership until termination.
       await new Promise(() => {});
     }).catch(reject);

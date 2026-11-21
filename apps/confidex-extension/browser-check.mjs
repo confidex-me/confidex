@@ -385,6 +385,24 @@ path = ${JSON.stringify(blobPath)}
   await until(() => !workers.size, 'expired worker terminates');
   assert.deepEqual(await action(session, {Logins: {after: null}}), {Err: 'Locked'});
 
+  const exiting = await currentWorker();
+  await exiting.evaluate(`(() => {
+    const handle = self.onmessage;
+    self.onmessage = event => {
+      if (event.data instanceof Uint8Array) {
+        event.data.fill(0);
+        self.close();
+        return;
+      }
+      return handle(event);
+    };
+    return true;
+  })()`);
+  const beforeExit = await session.evaluate('performance.timeOrigin');
+  await assert.rejects(action(session, {Unlock: credentials}), /Confidex session closed/);
+  assert.equal(await session.evaluate('performance.timeOrigin'), beforeExit, 'Worker loss reloaded the session');
+  assert.equal((await status(session)).Ok?.Locked?.name, 'Synthetic extension vault');
+
   const slowWorker = await currentWorker();
   await slowWorker.call('Runtime.addBinding', {name: 'confidexTestDeriving'});
   let deriving = false;
@@ -447,7 +465,7 @@ path = ${JSON.stringify(blobPath)}
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
     optionalSitePermission: true, senderValidation: true, strictCspRouting: true,
     backgroundRestart: true, idleExpiry: true, workerLoss: true,
-    slowUnlock: true, openDocumentAfterRevocation: true}));
+    slowUnlock: true, workerLossDuringUnlock: true, openDocumentAfterRevocation: true}));
 
   if (!options.includes('--vault-only')) {
     for (const page of [ordinaryTab, strictTab]) {

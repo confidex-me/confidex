@@ -258,16 +258,20 @@ impl App {
         }
         if self.pending.is_some() {
             ui_kit::spinner(ui, self.colors, 20., &self.locale.text("vault-working"));
-            if matches!(self.page, Page::Opened { .. })
-                && ui_kit::button(
-                    ui,
-                    self.colors,
-                    &self.locale.text("vault-lock"),
-                    ButtonRole::Secondary,
-                    0.,
-                    true,
-                )
-                .clicked()
+            let action = if matches!(self.page, Page::Opened { .. }) {
+                "vault-lock"
+            } else {
+                "vault-cancel"
+            };
+            if ui_kit::button(
+                ui,
+                self.colors,
+                &self.locale.text(action),
+                ButtonRole::Secondary,
+                0.,
+                true,
+            )
+            .clicked()
             {
                 cancel_session();
             }

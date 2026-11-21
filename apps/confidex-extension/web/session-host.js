@@ -2,6 +2,7 @@ let worker;
 let pending;
 let startupTimer;
 let workingTimer;
+let vaultLock;
 let checking = false;
 let routing = false;
 let revision = 0;
@@ -15,6 +16,7 @@ function stop(output) {
   clearTimeout(startupTimer);
   clearInterval(workingTimer);
   workingTimer = undefined;
+  vaultLock = undefined;
   revision++;
   const request = pending;
   pending = undefined;
@@ -29,8 +31,9 @@ function start() {
   startupTimer = setTimeout(stop, 20000);
   current.onmessage = ({data}) => {
     if (worker !== current) return;
-    if (data === 'ready' && !workingTimer) {
+    if (typeof data?.ready === 'string' && !workingTimer) {
       clearTimeout(startupTimer);
+      vaultLock = data.ready;
       workingTimer = setInterval(checkWorker, 5000);
       return;
     }
@@ -65,13 +68,26 @@ async function probe(current, form) {
 
 async function checkWorker() {
   const current = worker;
-  if (!current || !workingTimer || pending || checking) return;
+  if (!current || !vaultLock || checking) return;
+  const request = pending;
   const sequence = commandSequence;
   checking = true;
   try {
-    if (!await probe(current)) stopIfIdle(current, sequence);
-  } catch {
-    stopIfIdle(current, sequence);
+    if (request) {
+      // The browser can observe the ownership lock while WASM blocks the
+      // worker's event loop. A held lock does not require a worker reply.
+      const state = await navigator.locks.query().catch(() => undefined);
+      if (!state || state.held.some(lock => lock.name === vaultLock)
+          || current !== worker || pending !== request) return;
+    }
+    // An orderly exit may already have queued its terminal reply. Give the
+    // host time to receive it before rejecting a command whose owner is gone.
+    if (await probe(current).catch(() => false)) return;
+    if (request) {
+      if (current === worker && pending === request) stop();
+    } else {
+      stopIfIdle(current, sequence);
+    }
   } finally {
     checking = false;
   }

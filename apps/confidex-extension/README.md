@@ -34,6 +34,8 @@ and returning results. Trusted pointer, keyboard and scroll events in the
 session tab can renew the deadline. Background traffic and sync leave the
 deadline untouched. Closing or reloading the tab, locking manually, expiry, or
 loss of the worker clears the previews and requires another unlock. The
+session tab checks the worker's ownership lock while a command is pending.
+Users can cancel a pending connection or unlock from the session tab. The
 background service worker asks the existing session for live authorization
 on each route, so background restarts preserve routing without storing keys
 or granting any session authority to the background.
@@ -71,10 +73,11 @@ the isolated messaging channel under strict CSP, routing after a background
 restart, worker loss, idle expiry, duplicate ownership, and closing the session.
 The revocation check sends a report from the original isolated world without
 reloading the page. The slow-unlock check blocks the worker across the previous
-probe timeout and verifies that unlock completes. The suite also checks
-incorrect credentials, offline unlock, and absence of fixture credentials in
-persistent extension data. It removes the temporary browser profile and server
-data and does not write traces or screenshots.
+probe timeout and verifies that unlock completes. A separate check closes the
+worker without a reply during unlock and verifies recovery in the same tab.
+The suite also checks incorrect credentials, offline unlock, and absence of
+fixture credentials in persistent extension data. It removes the temporary
+browser profile and server data and does not write traces or screenshots.
 
 Headless runs record prior consent in Chromium's test profile and then use the
 permission button to request actual access. To exercise the first-use native
