@@ -14,6 +14,7 @@ ui = ["dep:confidex-browser", "dep:confidex-ui", "dep:confidex-vault", "dep:efra
 session = ["dep:confidex-browser", "dep:confidex-vault"]
 
 [dependencies]
+confidex-extension-content = { path = "content" }
 confidex-app = { path = "../../crates/confidex-app" }
 confidex-storage = { path = "../../crates/confidex-storage" }
 serde = { version = "1", features = ["derive"] }

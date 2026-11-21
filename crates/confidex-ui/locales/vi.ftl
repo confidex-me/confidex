@@ -632,3 +632,11 @@ extension-startup-error = Không thể khởi động Confidex. Hãy tải lại
 extension-sites-grant = Cho phép truy cập các trang HTTPS
 extension-sites-revoke = Thu hồi quyền truy cập các trang HTTPS
 extension-sites-unavailable = Không thể thay đổi quyền truy cập trang web.
+
+extension-fill = Điền thông tin đăng nhập
+extension-no-form = Không tìm thấy biểu mẫu đăng nhập được hỗ trợ.
+extension-site-no-access = Mở trang HTTPS và cho phép truy cập trang web trong thẻ phiên.
+extension-form-changed = Trang, biểu mẫu hoặc mục đã thay đổi. Hãy làm mới danh sách và chọn lại.
+extension-form-choice = Biểu mẫu đăng nhập
+extension-session-open = Mở phiên
+extension-filled = Đã điền thông tin đăng nhập.

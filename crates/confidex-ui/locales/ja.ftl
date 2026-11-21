@@ -632,3 +632,11 @@ extension-startup-error = Confidex を起動できませんでした。拡張機
 extension-sites-grant = HTTPS サイトへのアクセスを許可
 extension-sites-revoke = HTTPS サイトへのアクセス許可を取り消す
 extension-sites-unavailable = サイトへのアクセス権を変更できませんでした。
+
+extension-fill = ログイン情報を入力
+extension-no-form = 対応するログインフォームが見つかりませんでした。
+extension-site-no-access = HTTPS ページを開き、セッションタブでサイトへのアクセスを許可してください。
+extension-form-changed = ページ、フォーム、または項目が変更されました。一覧を更新して選び直してください。
+extension-form-choice = ログインフォーム
+extension-session-open = セッションを開く
+extension-filled = ログイン情報を入力しました。

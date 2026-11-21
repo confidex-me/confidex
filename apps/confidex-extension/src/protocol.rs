@@ -111,13 +111,32 @@ pub type Response = Result<Reply, Error>;
 
 // The browser adapter supplies this context separately from the form report.
 #[cfg(any(test, feature = "session"))]
-#[derive(Deserialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct SenderContext {
-    tab_id: u32,
-    frame_id: u32,
-    document_id: String,
-    origin: String,
+pub struct SenderContext {
+    pub tab_id: u32,
+    pub frame_id: u32,
+    pub document_id: String,
+    pub origin: String,
+}
+
+#[cfg(any(test, feature = "session"))]
+impl SenderContext {
+    pub fn valid(&self) -> bool {
+        self.tab_id <= i32::MAX as u32
+            && self.frame_id == 0
+            && valid_id(&self.document_id)
+            && self.origin.len() <= 1024
+            && confidex_app::browser_logins::login_origin(&self.origin)
+                .ok()
+                .as_ref()
+                == Some(&self.origin)
+    }
+}
+
+#[cfg(any(test, feature = "session"))]
+pub fn valid_id(id: &str) -> bool {
+    !id.is_empty() && id.len() <= 64 && id.bytes().all(|b| b.is_ascii_hexdigit() || b == b'-')
 }
 
 #[cfg(any(test, feature = "session"))]
@@ -147,19 +166,7 @@ impl FormReport {
         ) else {
             return false;
         };
-        let Ok(origin) = confidex_app::sync::server_url(&context.origin) else {
-            return false;
-        };
-        context.tab_id <= i32::MAX as u32
-            && context.frame_id == 0
-            && context.document_id.len() <= 64
-            && !context.document_id.is_empty()
-            && context
-                .document_id
-                .bytes()
-                .all(|b| b.is_ascii_hexdigit() || b == b'-')
-            && origin.starts_with("https://")
-            && origin.strip_suffix('/') == Some(context.origin.as_str())
+        context.valid()
             && matches!(report.kind, FormKind::FormPresence)
             && report.version == 1
             && report.has_password

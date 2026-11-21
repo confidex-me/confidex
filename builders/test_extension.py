@@ -13,7 +13,8 @@ with patch.dict(sys.modules, {'build': wasm}):
 
 def fixture(bundle):
     bundle.mkdir(parents=True)
-    for name in ('manifest.json', 'session.html', 'session.css', 'session-boot.js',
+    for name in ('manifest.json', 'popup.html', 'popup.css', 'popup-boot.js',
+                 'extension-strings.js', 'session.html', 'session.css', 'session-boot.js',
                  'session-messages.json', 'session-worker.js', 'background.js',
                  'content-bootstrap.js', 'content-channel.js', 'site-permissions.js',
                  'engine/engine.js', 'ui/ui.js', 'content/content.js'):

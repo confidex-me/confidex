@@ -635,3 +635,11 @@ extension-startup-error = Confidex haikuweza kuanza. Pakia upya kiendelezi na uj
 extension-sites-grant = Ruhusu ufikiaji wa tovuti za HTTPS
 extension-sites-revoke = Ondoa ruhusa ya kufikia tovuti za HTTPS
 extension-sites-unavailable = Haikuwezekana kubadilisha ruhusa ya kufikia tovuti.
+
+extension-fill = Jaza taarifa za kuingia
+extension-no-form = Hakuna fomu ya kuingia inayotumika iliyopatikana.
+extension-site-no-access = Fungua ukurasa wa HTTPS na uruhusu ufikiaji wa tovuti kwenye kichupo cha kipindi.
+extension-form-changed = Ukurasa, fomu au rekodi imebadilika. Onyesha upya orodha na uchague tena.
+extension-form-choice = Fomu ya kuingia
+extension-session-open = Fungua kipindi
+extension-filled = Taarifa za kuingia zimejazwa.

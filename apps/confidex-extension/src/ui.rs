@@ -983,7 +983,7 @@ async fn send(action: Action) -> Response {
     serde_json::from_slice(&bytes).map_err(|_| Error::Integrity)?
 }
 
-fn error_label(error: Error) -> &'static str {
+pub(crate) fn error_label(error: Error) -> &'static str {
     match error {
         Error::Auth => "vault-error-auth",
         Error::Key => "vault-error-key",

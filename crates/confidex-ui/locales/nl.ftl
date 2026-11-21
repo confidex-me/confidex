@@ -635,3 +635,11 @@ extension-startup-error = Confidex kon niet starten. Laad de extensie opnieuw en
 extension-sites-grant = Toegang tot HTTPS-sites toestaan
 extension-sites-revoke = Toegang tot HTTPS-sites intrekken
 extension-sites-unavailable = De sitetoegang kon niet worden gewijzigd.
+
+extension-fill = Inloggegevens invullen
+extension-no-form = Geen ondersteund inlogformulier gevonden.
+extension-site-no-access = Open een HTTPS-pagina en sta toegang tot sites toe op het sessietabblad.
+extension-form-changed = De pagina, het formulier of het item is gewijzigd. Vernieuw de lijst en kies opnieuw.
+extension-form-choice = Inlogformulier
+extension-session-open = Sessie openen
+extension-filled = Inloggegevens ingevuld.

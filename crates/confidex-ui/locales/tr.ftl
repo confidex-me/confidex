@@ -632,3 +632,11 @@ extension-startup-error = Confidex başlatılamadı. Uzantıyı yeniden yükleyi
 extension-sites-grant = HTTPS sitelerine erişime izin ver
 extension-sites-revoke = HTTPS sitelerine erişimi kaldır
 extension-sites-unavailable = Site erişimi değiştirilemedi.
+
+extension-fill = Giriş bilgilerini doldur
+extension-no-form = Desteklenen bir giriş formu bulunamadı.
+extension-site-no-access = Bir HTTPS sayfası açın ve oturum sekmesinden sitelere erişime izin verin.
+extension-form-changed = Sayfa, form veya kayıt değişti. Listeyi yenileyip yeniden seçin.
+extension-form-choice = Giriş formu
+extension-session-open = Oturumu aç
+extension-filled = Giriş bilgileri dolduruldu.

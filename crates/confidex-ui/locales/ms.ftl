@@ -632,3 +632,11 @@ extension-startup-error = Confidex tidak dapat dimulakan. Muat semula sambungan 
 extension-sites-grant = Benarkan akses ke laman HTTPS
 extension-sites-revoke = Tarik balik akses ke laman HTTPS
 extension-sites-unavailable = Akses laman tidak dapat diubah.
+
+extension-fill = Isi maklumat log masuk
+extension-no-form = Tiada borang log masuk yang disokong ditemui.
+extension-site-no-access = Buka halaman HTTPS dan benarkan akses laman dalam tab sesi.
+extension-form-changed = Halaman, borang atau rekod telah berubah. Muat semula senarai dan pilih semula.
+extension-form-choice = Borang log masuk
+extension-session-open = Buka sesi
+extension-filled = Maklumat log masuk telah diisi.

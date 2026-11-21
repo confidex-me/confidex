@@ -637,3 +637,11 @@ extension-startup-error = Nie udało się uruchomić Confidex. Załaduj rozszerz
 extension-sites-grant = Zezwól na dostęp do stron HTTPS
 extension-sites-revoke = Cofnij dostęp do stron HTTPS
 extension-sites-unavailable = Nie udało się zmienić dostępu do stron.
+
+extension-fill = Wypełnij dane logowania
+extension-no-form = Nie znaleziono obsługiwanego formularza logowania.
+extension-site-no-access = Otwórz stronę HTTPS i zezwól na dostęp do witryn na karcie sesji.
+extension-form-changed = Strona, formularz lub wpis uległy zmianie. Odśwież listę i wybierz ponownie.
+extension-form-choice = Formularz logowania
+extension-session-open = Otwórz sesję
+extension-filled = Dane logowania zostały wypełnione.

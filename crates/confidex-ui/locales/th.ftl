@@ -632,3 +632,11 @@ extension-startup-error = ไม่สามารถเริ่ม Confidex �
 extension-sites-grant = อนุญาตให้เข้าถึงเว็บไซต์ HTTPS
 extension-sites-revoke = ยกเลิกการเข้าถึงเว็บไซต์ HTTPS
 extension-sites-unavailable = ไม่สามารถเปลี่ยนสิทธิ์การเข้าถึงเว็บไซต์ได้
+
+extension-fill = กรอกข้อมูลเข้าสู่ระบบ
+extension-no-form = ไม่พบแบบฟอร์มเข้าสู่ระบบที่รองรับ
+extension-site-no-access = เปิดหน้า HTTPS แล้วอนุญาตการเข้าถึงเว็บไซต์ในแท็บเซสชัน
+extension-form-changed = หน้า แบบฟอร์ม หรือรายการมีการเปลี่ยนแปลง รีเฟรชรายการแล้วเลือกอีกครั้ง
+extension-form-choice = แบบฟอร์มเข้าสู่ระบบ
+extension-session-open = เปิดเซสชัน
+extension-filled = กรอกข้อมูลเข้าสู่ระบบแล้ว

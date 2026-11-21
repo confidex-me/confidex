@@ -24,7 +24,7 @@ function openSession() {
 function retire(output) {
   clearTimeout(expiry);
   clearTimeout(syncTimer);
-  queued?.fill(0);
+  queued?.input.fill(0);
   queued = undefined;
   // The worker can run Rust destructors when the Engine has no active borrow.
   if (!busy) {
@@ -46,9 +46,9 @@ function scheduleExpiry() {
 
 function resume() {
   if (queued) {
-    const input = queued;
+    const {input, site} = queued;
     queued = undefined;
-    void execute(input);
+    void execute(input, site);
     return;
   }
   const delay = session.sync_delay();
@@ -73,12 +73,12 @@ async function sync() {
   }
 }
 
-async function execute(input) {
+async function execute(input, site = false) {
   clearTimeout(syncTimer);
   busy = true;
   try {
     session ??= await openSession();
-    const response = await session.execute(input);
+    const response = await (site ? session.execute_site(input) : session.execute(input));
     busy = false;
     if (lease.remaining() === 0) {
       if (lease.was_locked()) retire(response);
@@ -98,25 +98,32 @@ async function execute(input) {
 }
 
 self.onmessage = ({data, ports}) => {
-  if (!(data instanceof Uint8Array)) {
+  const site = data?.kind === 'Site' && data.input instanceof Uint8Array;
+  const input = site ? data.input : data;
+  if (!(input instanceof Uint8Array)) {
     if (data?.kind === 'Activity' && lease) {
       lease.activity();
       scheduleExpiry();
     } else if (data?.kind === 'Probe' && ports.length === 1) {
       const [port] = ports;
       const remaining = lease?.remaining();
-      port.postMessage(data.form
-        ? remaining > 0 && lease.accept_form(data.form.context, data.form.report)
-        : remaining !== undefined && remaining !== 0);
+      let alive = remaining !== undefined && remaining !== 0;
+      if (data.form) alive = remaining > 0 && lease.accept_form(data.form.context, data.form.report);
+      if (typeof data.operation === 'string') alive = lease?.site_live(data.operation) === true;
+      port.postMessage(alive);
       port.close();
       if (remaining === 0) retire();
+    } else if (data?.kind === 'SiteReset' && lease) {
+      lease.site_reset();
+    } else if (data?.kind === 'SiteNavigation' && lease) {
+      lease.site_navigation(data.tabId, data.origin ?? undefined);
     }
     return;
   }
-  if (!busy) void execute(data);
-  else if (!queued) queued = data;
+  if (!busy) void execute(input, site);
+  else if (!queued) queued = {input, site};
   else {
-    data.fill(0);
+    input.fill(0);
     retire();
   }
 };

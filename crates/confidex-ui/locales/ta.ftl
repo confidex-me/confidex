@@ -635,3 +635,11 @@ extension-startup-error = Confidex ஐத் தொடங்க முடிய�
 extension-sites-grant = HTTPS தளங்களுக்கான அணுகலை அனுமதி
 extension-sites-revoke = HTTPS தளங்களுக்கான அணுகலை நீக்கு
 extension-sites-unavailable = தள அணுகலை மாற்ற முடியவில்லை.
+
+extension-fill = உள்நுழைவு விவரங்களை நிரப்பு
+extension-no-form = ஆதரிக்கப்படும் உள்நுழைவுப் படிவம் கிடைக்கவில்லை.
+extension-site-no-access = HTTPS பக்கத்தைத் திறந்து, அமர்வுத் தாவலில் தள அணுகலை அனுமதிக்கவும்.
+extension-form-changed = பக்கம், படிவம் அல்லது பதிவு மாறிவிட்டது. பட்டியலைப் புதுப்பித்து மீண்டும் தேர்ந்தெடுக்கவும்.
+extension-form-choice = உள்நுழைவுப் படிவம்
+extension-session-open = அமர்வைத் திற
+extension-filled = உள்நுழைவு விவரங்கள் நிரப்பப்பட்டன.

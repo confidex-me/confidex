@@ -260,7 +260,7 @@ fn serialized_previews_omit_protected_separate_and_compound_usernames() {
         record: [1; 16],
         revision: [2; 32],
     };
-    assert!(append_previews(&record, &head, 0, &mut page).is_none());
+    assert!(append_previews(&record, &head, 0, &mut page, None).is_none());
     let serialized = serde_json::to_string(&page).unwrap();
     assert!(!serialized.contains("private-separate-user"));
     assert!(!serialized.contains("private-compound-user"));
@@ -292,11 +292,14 @@ fn previews_page_within_a_revision_and_serialize_no_secrets() {
         issues: Issues::default(),
         next: None,
     };
-    let offset = append_previews(&record, &head, 0, &mut page).unwrap();
+    let offset = append_previews(&record, &head, 0, &mut page, None).unwrap();
     assert_eq!(offset, PAGE_SIZE);
     assert_eq!(page.rows.last().unwrap().target.field, PAGE_SIZE - 1);
     page.rows.clear();
-    assert_eq!(append_previews(&record, &head, offset, &mut page), None);
+    assert_eq!(
+        append_previews(&record, &head, offset, &mut page, None),
+        None
+    );
     assert_eq!(
         page.rows
             .iter()
@@ -307,4 +310,28 @@ fn previews_page_within_a_revision_and_serialize_no_secrets() {
     let preview = serde_json::to_string(&page).unwrap();
     assert!(!preview.contains("fixture-secret"));
     assert!(!preview.contains("q=keep"));
+}
+
+#[test]
+fn autofill_matches_only_the_canonical_https_origin() {
+    let mut entry = compound("first");
+    entry.value.insert(
+        "url".into(),
+        Value::from("https://Bücher.example:443/login?private=1#form"),
+    );
+    let mut record = Record::default();
+    record.entries.push(entry);
+    let pair = login_pair(&record, 0).unwrap();
+    assert_eq!(
+        fill_values(&record, &pair, "https://xn--bcher-kva.example"),
+        Some(("first", "fixture-secret"))
+    );
+    for origin in [
+        "http://xn--bcher-kva.example",
+        "https://xn--bcher-kva.example:444",
+        "https://accounts.xn--bcher-kva.example",
+        "https://xn--bcher-kva.example.attacker.test",
+    ] {
+        assert!(fill_values(&record, &pair, origin).is_none());
+    }
 }

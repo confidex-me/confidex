@@ -96,6 +96,12 @@ pub struct Change {
     pub tags: Option<Vec<String>>,
 }
 
+#[derive(Serialize, ZeroizeOnDrop)]
+pub struct FillLogin {
+    pub username: Option<String>,
+    pub password: Option<String>,
+}
+
 struct Pair {
     username: usize,
     password: usize,
@@ -193,7 +199,7 @@ fn new_content(login: &NewLogin) -> Result<Record, Error> {
     Ok(record)
 }
 
-fn login_origin(input: &str) -> Result<String, Error> {
+pub fn login_origin(input: &str) -> Result<String, Error> {
     let url = url::Url::parse(input.trim()).map_err(|_| Error::Input)?;
     if url.scheme() != "https"
         || url.host_str().is_none()
@@ -369,6 +375,25 @@ impl Engine {
         store: &mut impl Store,
         cursor: Option<Cursor>,
     ) -> Result<Page, Error> {
+        self.browser_login_page(store, cursor, None).await
+    }
+
+    pub async fn find_browser_logins(
+        &self,
+        store: &mut impl Store,
+        cursor: Option<Cursor>,
+        origin: &str,
+    ) -> Result<Page, Error> {
+        let origin = login_origin(origin)?;
+        self.browser_login_page(store, cursor, Some(&origin)).await
+    }
+
+    async fn browser_login_page(
+        &self,
+        store: &mut impl Store,
+        cursor: Option<Cursor>,
+        origin: Option<&str>,
+    ) -> Result<Page, Error> {
         let vault = self.vault.as_ref().ok_or(Error::Locked)?;
         let heads = store
             .branch_heads(vault.vault_id(), cursor.as_ref().map(|c| &c.head), None)
@@ -395,7 +420,8 @@ impl Engine {
                 Ok(Some(current)) if current == head => {
                     if let Some(record) =
                         read_record(store, vault, head.record, head.revision).await?
-                        && let Some(offset) = append_previews(&record, &head, offset, &mut page)
+                        && let Some(offset) =
+                            append_previews(&record, &head, offset, &mut page, origin)
                     {
                         page.next = Some(Cursor { head, offset });
                         return Ok(page);
@@ -436,11 +462,33 @@ impl Engine {
             .filter(|cursor| cursor.head == head)
             .map_or(0, |cursor| cursor.offset);
         if let Some(content) = read_record(store, vault, record, head.revision).await?
-            && let Some(offset) = append_previews(&content, &head, offset, &mut page)
+            && let Some(offset) = append_previews(&content, &head, offset, &mut page, None)
         {
             page.next = Some(Cursor { head, offset });
         }
         Ok(page)
+    }
+
+    pub async fn prepare_browser_fill(
+        &self,
+        store: &mut impl Store,
+        target: &Selection,
+        origin: &str,
+        fill_username: bool,
+        fill_password: bool,
+    ) -> Result<FillLogin, Error> {
+        let vault = self.vault.as_ref().ok_or(Error::Locked)?;
+        let content = read_current_login(store, vault, &target.head).await?;
+        let pair = login_pair(&content, target.field)?;
+        let (username, password) = fill_values(&content, &pair, origin).ok_or(Error::Input)?;
+        let username = fill_username
+            .then(|| username.to_owned())
+            .filter(|name| !name.is_empty());
+        let password = fill_password.then(|| password.to_owned());
+        if username.is_none() && password.is_none() {
+            return Err(Error::Input);
+        }
+        Ok(FillLogin { username, password })
     }
 
     pub async fn browser_login_editor(
@@ -512,9 +560,36 @@ impl Engine {
     }
 }
 
-fn append_previews(record: &Record, head: &Head, offset: usize, page: &mut Page) -> Option<usize> {
+fn fill_values<'a>(record: &'a Record, pair: &Pair, origin: &str) -> Option<(&'a str, &'a str)> {
+    let url = text(&record.entries[pair.url], "url")?;
+    if login_origin(url).ok().as_deref() != Some(origin) {
+        return None;
+    }
+    let password =
+        text(&record.entries[pair.password], "password").filter(|p| valid_password(p))?;
+    // A protected username is never copied into preview metadata or filled.
+    let username = editable_text(&record.entries[pair.username], "username").unwrap_or("");
+    Some((username, password))
+}
+
+fn append_previews(
+    record: &Record,
+    head: &Head,
+    offset: usize,
+    page: &mut Page,
+    origin: Option<&str>,
+) -> Option<usize> {
     let (pairs, ambiguous) = pairs(record);
-    page.issues.ambiguous |= ambiguous;
+    page.issues.ambiguous |= ambiguous
+        && origin.is_none_or(|origin| {
+            record.entries.iter().any(|entry| {
+                entry.type_name == "url/v1"
+                    && text(entry, "url")
+                        .and_then(|url| login_origin(url).ok())
+                        .as_deref()
+                        == Some(origin)
+            })
+        });
     let title = record
         .extra
         .get(TITLE_KEY)
@@ -522,6 +597,9 @@ fn append_previews(record: &Record, head: &Head, offset: usize, page: &mut Page)
         .unwrap_or("");
     let fields = fields::count(record);
     for (index, pair) in pairs.enumerate().skip(offset) {
+        if origin.is_some_and(|origin| fill_values(record, &pair, origin).is_none()) {
+            continue;
+        }
         if page.rows.len() == PAGE_SIZE {
             return Some(index);
         }

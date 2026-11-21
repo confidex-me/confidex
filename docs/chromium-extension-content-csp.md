@@ -25,18 +25,26 @@ The session-routing stage reproduced the same WASM compile error in Chrome
 158.0.8127.36 on macOS 15.7.7. The ordinary-page WASM control and isolated
 messaging under strict CSP both passed.
 
-## Pending architecture decision
+## Decision for autofill
 
-Strict-CSP integration is a gate for the content architecture. The unpacked extension can register a document-addressing channel after an
-explicit HTTPS permission grant. This channel works independently from the
-packaged WASM probe and performs no form inspection. The standalone WASM smoke
-test uses a disposable copy with access to the local fixture host and fails if
-the strict page cannot initialize the module.
+Run form classification in the session worker's Rust/WASM. The isolated
+content adapter uses native DOM and Chrome APIs to collect bounded,
+value-free snapshots and to apply an authorized fill. It visits only the top
+document and open Shadow DOM. The adapter neither loads WASM on the website
+nor reads field values. The isolated-world WASM probe remains reproducible
+using a disposable test manifest with its own web-accessible resources.
 
-A candidate design is to keep DOM access and field mutation in a restricted
-isolated-world adapter and move form classification to Rust/WASM in an
-extension-owned context. Before adopting it, verify strict-CSP coverage and
-define the metadata that can cross the browser-provided messaging boundary.
-Only an approved one-time fill may carry a vault credential into the target
-document. This branch retains the original runtime and the reproducible
-browser check while that design is pending.
+A snapshot contains document-local IDs and form revisions, input types,
+autocomplete tokens, bounded label/name/id hints, and the resolved origins
+of the form and its submit overrides. Browser APIs supply the tab, document
+and effective origin independently. The session returns only account
+previews and form choices to the popup. It consumes the selected
+operation once and checks the current record revision and HTTPS origin
+before preparing credentials. The background addresses the exact Chrome
+document ID and checks live session ownership and permission before
+delivery. The adapter checks the current address and form again before
+assigning values and dispatching input and change events.
+
+This route uses isolated-world messaging under strict CSP. The acceptance
+check exercises a fill on the strict page. The optional standalone probe
+continues to reproduce the original WASM compilation limitation.

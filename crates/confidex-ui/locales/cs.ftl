@@ -637,3 +637,11 @@ extension-startup-error = Confidex se nepodařilo spustit. Znovu načtěte rozš
 extension-sites-grant = Povolit přístup k webům HTTPS
 extension-sites-revoke = Odebrat přístup k webům HTTPS
 extension-sites-unavailable = Přístup k webům se nepodařilo změnit.
+
+extension-fill = Vyplnit přihlašovací údaje
+extension-no-form = Nebyl nalezen podporovaný přihlašovací formulář.
+extension-site-no-access = Otevřete stránku HTTPS a povolte přístup k webům na kartě relace.
+extension-form-changed = Stránka, formulář nebo záznam se změnily. Obnovte seznam a vyberte znovu.
+extension-form-choice = Přihlašovací formulář
+extension-session-open = Otevřít relaci
+extension-filled = Přihlašovací údaje byly vyplněny.

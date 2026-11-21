@@ -1168,6 +1168,7 @@ version = "0.1.0"
 dependencies = [
  "confidex-app",
  "confidex-browser",
+ "confidex-extension-content",
  "confidex-storage",
  "confidex-ui",
  "confidex-vault",
@@ -1185,6 +1186,7 @@ dependencies = [
 name = "confidex-extension-content"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "wasm-bindgen",
  "web-sys",
 ]

@@ -636,3 +636,11 @@ extension-startup-error = Confidex nu a putut porni. Reîncarcă extensia și î
 extension-sites-grant = Permite accesul la site-uri HTTPS
 extension-sites-revoke = Revocă accesul la site-uri HTTPS
 extension-sites-unavailable = Accesul la site-uri nu a putut fi modificat.
+
+extension-fill = Completează datele de conectare
+extension-no-form = Nu s-a găsit niciun formular de conectare compatibil.
+extension-site-no-access = Deschide o pagină HTTPS și permite accesul la site-uri în fila sesiunii.
+extension-form-changed = Pagina, formularul sau înregistrarea s-a schimbat. Reîncarcă lista și alege din nou.
+extension-form-choice = Formular de conectare
+extension-session-open = Deschide sesiunea
+extension-filled = Datele de conectare au fost completate.

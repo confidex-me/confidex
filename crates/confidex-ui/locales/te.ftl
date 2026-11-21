@@ -635,3 +635,11 @@ extension-startup-error = Confidex ప్రారంభం కాలేదు. 
 extension-sites-grant = HTTPS సైట్‌లకు ప్రాప్యతను అనుమతించండి
 extension-sites-revoke = HTTPS సైట్‌ల ప్రాప్యతను తొలగించండి
 extension-sites-unavailable = సైట్ ప్రాప్యతను మార్చడం సాధ్యం కాలేదు.
+
+extension-fill = లాగిన్ వివరాలను పూరించండి
+extension-no-form = మద్దతు ఉన్న లాగిన్ ఫారం కనబడలేదు.
+extension-site-no-access = HTTPS పేజీని తెరిచి, సెషన్ ట్యాబ్‌లో సైట్‌లకు ప్రాప్యతను అనుమతించండి.
+extension-form-changed = పేజీ, ఫారం లేదా నమోదు మారింది. జాబితాను రిఫ్రెష్ చేసి మళ్లీ ఎంచుకోండి.
+extension-form-choice = లాగిన్ ఫారం
+extension-session-open = సెషన్‌ను తెరవండి
+extension-filled = లాగిన్ వివరాలు పూరించబడ్డాయి.

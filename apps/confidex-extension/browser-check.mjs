@@ -18,6 +18,7 @@ const interactive = options.includes('--interactive-permission');
 const directory = await mkdtemp(join(tmpdir(), 'confidex-extension-'));
 let chrome, daemon, server;
 let networkBlocked = false;
+let scenario = 'start HTTPS fixtures';
 const password = 'public-extension-master-fixture';
 const loginPassword = 'public-extension-login-fixture';
 const sessionProtocol = 3;
@@ -74,13 +75,22 @@ path = ${JSON.stringify(blobPath)}
       req.pipe(proxy);
       return;
     }
-    if (req.url === '/strict' || req.url === '/ordinary') {
+    if (req.url.startsWith('/fill') || req.url === '/strict' || req.url === '/ordinary') {
       res.setHeader('Content-Type', 'text/html');
       if (req.url === '/strict') {
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'none'; object-src 'none'");
       }
       const frame = req.url === '/ordinary' ? '<iframe src="/seed"></iframe>' : '';
-      res.end('<!doctype html><title>CSP fixture</title><input type="password">' + frame);
+      const login = '<form id="login"><label>User <input id="user" autocomplete="username"></label>'
+        + '<input id="password" type="password" autocomplete="current-password"><button>Sign in</button></form>';
+      const pages = {
+        '/fill': login,
+        '/fill-first': '<form id="first"><input id="user" autocomplete="username"><button>Next</button></form>',
+        '/fill-second': '<form id="second"><input id="password" type="password" autocomplete="current-password"></form>',
+        '/fill-empty': '<main></main>',
+        '/fill-iframe': '<iframe src="/fill"></iframe>',
+      };
+      res.end('<!doctype html><title>Form fixture</title>' + (pages[req.url] ?? '<input type="password">') + frame);
       return;
     }
     if (req.url === '/seed') {
@@ -108,6 +118,9 @@ path = ${JSON.stringify(blobPath)}
   assert.equal(manifest.host_permissions, undefined);
   assert.equal(manifest.externally_connectable, undefined);
   manifest.host_permissions = ['https://127.0.0.1/*'];
+  manifest.web_accessible_resources = [{
+    resources: ['content/content.js', 'content/content_bg.wasm'], matches: ['https://127.0.0.1/*'],
+  }];
   await writeFile(manifestPath, JSON.stringify(manifest));
 
   const launch = () => {
@@ -138,7 +151,7 @@ path = ${JSON.stringify(blobPath)}
   const fields = [
     ['username/v1', 'username', 'chromium-fixture@example.test'],
     ['password/v1', 'password', loginPassword],
-    ['url/v1', 'url', 'https://example.test'],
+    ['url/v1', 'url', origin + '/account?path=ignored#login'],
   ].map(([type_name, key, value]) => ({
     source: null, name: '', type_name, values: {[key]: value}, opaque: 0, protected: false,
   }));
@@ -148,21 +161,42 @@ path = ${JSON.stringify(blobPath)}
   assert((await initialWeb({SyncConfig: {server: origin + '/'}})).Ok?.Synced);
   await syncWeb(initialWeb, origin);
 
+  scenario = 'toolbar popup and session';
   const extensionUrl = `chrome-extension://${id}/session.html`;
   const seedTab = (await tabTargets()).find(target => !previousTargets.has(target.targetId));
   assert(seedTab, 'No top-level tab target for the toolbar action');
+  const popupUrl = `chrome-extension://${id}/popup.html`;
   await command('Extensions.triggerAction', {id, targetId: seedTab.targetId});
+  const popup = await until(async () => {
+    const {targetInfos} = await command('Target.getTargets');
+    const target = targetInfos.find(target => target.url === popupUrl);
+    if (target) return attach(command, target.targetId);
+    return false;
+  }, 'toolbar opens popup');
+  const popupCall = (page, action) => page.evaluate(`chrome.runtime.sendMessage(
+    ${JSON.stringify({kind: 'ConfidexPopup', version: 1, action})})`);
+  await until(() => popup.evaluate("!document.getElementById('startup')"), 'egui popup startup');
+  assert.equal(await popupCall(popup, {Discover: {after: null}}), 'Locked');
+  await until(() => popup.evaluate("document.activeElement?.id === 'popup'"), 'keyboard focus in popup');
+  await press(popup, 'Tab', 9);
+  // Opening the session closes the toolbar popup while Chrome dispatches the key.
+  await popup.call('Input.dispatchKeyEvent', {type: 'rawKeyDown', key: 'Enter', code: 'Enter',
+    windowsVirtualKeyCode: 13});
   const tab = await until(async () => {
     const {targetInfos} = await command('Target.getTargets');
     return targetInfos.find(target => target.type === 'page' && target.url === extensionUrl);
-  }, 'action opens the session tab');
+  }, 'popup opens the session tab');
   const session = await attach(command, tab.targetId);
   await waitForUi(session);
   await until(() => session.evaluate("navigator.locks.query().then(s => s.held.some(lock => lock.name === 'confidex-session'))"), 'session ownership');
-  await command('Extensions.triggerAction', {id, targetId: seedTab.targetId});
+  // Use a trusted extension page to keep the same popup entry point open when
+  // DevTools changes tabs to simulate a document replacement.
+  const popupDriver = await newTab(command, popupUrl);
+  assert.equal(await popupCall(popupDriver, 'OpenSession'), 'Live');
   assert.equal((await command('Target.getTargets')).targetInfos
     .filter(target => target.type === 'page' && target.url === extensionUrl).length, 1);
 
+  scenario = 'connect and synchronize fixtures';
   const host = (await readdir(join(extensionPath, 'ui', 'snippets'), {recursive: true}))
     .find(name => name.endsWith('/web/session-host.js'));
   assert(host, 'Packaged session host is missing');
@@ -208,6 +242,7 @@ path = ${JSON.stringify(blobPath)}
   };
   await expectWebLogin(session);
 
+  scenario = 'grant access and validate content senders';
   const hostPermission = "{origins: ['https://*/*']}";
   const permission = () => session.evaluate(`chrome.permissions.contains(${hostPermission})`);
   const registered = () => session.evaluate(`chrome.scripting.getRegisteredContentScripts({
@@ -274,6 +309,129 @@ path = ${JSON.stringify(blobPath)}
   await expectWebLogin(session);
   assert.equal(await session.evaluate(`chrome.runtime.sendMessage(${JSON.stringify(report)})`), false);
 
+  scenario = 'autofill on ordinary HTTPS and strict CSP';
+  const discover = async page => {
+    await page.call('Page.bringToFront');
+    return until(async () => {
+      const result = await popupCall(popupDriver, {Discover: {after: null}});
+      return result !== 'Busy' && result;
+    }, 'autofill discovery');
+  };
+  const choice = async page => {
+    const result = await discover(page);
+    assert(result.Site, `Expected a supported site, got ${JSON.stringify(result)}`);
+    return result.Site;
+  };
+  const fillPacket = (site, form = 0, account = 0) => ({
+    Fill: {operation: site.operation, form: site.forms[form].target.form, target: site.matches.rows[account].target},
+  });
+  const runFill = packet => popupCall(popupDriver, packet);
+  const expectEmpty = page => page.evaluate("Array.from(document.querySelectorAll('input')).every(input => input.value === '')");
+  const isFilled = (page, user = true, pass = true) => page.evaluate(`(() => {
+    const root = document.querySelector('#shadow')?.shadowRoot ?? document;
+    return (root.querySelector('#user')?.value === 'chromium-fixture@example.test') === ${user}
+      && (root.querySelector('#password, input[type=password]')?.value === ${JSON.stringify(loginPassword)}) === ${pass};
+  })()`);
+
+  const normal = await newTab(command, origin + '/fill');
+  await normal.evaluate(`(() => {
+    window.filledEvents = [];
+    const form = document.querySelector('form');
+    for (const type of ['input', 'change', 'submit']) {
+      form.addEventListener(type, event => window.filledEvents.push(type + ':' + event.target.id));
+    }
+  })()`);
+  const normalSite = await choice(normal);
+  assert.equal(normalSite.origin, origin);
+  assert.equal(normalSite.matches.rows.length, 1);
+  assert(!JSON.stringify(normalSite).includes(loginPassword), 'Popup received the password');
+  const normalPacket = fillPacket(normalSite);
+  assert.equal((await fromSite(origin + '/fill', {
+    kind: 'ConfidexPopup', version: 1, action: normalPacket,
+  }))[0].result, 'Error');
+  assert(await expectEmpty(normal));
+  assert.equal(await runFill(normalPacket), 'Filled');
+  assert(await isFilled(normal));
+  assert.deepEqual(await normal.evaluate('window.filledEvents'),
+    ['input:user', 'change:user', 'input:password', 'change:password']);
+  assert.equal(await runFill(normalPacket), 'Changed', 'A fill operation could be replayed');
+
+  const strict = await newTab(command, strictUrl);
+  assert.equal(await runFill(fillPacket(await choice(strict))), 'Filled');
+  assert(await isFilled(strict, false), 'Autofill failed under strict CSP');
+
+  scenario = 'SPA, Shadow DOM and stale form selections';
+  const spa = await newTab(command, origin + '/fill-empty');
+  assert.equal((await choice(spa)).forms.length, 0);
+  await spa.evaluate(`document.querySelector('main').innerHTML =
+    '<div id="shadow"></div>'`);
+  await spa.evaluate(`document.querySelector('#shadow').attachShadow({mode:'open'}).innerHTML =
+    '<form aria-label="Sign in"><input hidden autocomplete="username"><input readonly autocomplete="username">'
+    + '<input disabled autocomplete="username"><input id="user" autocomplete="username">'
+    + '<input id="password" type="password" autocomplete="current-password"></form>'`);
+  const shadow = await choice(spa);
+  assert.equal(shadow.forms[0].label, 'Sign in');
+  assert.equal(await runFill(fillPacket(shadow)), 'Filled');
+  assert(await isFilled(spa));
+  assert(await spa.evaluate(`Array.from(document.querySelector('#shadow').shadowRoot
+    .querySelectorAll('[hidden], [readonly], [disabled]')).every(input => input.value === '')`));
+
+  const replacement = await newTab(command, origin + '/fill');
+  const selection = fillPacket(await choice(replacement));
+  await replacement.evaluate(`document.querySelector('form').replaceWith(document.querySelector('form').cloneNode(true))`);
+  assert.equal(await runFill(selection), 'Changed');
+  assert(await expectEmpty(replacement));
+  const changedDestination = fillPacket(await choice(replacement));
+  await replacement.evaluate("document.querySelector('button').formAction = 'https://localhost/other'");
+  assert.equal(await runFill(changedDestination), 'Changed');
+  assert(await expectEmpty(replacement));
+  assert.equal((await choice(replacement)).forms.length, 0);
+  await replacement.evaluate("document.querySelector('button').removeAttribute('formaction')");
+  await replacement.evaluate(`(() => {
+    const form = document.querySelector('form');
+    form.setAttribute('action', 'http://127.0.0.1/downgrade');
+    form.insertAdjacentHTML('beforeend', '<input type="hidden" name="action">');
+  })()`);
+  assert.equal((await choice(replacement)).forms.length, 0, 'A named control hid the unsafe action');
+  await replacement.evaluate("document.querySelector('form').removeAttribute('action')");
+  await replacement.evaluate("document.querySelector('#password').autocomplete = 'section-login new-password'");
+  assert.equal((await choice(replacement)).forms.length, 0);
+  await replacement.evaluate("document.querySelector('#password').autocomplete = 'current-password'");
+  const spaNavigation = fillPacket(await choice(replacement));
+  await replacement.evaluate("history.pushState({}, '', '/fill?step=second')");
+  assert.equal(await runFill(spaNavigation), 'Changed');
+  const replacedDocument = fillPacket(await choice(replacement));
+  await replacement.call('Page.navigate', {url: origin + '/fill'});
+  await until(() => replacement.evaluate('document.readyState === "complete" && location.search === ""'), 'replacement document ready');
+  assert.equal(await runFill(replacedDocument), 'Changed');
+  assert(await expectEmpty(replacement));
+
+  scenario = 'two-step sign-ins, frames and origin isolation';
+  const first = await newTab(command, origin + '/fill-first');
+  assert.equal(await runFill(fillPacket(await choice(first))), 'Filled');
+  assert(await isFilled(first, true, false));
+  await first.call('Page.navigate', {url: origin + '/fill-second'});
+  await until(() => first.evaluate('location.pathname === "/fill-second" && document.readyState === "complete"'), 'second login step');
+  const second = await choice(first);
+  assert.deepEqual(second.preferred, second.matches.rows[0].target);
+  assert.equal(await runFill(fillPacket(second)), 'Filled');
+  assert(await isFilled(first, false));
+
+  const iframe = await newTab(command, origin + '/fill-iframe');
+  assert.equal((await choice(iframe)).forms.length, 0);
+  const closed = await newTab(command, origin + '/fill-empty');
+  await closed.evaluate(`(document.querySelector('main').attachShadow({mode:'closed'})).innerHTML =
+    '<input autocomplete="username"><input type="password">' `);
+  assert.equal((await choice(closed)).forms.length, 0);
+  const foreign = await newTab(command, origin.replace('127.0.0.1', 'localhost') + '/fill');
+  assert.equal((await choice(foreign)).matches.rows.length, 0);
+  await first.call('Page.navigate', {url: origin.replace('127.0.0.1', 'localhost') + '/fill-first'});
+  await until(() => first.evaluate('location.hostname === "localhost"'), 'origin transition');
+  await first.call('Page.navigate', {url: origin + '/fill-second'});
+  await until(() => first.evaluate('location.pathname === "/fill-second" && document.readyState === "complete"'), 'return to first origin');
+  assert.equal((await choice(first)).preferred, null);
+
+  scenario = 'session, permissions, online and offline write regressions';
   const backgroundUrl = `chrome-extension://${id}/background.js`;
   const targetsAt = (type, url) => command('Target.getTargets')
     .then(({targetInfos}) => targetInfos.filter(target => target.type === type && target.url === url));
@@ -301,9 +459,13 @@ path = ${JSON.stringify(blobPath)}
     `chrome.runtime.sendMessage(${JSON.stringify(report)})`, {uniqueContextId: worldId},
   );
   assert.equal(await reportFromExistingDocument(), true);
+  const revokedChoice = fillPacket(await choice(replacement));
   await click(session, '#site-permissions-toggle');
   await until(async () => !await permission() && !await registered(), 'site permission and registration removed');
   assert.equal(await reportFromExistingDocument(), false, 'Revoked access still allowed reports from an open document');
+  await replacement.call('Page.bringToFront');
+  assert.equal(await runFill(revokedChoice), 'Changed');
+  assert(await expectEmpty(replacement));
   await expectWebLogin(session);
   await click(session, '#site-permissions-toggle');
   await until(permission, 'site permission restored');
@@ -681,17 +843,71 @@ path = ${JSON.stringify(blobPath)}
   assert(finalDraft.fields[1].values.password === updatedPassword, 'Password replacement did not synchronize');
   assert.deepEqual(finalDraft.tags, [...editedTags, 'web']);
 
+  scenario = 'multiple accounts, multiple forms and stale credential selections';
+  const originalLogin = (await list(recovered)).rows
+    .find(row => row.target.head.record.join(',') === webRecord.join(','));
+  assert((await action(recovered, {UpdateLogin: {target: originalLogin.target, change: {url: origin}}})).Ok?.Saved);
+  const otherRecord = Array(16).fill(78);
+  const otherLogin = {
+    title: 'Another synthetic login', url: origin, username: 'second-account@example.test', password: updatedPassword,
+  };
+  assert((await action(recovered, {CreateLogin: {record: otherRecord, login: otherLogin}})).Ok?.Saved);
+  const restartedPermission = () => recovered.evaluate(`chrome.permissions.contains(${hostPermission})`);
+  if (!await restartedPermission()) {
+    // DevTools can reload the unpacked package with optional permissions reset.
+    const settings = await newTab(browserAfterRestart, 'chrome://extensions/',
+      ['chrome://extensions/', 'edge://extensions/', 'brave://extensions/']);
+    await settings.evaluate(`chrome.developerPrivate.addHostPermission(${JSON.stringify(id)}, 'https://*/*')`);
+    await browserAfterRestart('Target.closeTarget', {targetId: settings.targetId});
+    await click(recovered, '#site-permissions-toggle');
+    await until(restartedPermission, 'site permission after unpacked reload');
+  }
+  const multiple = await newTab(browserAfterRestart, origin + '/fill');
+  const postRestartPopup = await newTab(browserAfterRestart, popupUrl);
+  await multiple.evaluate(`document.body.insertAdjacentHTML('beforeend',
+    '<form id="second"><input id="backup-user" autocomplete="username">'
+    + '<input id="backup-password" type="password" autocomplete="current-password"></form>')`);
+  await multiple.call('Page.bringToFront');
+  const lookupAfterRestart = () => until(async () => {
+    const result = await popupCall(postRestartPopup, {Discover: {after: null}});
+    return result !== 'Busy' && result;
+  }, 'post-restart autofill discovery');
+  const postRestart = await lookupAfterRestart();
+  const completeSite = postRestart.Site;
+  assert(completeSite, `Autofill did not reconnect after browser restart (${postRestart})`);
+  assert.equal(completeSite.forms.length, 2);
+  assert.equal(completeSite.matches.rows.length, 2);
+  const otherIndex = completeSite.matches.rows.findIndex(row => row.title === otherLogin.title);
+  const secondForm = completeSite.forms.findIndex(form => form.label === 'second');
+  const otherPacket = fillPacket(completeSite, secondForm, otherIndex);
+  assert.equal(await popupCall(postRestartPopup, otherPacket), 'Filled');
+  assert(await multiple.evaluate(`document.querySelector('#backup-user').value === ${JSON.stringify(otherLogin.username)}
+    && document.querySelector('#backup-password').value === ${JSON.stringify(updatedPassword)}
+    && !document.querySelector('#password').value && !document.querySelector('#user').value`));
+
+  const latest = (await lookupAfterRestart()).Site;
+  const target = latest.matches.rows.find(row => row.title === otherLogin.title).target;
+  assert((await action(recovered, {UpdateLogin: {target, change: {password: offlinePassword}}})).Ok?.Saved);
+  assert.equal(await popupCall(postRestartPopup, {Fill: {
+    operation: latest.operation, form: latest.forms[0].target.form, target,
+  }}), 'Changed');
+  assert(await multiple.evaluate("!document.querySelector('#password').value"));
+
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
     offlineUnlock: true, newLoginThroughUi: true, editedLoginThroughUi: true, tagsSyncedBothWays: true,
     offlineWritesSurviveBrowserRestart: true, automaticSync: true,
     duplicateCreateRejected: true, staleUpdateRejected: true, draftRecoveredAfterConflict: true,
     conflictPreservedAndResolved: true,
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
-    optionalSitePermission: true, senderValidation: true, strictCspRouting: true,
+    optionalSitePermission: true, senderValidation: true, strictCspRouting: true, keyboardPopup: true,
     backgroundRestart: true, idleExpiry: true, workerLoss: true,
-    slowUnlock: true, workerLossDuringUnlock: true, openDocumentAfterRevocation: true}));
+    slowUnlock: true, workerLossDuringUnlock: true, openDocumentAfterRevocation: true,
+    autofill: true, strictCspAutofill: true, openShadowDom: true, usernameFirst: true,
+    formReplacementRejected: true, documentReplacementRejected: true, replayRejected: true,
+    multipleFormsAndAccounts: true, staleFillRejected: true}));
 
   if (!options.includes('--vault-only')) {
+    scenario = 'standalone content WASM CSP reproduction';
     const {id: probeId} = await browserAfterRestart('Extensions.loadUnpacked', {path: cspExtension});
     const cspPage = await newTab(browserAfterRestart, `chrome-extension://${probeId}/session.html`);
     await cspPage.evaluate(`chrome.scripting.registerContentScripts([{
@@ -723,6 +939,8 @@ path = ${JSON.stringify(blobPath)}
     assert.equal(ordinary?.detected, true, 'Content WASM did not work on the control page');
     assert.equal(strict?.detected, true, 'Content WASM did not work under strict site CSP');
   }
+} catch (error) {
+  throw new Error(`Browser check failed during ${scenario}`, {cause: error});
 } finally {
   server?.closeAllConnections();
   server?.close();

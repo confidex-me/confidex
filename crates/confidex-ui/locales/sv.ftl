@@ -635,3 +635,11 @@ extension-startup-error = Confidex kunde inte starta. Ladda om tillägget och f�
 extension-sites-grant = Tillåt åtkomst till HTTPS-webbplatser
 extension-sites-revoke = Ta bort åtkomst till HTTPS-webbplatser
 extension-sites-unavailable = Det gick inte att ändra webbplatsåtkomsten.
+
+extension-fill = Fyll i inloggningsuppgifter
+extension-no-form = Inget inloggningsformulär som stöds hittades.
+extension-site-no-access = Öppna en HTTPS-sida och tillåt åtkomst till webbplatser på sessionsfliken.
+extension-form-changed = Sidan, formuläret eller posten har ändrats. Uppdatera listan och välj igen.
+extension-form-choice = Inloggningsformulär
+extension-session-open = Öppna session
+extension-filled = Inloggningsuppgifterna har fyllts i.

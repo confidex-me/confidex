@@ -635,3 +635,11 @@ extension-startup-error = Δεν ήταν δυνατή η εκκίνηση το�
 extension-sites-grant = Να επιτρέπεται η πρόσβαση σε ιστοτόπους HTTPS
 extension-sites-revoke = Κατάργηση πρόσβασης σε ιστοτόπους HTTPS
 extension-sites-unavailable = Δεν ήταν δυνατή η αλλαγή πρόσβασης σε ιστοτόπους.
+
+extension-fill = Συμπλήρωση στοιχείων σύνδεσης
+extension-no-form = Δεν βρέθηκε υποστηριζόμενη φόρμα σύνδεσης.
+extension-site-no-access = Ανοίξτε μια σελίδα HTTPS και επιτρέψτε την πρόσβαση σε ιστοτόπους από την καρτέλα συνεδρίας.
+extension-form-changed = Η σελίδα, η φόρμα ή η καταχώριση άλλαξε. Ανανεώστε τη λίστα και επιλέξτε ξανά.
+extension-form-choice = Φόρμα σύνδεσης
+extension-session-open = Άνοιγμα συνεδρίας
+extension-filled = Τα στοιχεία σύνδεσης συμπληρώθηκαν.

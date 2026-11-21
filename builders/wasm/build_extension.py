@@ -14,7 +14,8 @@ def build_bundle(bundle):
     target, bindgen, optimizer = wasm_tools()
     source = ROOT / 'apps/confidex-extension/web'
     bundle.mkdir(parents=True)
-    for name in ('manifest.json', 'background.js', 'session.html', 'session.css',
+    for name in ('manifest.json', 'background.js', 'popup.html', 'popup.css', 'popup-boot.js',
+                 'extension-strings.js', 'session.html', 'session.css',
                  'session-boot.js', 'session-worker.js', 'content-bootstrap.js',
                  'content-channel.js', 'site-permissions.js'):
         shutil.copy2(source / name, bundle)
@@ -55,7 +56,8 @@ def build_bundle(bundle):
 
 
 def validate_bundle(bundle):
-    for name in ('manifest.json', 'session.html', 'session.css', 'session-boot.js',
+    for name in ('manifest.json', 'popup.html', 'popup.css', 'popup-boot.js',
+                 'extension-strings.js', 'session.html', 'session.css', 'session-boot.js',
                  'session-messages.json', 'session-worker.js', 'background.js',
                  'content-bootstrap.js', 'content-channel.js', 'site-permissions.js',
                  'engine/engine.js', 'ui/ui.js', 'content/content.js'):

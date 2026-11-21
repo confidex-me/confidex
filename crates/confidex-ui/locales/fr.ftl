@@ -635,3 +635,11 @@ extension-startup-error = Confidex n’a pas pu démarrer. Rechargez l’extensi
 extension-sites-grant = Autoriser l’accès aux sites HTTPS
 extension-sites-revoke = Retirer l’accès aux sites HTTPS
 extension-sites-unavailable = Impossible de modifier l’accès aux sites.
+
+extension-fill = Remplir les identifiants
+extension-no-form = Aucun formulaire de connexion pris en charge.
+extension-site-no-access = Ouvrez une page HTTPS et autorisez l’accès aux sites dans l’onglet de session.
+extension-form-changed = La page, le formulaire ou l’entrée a changé. Actualisez la liste et sélectionnez à nouveau.
+extension-form-choice = Formulaire de connexion
+extension-session-open = Ouvrir la session
+extension-filled = Identifiants remplis.

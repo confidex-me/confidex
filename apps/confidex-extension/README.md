@@ -1,6 +1,7 @@
 # Confidex for Chromium
 
-The toolbar action opens the Confidex egui session tab. The tab can connect
+The toolbar action shows the Confidex autofill popup. **Open session** opens or
+focuses the Confidex egui session tab. The tab can connect
 an existing synchronized vault and unlock the local encrypted cache offline.
 It recognizes composite logins and separate Login template fields. Each page
 contains up to 128 previews with titles and usernames.
@@ -14,7 +15,7 @@ make extension
 ```
 
 Load `dist/extension` as an unpacked extension. Click the Confidex toolbar
-action to open or focus the session. The server defaults to
+action and select **Open session**. The server defaults to
 `https://sync.confidex.me/` and accepts a custom Confidex HTTPS sync origin.
 
 The builder validates the package before replacing `dist/extension`. Reload
@@ -72,12 +73,29 @@ navigations and reloaded pages. Revocation removes the registration. The
 router also checks current permissions and the active document on each request,
 including replies from isolated worlds already present when access was revoked.
 
-At this stage the website channel accepts only a versioned boolean form report
-and replies with a boolean acknowledgement. Chromium supplies the tab, frame,
-document and origin independently of the payload. The Engine exchange is private
-to the extension session page. Form analysis, autofill and capture are later stages.
+## Autofill
+
+Open the toolbar popup on an HTTPS page. Confidex looks for suitable
+forms in the current top-level document and matches saved logins by exact
+HTTPS origin, including the port. Choose an account and, when listed,
+a specific form, then select **Fill login**. **Refresh** rescans the page.
+Confidex fills visible, editable fields in ordinary forms, dynamically
+rendered forms, and open Shadow DOM. The site still controls submission.
+
+For a two-step sign-in, choose the login to fill the username and proceed
+on the site. Reopen the popup on the password step. For up to two minutes,
+Confidex can preselect the same account in the same tab and origin.
+**Fill login** is required for both steps. Form or document changes can
+invalidate the selection and require a fresh scan. Registration, password
+changes, insecure or cross-origin form destinations, iframes and closed
+Shadow DOM are outside the supported fill flow.
+
+The popup receives account previews and form choices. Each selection is bound to the live
+session, tab, document and form. The worker rejects replay, conflicting
+or stale revisions and changed form metadata. The content adapter
+checks the current form and address again immediately before insertion.
 See [Content WASM under a strict site CSP](../../docs/chromium-extension-content-csp.md)
-for the isolated-world WASM experiment.
+for the architecture decision and isolated-world WASM experiment.
 
 ## Browser checks
 
@@ -94,7 +112,10 @@ node apps/confidex-extension/browser-check.mjs \
 The check creates a local HTTPS server and uses the packaged web client to create
 and sync a synthetic vault. It installs the unpacked extension in a temporary
 Chromium profile and checks permission grant and revocation, sender validation,
-the isolated messaging channel under strict CSP, routing after a background
+keyboard activation of the session from the toolbar popup, autofill under
+strict CSP and dynamic open Shadow DOM, two-step sign-ins, account and
+form selection, input and change events without submission, blocked form
+and document replacement, stale revisions, replay rejection, routing after a background
 restart, worker loss, idle expiry, duplicate ownership, and closing the session.
 The revocation check sends a report from the original isolated world without
 reloading the page. The slow-unlock check blocks the worker across the previous

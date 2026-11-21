@@ -632,3 +632,11 @@ extension-startup-error = Confidex शुरू नहीं हो सका।
 extension-sites-grant = HTTPS साइटों की अनुमति दें
 extension-sites-revoke = HTTPS साइटों की अनुमति हटाएँ
 extension-sites-unavailable = साइटों की अनुमति नहीं बदली जा सकी।
+
+extension-fill = लॉगिन विवरण भरें
+extension-no-form = कोई समर्थित लॉगिन फ़ॉर्म नहीं मिला।
+extension-site-no-access = HTTPS पेज खोलें और सत्र टैब में साइटों की अनुमति दें।
+extension-form-changed = पेज, फ़ॉर्म या रिकॉर्ड बदल गया है। सूची रीफ़्रेश करके फिर से चुनें।
+extension-form-choice = लॉगिन फ़ॉर्म
+extension-session-open = सत्र खोलें
+extension-filled = लॉगिन विवरण भर दिया गया।

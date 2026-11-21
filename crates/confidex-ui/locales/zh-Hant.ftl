@@ -632,3 +632,11 @@ extension-startup-error = 無法啟動 Confidex。請重新載入擴充功能後
 extension-sites-grant = 允許存取 HTTPS 網站
 extension-sites-revoke = 撤銷存取 HTTPS 網站的權限
 extension-sites-unavailable = 無法變更網站存取權限。
+
+extension-fill = 填入登入資訊
+extension-no-form = 找不到支援的登入表單。
+extension-site-no-access = 開啟 HTTPS 頁面，並在工作階段分頁中允許存取網站。
+extension-form-changed = 頁面、表單或記錄已變更。請重新整理清單後再選擇。
+extension-form-choice = 登入表單
+extension-session-open = 開啟工作階段
+extension-filled = 已填入登入資訊。

@@ -698,3 +698,11 @@ extension-startup-error = Не удалось запустить Confidex. Пе�
 extension-sites-grant = Разрешить доступ к HTTPS-сайтам
 extension-sites-revoke = Отозвать доступ к HTTPS-сайтам
 extension-sites-unavailable = Не удалось изменить доступ к сайтам.
+
+extension-fill = Заполнить логин
+extension-no-form = Подходящая форма входа не найдена.
+extension-site-no-access = Откройте страницу HTTPS и разрешите доступ к сайтам во вкладке сессии.
+extension-form-changed = Страница, форма или запись изменилась. Обновите список и выберите снова.
+extension-form-choice = Форма входа
+extension-session-open = Открыть сессию
+extension-filled = Данные для входа заполнены.
