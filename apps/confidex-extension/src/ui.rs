@@ -1,8 +1,7 @@
 use crate::protocol::{
-    Action, Credentials, Login, MAX_RESPONSE, Reply, Request, Response, VERSION,
+    Action, Credentials, Login, LoginCursor, MAX_RESPONSE, Reply, Request, Response, VERSION,
 };
 use confidex_app::Error;
-use confidex_storage::Head;
 use confidex_ui::{
     browser_input,
     i18n::Localizer,
@@ -107,7 +106,7 @@ struct App {
     page: Page,
     pending: Option<Pending>,
     rows: Vec<Login>,
-    next: Option<Head>,
+    next: Option<LoginCursor>,
     status: Option<(&'static str, bool)>,
 }
 

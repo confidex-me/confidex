@@ -1,7 +1,10 @@
-use crate::protocol::{Action, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response};
+use crate::{
+    logins::{LOGIN_PAGE_SIZE, append_previews},
+    protocol::{Action, LoginCursor, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response},
+};
 use confidex_app::{Command, DeviceKeys, Error, Output};
 use confidex_browser::{BrowserStore, Net, Runtime};
-use confidex_storage::{Head, Store, VaultId, VaultInfo};
+use confidex_storage::{Store, VaultId, VaultInfo};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 use zeroize::Zeroizing;
@@ -172,43 +175,57 @@ impl Session {
         })
     }
 
-    async fn logins(&mut self, after: Option<Head>) -> Response {
-        let Output::Rows { rows, more, next } =
-            self.command(Command::List { after, tag: None }).await?
+    async fn logins(&mut self, cursor: Option<LoginCursor>) -> Response {
+        let Output::Rows { rows, more, next } = self
+            .command(Command::List {
+                after: cursor.as_ref().map(|cursor| cursor.head.clone()),
+                tag: None,
+            })
+            .await?
         else {
             return Err(Error::Integrity);
         };
         let mut logins = Vec::new();
         let mut scanned = None;
-        for row in rows {
-            if logins.len() >= 128 {
+        let resume = cursor.filter(|cursor| cursor.offset > 0);
+        for (head, offset) in resume
+            .into_iter()
+            .map(|cursor| (cursor.head, cursor.offset))
+            .chain(rows.iter().map(|row| (row.head.clone(), 0)))
+        {
+            if logins.len() == LOGIN_PAGE_SIZE {
                 return Ok(Reply::Logins {
                     rows: logins,
                     next: scanned,
                 });
             }
-            scanned = Some(row.head.clone());
             let draft = match self
                 .command(Command::Open {
-                    record: row.head.record,
+                    record: head.record,
                 })
                 .await
             {
                 Ok(Output::Draft(draft)) => draft,
+                Err(Error::Input) if offset > 0 => continue,
                 Err(Error::Storage(confidex_storage::Error::Conflict)) => continue,
                 Err(error) => return Err(error),
                 _ => return Err(Error::Integrity),
             };
-            for username in crate::logins::usernames(&draft) {
-                logins.push(crate::protocol::Login {
-                    title: draft.title.chars().take(128).collect(),
-                    username: username.chars().take(128).collect(),
+            if draft.revision == Some(head.revision)
+                && let Some(offset) = append_previews(&draft, offset, &mut logins)
+            {
+                return Ok(Reply::Logins {
+                    rows: logins,
+                    next: Some(LoginCursor { head, offset }),
                 });
             }
+            scanned = Some(LoginCursor { head, offset: 0 });
         }
         Ok(Reply::Logins {
             rows: logins,
-            next: if more { next } else { None },
+            next: next
+                .filter(|_| more)
+                .map(|head| LoginCursor { head, offset: 0 }),
         })
     }
 }

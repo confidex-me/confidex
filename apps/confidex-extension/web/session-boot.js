@@ -34,7 +34,8 @@ try {
           await chrome.tabs.update(current.id, {active: true});
           await chrome.windows.update(current.windowId, {focused: true});
         }
-        window.close();
+        if (duplicate?.id != null) await chrome.tabs.remove(duplicate.id);
+        else window.close();
         return;
       }
       // Catch missing bindings, WASM, fonts and renderer initialization failures.

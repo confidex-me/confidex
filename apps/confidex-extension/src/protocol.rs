@@ -3,7 +3,7 @@ use confidex_storage::Head;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-pub const VERSION: u8 = 1;
+pub const VERSION: u8 = 2;
 #[cfg(any(test, feature = "session"))]
 pub const MAX_REQUEST: usize = 32 * 1024;
 pub const MAX_RESPONSE: usize = 1024 * 1024;
@@ -35,8 +35,16 @@ pub enum Action {
     Lock,
     Sync,
     Logins {
-        after: Option<Head>,
+        after: Option<LoginCursor>,
     },
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct LoginCursor {
+    pub head: Head,
+    // Zero advances past the head. A positive offset resumes within its revision.
+    pub offset: usize,
 }
 
 #[cfg(any(test, feature = "session"))]
@@ -69,7 +77,7 @@ pub enum Reply {
     },
     Logins {
         rows: Vec<Login>,
-        next: Option<Head>,
+        next: Option<LoginCursor>,
     },
 }
 
@@ -94,16 +102,16 @@ mod tests {
     #[test]
     fn worker_rejects_unknown_and_oversized_messages() {
         assert!(matches!(
-            Request::decode(br#"{"version":1,"action":"Status"}"#)
+            Request::decode(br#"{"version":2,"action":"Status"}"#)
                 .unwrap()
                 .action,
             Action::Status
         ));
         for bytes in [
-            &br#"{"version":0,"action":"Status"}"#[..],
-            br#"{"version":1,"action":"Open"}"#,
-            br#"{"version":1,"action":"Status","origin":"https://example.test"}"#,
-            br#"{"version":1,"action":{"Unlock":{"password":"p","key":"k","remember":true}}}"#,
+            &br#"{"version":1,"action":"Status"}"#[..],
+            br#"{"version":2,"action":"Open"}"#,
+            br#"{"version":2,"action":"Status","origin":"https://example.test"}"#,
+            br#"{"version":2,"action":{"Unlock":{"password":"p","key":"k","remember":true}}}"#,
             &[b' '; MAX_REQUEST + 1],
         ] {
             assert!(matches!(Request::decode(bytes), Err(Error::Input)));

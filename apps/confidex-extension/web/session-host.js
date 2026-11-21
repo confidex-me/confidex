@@ -11,10 +11,13 @@ function stop() {
 function start() {
   worker = new Worker(chrome.runtime.getURL('session-worker.js'), {type: 'module'});
   worker.onmessage = ({data}) => {
+    if (!(data instanceof Uint8Array)) {
+      stop();
+      return;
+    }
     const request = pending;
     pending = undefined;
-    if (data instanceof Uint8Array) request?.resolve(data);
-    else request?.reject(new Error('Confidex session request failed'));
+    request?.resolve(data);
   };
   worker.onerror = stop;
   worker.onmessageerror = stop;

@@ -5,13 +5,15 @@ egui session tab. The tab can connect an existing synchronized vault, display
 login titles and usernames, and unlock the local encrypted cache offline. The
 preview recognizes both the composite login field and the separate fields
 created by the Login template. It skips ambiguous combinations and conflicted
-records.
+records. Each page contains up to 128 logins. When a record spans pages, the
+next page resumes at the next login in that revision.
 
 The worker uses the existing Confidex Engine, sync protocol and IndexedDB
 schema. The extension has its own storage origin and requires the master
 password and secret key on each unlock. There is no device unlock or
 remembered key. The preview never sends a vault password to the UI. Closing the
-session tab destroys its Dedicated Worker. The full session hardening,
+session tab destroys its Dedicated Worker. A duplicated tab returns to the
+original tab, and the worker holds an exclusive lock for its lifetime. The full session hardening,
 permission onboarding, website integration, and pilot packaging are later
 implementation stages.
 
@@ -48,7 +50,8 @@ The test creates a local HTTPS fixture and uses the packaged web client to
 generate and sync a synthetic vault. It installs the unpacked extension in a
 temporary Chromium profile, opens the session through the toolbar action,
 connects to the fixture and previews a login. It verifies rejection of an
-incorrect password, lock on tab close, offline unlock, and absence of the
+incorrect password, exclusive session ownership after tab duplication,
+manual locking, lock on tab close, offline unlock, and absence of the
 fixture credentials in the extension's IndexedDB and local storage. Browser
 profiles, server databases, test certificates and keys are temporary. The test
 does not write traces or screenshots.

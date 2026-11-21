@@ -18,6 +18,7 @@ const directory = await mkdtemp(join(tmpdir(), 'confidex-extension-'));
 let chrome, daemon, server;
 const password = 'public-extension-master-fixture';
 const loginPassword = 'public-extension-login-fixture';
+const sessionProtocol = 2;
 
 try {
   const certFile = join(directory, 'cert.pem');
@@ -174,7 +175,7 @@ path = ${JSON.stringify(blobPath)}
   assert(host, 'Packaged session host is missing');
   const action = (page, action) => page.evaluate(`(async () => {
     const {exchange} = await import(${JSON.stringify('./ui/snippets/' + host)});
-    const packet = new TextEncoder().encode(JSON.stringify({version: 1, action: ${JSON.stringify(action)}}));
+    const packet = new TextEncoder().encode(JSON.stringify({version: ${sessionProtocol}, action: ${JSON.stringify(action)}}));
     const response = await exchange(packet);
     try { return JSON.parse(new TextDecoder().decode(response)); }
     finally { response.fill(0); }
@@ -202,6 +203,31 @@ path = ${JSON.stringify(blobPath)}
   }
   const expected = {Ok: {Logins: {rows: [{title: 'Synthetic login', username: 'chromium-fixture@example.test'}], next: null}}};
   assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+
+  const duplicateId = await session.evaluate(`(async () => {
+    const current = await chrome.tabs.getCurrent();
+    const duplicate = await chrome.tabs.duplicate(current.id);
+    return duplicate.id;
+  })()`);
+  assert(Number.isInteger(duplicateId), 'Chrome did not duplicate the Confidex tab');
+  await until(() => session.evaluate(`chrome.tabs.get(${duplicateId}).then(() => false, () => true)`),
+    'duplicate Confidex tab closes');
+  const rivalWorkerRejected = await session.evaluate(`(async () => {
+    const worker = new Worker(chrome.runtime.getURL('session-worker.js'), {type: 'module'});
+    try {
+      const response = await new Promise((resolve, reject) => {
+        worker.onmessage = ({data}) => resolve(data);
+        worker.onerror = reject;
+        const packet = new TextEncoder().encode(JSON.stringify({version: ${sessionProtocol}, action: 'Status'}));
+        worker.postMessage(packet, [packet.buffer]);
+      });
+      return response === null;
+    } finally {
+      worker.terminate();
+    }
+  })()`);
+  assert.equal(rivalWorkerRejected, true, 'A second worker started a vault session');
+  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
   const plaintextFound = await session.evaluate(`(async () => {
     const forbidden = ${JSON.stringify([password, credentials.key, loginPassword, 'chromium-fixture@example.test'])};
     const database = await new Promise((resolve, reject) => {
@@ -226,6 +252,9 @@ path = ${JSON.stringify(blobPath)}
   })()`);
   assert.equal(plaintextFound, false, 'Plaintext appeared in extension storage');
 
+  assert.equal((await action(session, 'Lock')).Ok?.Locked?.name, 'Synthetic extension vault');
+  assert.deepEqual(await action(session, {Logins: {after: null}}), {Err: 'Locked'});
+  assert((await action(session, {Unlock: credentials})).Ok?.Opened, 'Could not unlock the original session');
   await command('Target.closeTarget', {targetId: session.targetId});
   const reopened = await newTab(command, extensionUrl);
   await waitForUi(reopened);
@@ -238,7 +267,7 @@ path = ${JSON.stringify(blobPath)}
   assert((await action(reopened, {Unlock: credentials})).Ok?.Opened, 'Offline unlock failed');
   assert.deepEqual(await action(reopened, {Logins: {after: null}}), expected);
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, offlineUnlock: true,
-    plaintextInBrowserStorage: false}));
+    duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false}));
 
   if (option !== '--vault-only') {
     server.listen(Number(new URL(origin).port), '127.0.0.1');
