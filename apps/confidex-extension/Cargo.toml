@@ -9,7 +9,8 @@ license-file = "../../LICENSE"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-ui = ["dep:confidex-browser", "dep:confidex-ui", "dep:eframe", "dep:web-sys"]
+# The UI and session WASM bundles are built separately and both need browser entropy.
+ui = ["dep:confidex-browser", "dep:confidex-ui", "dep:confidex-vault", "dep:eframe", "dep:web-sys"]
 session = ["dep:confidex-browser", "dep:confidex-vault"]
 
 [dependencies]

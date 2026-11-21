@@ -430,24 +430,46 @@ path = ${JSON.stringify(blobPath)}
   await command('Target.closeTarget', {targetId: session.targetId});
   assert.equal(await reportFrom(ordinaryUrl), false, 'A closed session allowed routing');
   const reopened = await newTab(command, extensionUrl);
+  await reopened.call('Emulation.setDeviceMetricsOverride', {
+    width: 1000, height: 850, deviceScaleFactor: 1, mobile: false,
+  });
   await waitForUi(reopened);
   assert.equal((await status(reopened)).Ok?.Locked?.name, 'Synthetic extension vault');
   assert.deepEqual(await action(reopened, {Logins: {after: null}}), {Err: 'Locked'});
   networkBlocked = true;
-  assert((await action(reopened, {Unlock: credentials})).Ok?.Opened, 'Offline unlock failed');
-  await expectWebLogin(reopened);
-  await until(async () => (await status(reopened)).Ok?.Opened?.sync === 'Offline', 'offline status');
-  const record = Array(16).fill(2);
-  const create = {CreateLogin: {record, login: {
+  await reopened.call('Page.bringToFront');
+  await reopened.evaluate("document.querySelector('#session').focus()");
+  await tabAndType(reopened, credentials.key, 'secret key');
+  await tabAndType(reopened, credentials.password, 'vault password');
+  await press(reopened, 'Enter', 13);
+  await until(async () => (await status(reopened)).Ok?.Opened?.sync === 'Offline', 'offline UI unlock');
+
+  // Keyboard order in the session toolbar is Lock, Sync now, New login.
+  await reopened.evaluate("document.querySelector('#session').focus()");
+  for (let button = 0; button < 3; button++) await press(reopened, 'Tab', 9);
+  await press(reopened, 'Enter', 13);
+  const login = {
     title: 'Offline login', url: 'https://example.test/account?private=1#login',
     username: 'offline-fixture@example.test', password: offlinePassword,
-  }}};
-  const saved = (await action(reopened, create)).Ok?.Saved;
-  assert(saved, 'Offline write did not finish');
+  };
+  // Focus can return to the toolbar when the New login button is disabled by the editor.
+  await tabAndType(reopened, login.title, 'new login title', 4);
+  await tabAndType(reopened, login.url, 'new login URL');
+  await tabAndType(reopened, login.username, 'new login username');
+  await tabAndType(reopened, login.password, 'new login password');
+  await press(reopened, 'Enter', 13);
+
+  const offline = await until(async () => {
+    try {
+      return (await list(reopened)).rows.find(row => row.title === login.title);
+    } catch (error) {
+      if (!error.message.includes('Confidex session request already pending')) throw error;
+      return false;
+    }
+  }, 'login saved through the offline session UI');
+  const {record} = offline.target.head;
+  const create = {CreateLogin: {record, login}};
   assert.deepEqual(await action(reopened, create), {Err: {Storage: 'Conflict'}});
-  const offlineRows = (await list(reopened)).rows;
-  const offline = offlineRows.find(row => row.title === 'Offline login');
-  assert.deepEqual(offline?.target.head, saved);
   const change = {username: null, password: updatedPassword};
   const updated = (await action(reopened, {UpdateLogin: {target: offline.target, change}})).Ok?.Saved;
   assert(updated, 'Offline update did not finish');
@@ -540,7 +562,7 @@ path = ${JSON.stringify(blobPath)}
   assert.equal(finalDraft.fields[3].values.text, 'Note edited in the main app');
 
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
-    offlineUnlock: true, offlineWritesSurviveBrowserRestart: true, automaticSync: true,
+    offlineUnlock: true, newLoginThroughUi: true, offlineWritesSurviveBrowserRestart: true, automaticSync: true,
     duplicateCreateRejected: true, staleUpdateRejected: true, conflictPreservedAndResolved: true,
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
     optionalSitePermission: true, senderValidation: true, strictCspRouting: true,
@@ -713,6 +735,24 @@ async function click(page, selector) {
   for (const type of ['mousePressed', 'mouseReleased']) {
     await page.call('Input.dispatchMouseEvent', {type, x, y, button: 'left', clickCount: 1});
   }
+}
+
+async function press(page, key, windowsVirtualKeyCode) {
+  for (const type of ['rawKeyDown', 'keyUp']) {
+    await page.call('Input.dispatchKeyEvent', {type, key, code: key, windowsVirtualKeyCode});
+  }
+  await page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+}
+
+async function tabAndType(page, text, field, tabStops = 1) {
+  for (let step = 0; step < tabStops; step++) {
+    await press(page, 'Tab', 9);
+    if (await page.evaluate("document.activeElement.id === 'session-text-input'")) {
+      await page.call('Input.insertText', {text});
+      return;
+    }
+  }
+  throw new Error(`Browser did not focus ${field}`);
 }
 
 async function attach(command, targetId) {
