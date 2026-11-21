@@ -5,6 +5,7 @@ let workingTimer;
 let checking = false;
 let routing = false;
 let revision = 0;
+let commandSequence = 0;
 let notify;
 
 function stop(output) {
@@ -64,15 +65,22 @@ async function probe(current, form) {
 
 async function checkWorker() {
   const current = worker;
-  if (!current || !workingTimer || checking) return;
+  if (!current || !workingTimer || pending || checking) return;
+  const sequence = commandSequence;
   checking = true;
   try {
-    if (!await probe(current) && current === worker) stop();
+    if (!await probe(current)) stopIfIdle(current, sequence);
   } catch {
-    if (current === worker) stop();
+    stopIfIdle(current, sequence);
   } finally {
     checking = false;
   }
+}
+
+function stopIfIdle(current, sequence) {
+  // A command can begin while a probe is in flight and block the event loop
+  // during key derivation. A failed probe can retire only an idle worker.
+  if (current === worker && !pending && sequence === commandSequence) stop();
 }
 
 function userActivity(event) {
@@ -93,9 +101,11 @@ function receiveForm(message, sender, reply) {
     return;
   }
   routing = true;
+  const sequence = commandSequence;
+  const idle = !pending;
   const form = {context: JSON.stringify(message.context), report: JSON.stringify(message.report)};
   probe(current, form).then(reply, () => {
-    if (current === worker) stop();
+    if (idle) stopIfIdle(current, sequence);
     reply(false);
   }).finally(() => { routing = false; });
   return true;
@@ -137,6 +147,7 @@ export function exchange(input) {
     }
     try {
       if (!worker) start();
+      commandSequence++;
       pending = {resolve, reject};
       worker.postMessage(input, [input.buffer]);
     } catch (error) {

@@ -69,9 +69,12 @@ and sync a synthetic vault. It installs the unpacked extension in a temporary
 Chromium profile and checks permission grant and revocation, sender validation,
 the isolated messaging channel under strict CSP, routing after a background
 restart, worker loss, idle expiry, duplicate ownership, and closing the session.
-It also checks incorrect credentials, offline unlock, and absence of fixture
-credentials in persistent extension data. It removes the temporary browser
-profile and server data and does not write traces or screenshots.
+The revocation check sends a report from the original isolated world without
+reloading the page. The slow-unlock check blocks the worker across the previous
+probe timeout and verifies that unlock completes. The suite also checks
+incorrect credentials, offline unlock, and absence of fixture credentials in
+persistent extension data. It removes the temporary browser profile and server
+data and does not write traces or screenshots.
 
 Headless runs record prior consent in Chromium's test profile and then use the
 permission button to request actual access. To exercise the first-use native

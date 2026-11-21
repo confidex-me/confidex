@@ -285,8 +285,23 @@ path = ${JSON.stringify(blobPath)}
   assert.notEqual(restarted?.targetId, background.targetId);
   assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
 
+  const {frameTree: {frame}} = await ordinaryTab.call('Page.getFrameTree');
+  let siteWorld;
+  command.on('Runtime.executionContextCreated', ({context}) => {
+    if (context.auxData?.frameId === frame.id && context.auxData.type === 'isolated'
+        && context.origin === `chrome-extension://${id}`) siteWorld = context.uniqueId;
+  });
+  await ordinaryTab.call('Runtime.enable');
+  const worldId = await until(() => siteWorld, 'existing content script world');
+  // CDP targets the existing isolated world. A new scripting injection would
+  // fail at the permissions API and never exercise routing after revocation.
+  const reportFromExistingDocument = () => ordinaryTab.evaluate(
+    `chrome.runtime.sendMessage(${JSON.stringify(report)})`, {uniqueContextId: worldId},
+  );
+  assert.equal(await reportFromExistingDocument(), true);
   await click(session, '#site-permissions-toggle');
   await until(async () => !await permission() && !await registered(), 'site permission and registration removed');
+  assert.equal(await reportFromExistingDocument(), false, 'Revoked access still allowed reports from an open document');
   assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
   await click(session, '#site-permissions-toggle');
   await until(permission, 'site permission restored');
@@ -369,7 +384,35 @@ path = ${JSON.stringify(blobPath)}
   assert.equal(await reportFrom(ordinaryUrl), false, 'Background or synthetic input renewed the session');
   await until(() => !workers.size, 'expired worker terminates');
   assert.deepEqual(await action(session, {Logins: {after: null}}), {Err: 'Locked'});
-  assert((await action(session, {Unlock: credentials})).Ok?.Opened, 'Unlock after expiry failed');
+
+  const slowWorker = await currentWorker();
+  await slowWorker.call('Runtime.addBinding', {name: 'confidexTestDeriving'});
+  let deriving = false;
+  command.on('Runtime.bindingCalled', ({name}) => {
+    if (name === 'confidexTestDeriving') deriving = true;
+  });
+  await slowWorker.evaluate(`(() => {
+    const handle = self.onmessage;
+    self.onmessage = event => {
+      if (event.data instanceof Uint8Array) {
+        self.onmessage = handle;
+        self.confidexTestDeriving('');
+        // Model synchronous WASM work across a heartbeat and probe deadline.
+        const end = performance.now() + 9000;
+        while (performance.now() < end) {}
+      }
+      return handle(event);
+    };
+    return true;
+  })()`);
+  await session.call('Page.bringToFront');
+  const [unlock, reportDuringUnlock] = await Promise.all([
+    action(session, {Unlock: credentials}),
+    until(() => deriving, 'slow unlock started').then(() => reportFrom(ordinaryUrl)),
+  ]);
+  assert(unlock.Ok?.Opened, 'A slow unlock was interrupted');
+  assert.equal(reportDuringUnlock, false, 'Routing accepted a report while the worker was blocked');
+  assert.equal(await reportFrom(ordinaryUrl), true, 'Routing did not resume after unlock');
 
   const stopped = await currentWorker();
   await stopped.evaluate('setTimeout(() => self.close(), 0); true');
@@ -403,7 +446,8 @@ path = ${JSON.stringify(blobPath)}
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, offlineUnlock: true,
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
     optionalSitePermission: true, senderValidation: true, strictCspRouting: true,
-    backgroundRestart: true, idleExpiry: true, workerLoss: true}));
+    backgroundRestart: true, idleExpiry: true, workerLoss: true,
+    slowUnlock: true, openDocumentAfterRevocation: true}));
 
   if (!options.includes('--vault-only')) {
     for (const page of [ordinaryTab, strictTab]) {
@@ -514,9 +558,9 @@ async function attach(command, targetId) {
 
 function debuggerSession(command, sessionId) {
   const call = (method, params) => command(method, params, sessionId);
-  return {call, async evaluate(expression) {
+  return {call, async evaluate(expression, options = {}) {
     const result = await call('Runtime.evaluate', {
-      expression, awaitPromise: true, returnByValue: true,
+      expression, awaitPromise: true, returnByValue: true, ...options,
     });
     if (result.exceptionDetails) {
       throw new Error(result.exceptionDetails.exception?.description ?? 'Browser evaluation failed');
