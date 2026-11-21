@@ -620,3 +620,5 @@ settings-auto-lock-hint = Deze instelling geldt alleen voor deze kluis op dit ap
 settings-device-unlock-error = Ontgrendeling met het apparaat kon niet worden gewijzigd. Probeer het opnieuw.
 
 extension-session-hint = Houd dit sessietabblad open zolang je Confidex in je browser gebruikt.
+
+extension-startup-error = Confidex kon niet starten. Laad de extensie opnieuw en probeer het nogmaals.

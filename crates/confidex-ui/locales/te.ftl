@@ -620,3 +620,5 @@ settings-auto-lock-hint = ఈ సెట్టింగ్ ఈ పరికరం
 settings-device-unlock-error = పరికరంతో అన్‌లాక్ చేసే సెట్టింగ్‌ను మార్చలేకపోయాం. మళ్లీ ప్రయత్నించండి.
 
 extension-session-hint = బ్రౌజర్‌లో Confidex వాడుతున్నప్పుడు ఈ సెషన్ ట్యాబ్‌ను తెరిచి ఉంచండి.
+
+extension-startup-error = Confidex ప్రారంభం కాలేదు. పొడిగింపును మళ్లీ లోడ్ చేసి ప్రయత్నించండి.

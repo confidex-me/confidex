@@ -683,3 +683,5 @@ settings-auto-lock-hint = Настройка действует только д�
 settings-device-unlock-error = Не удалось изменить разблокировку с помощью устройства. Повторите попытку.
 
 extension-session-hint = Не закрывайте вкладку сеанса, пока пользуетесь Confidex в браузере.
+
+extension-startup-error = Не удалось запустить Confidex. Перезагрузите расширение и попробуйте снова.

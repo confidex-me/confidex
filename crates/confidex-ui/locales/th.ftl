@@ -617,3 +617,5 @@ settings-auto-lock-hint = การตั้งค่านี้ใช้กั
 settings-device-unlock-error = ไม่สามารถเปลี่ยนการปลดล็อกด้วยอุปกรณ์ได้ ลองอีกครั้ง
 
 extension-session-hint = เปิดแท็บเซสชันนี้ไว้ขณะใช้ Confidex ในเบราว์เซอร์
+
+extension-startup-error = ไม่สามารถเริ่ม Confidex ได้ โปรดโหลดส่วนขยายใหม่แล้วลองอีกครั้ง

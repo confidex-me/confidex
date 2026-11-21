@@ -620,3 +620,5 @@ settings-auto-lock-hint = Este ajuste solo se aplica a esta bóveda en este disp
 settings-device-unlock-error = No se pudo cambiar el desbloqueo con el dispositivo. Inténtalo de nuevo.
 
 extension-session-hint = Mantén abierta esta pestaña de sesión mientras usas Confidex en el navegador.
+
+extension-startup-error = No se pudo iniciar Confidex. Recarga la extensión e inténtalo de nuevo.

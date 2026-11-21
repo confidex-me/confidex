@@ -621,3 +621,5 @@ settings-auto-lock-hint = Această setare se aplică doar acestui seif pe acest 
 settings-device-unlock-error = Nu s-a putut modifica deblocarea cu dispozitivul. Încercați din nou.
 
 extension-session-hint = Lasă această filă a sesiunii deschisă cât timp folosești Confidex în browser.
+
+extension-startup-error = Confidex nu a putut porni. Reîncarcă extensia și încearcă din nou.

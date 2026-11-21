@@ -617,3 +617,5 @@ settings-auto-lock-hint = এই সেটিং শুধু এই ডিভ�
 settings-device-unlock-error = ডিভাইস দিয়ে আনলক করার সেটিং বদলানো যায়নি। আবার চেষ্টা করুন।
 
 extension-session-hint = ব্রাউজারে Confidex ব্যবহার করার সময় এই সেশন ট্যাবটি খোলা রাখুন।
+
+extension-startup-error = Confidex চালু করা যায়নি। এক্সটেনশন পুনরায় লোড করে আবার চেষ্টা করুন।

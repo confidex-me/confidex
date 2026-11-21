@@ -617,3 +617,5 @@ settings-auto-lock-hint = Tetapan ini hanya terpakai pada peti besi ini pada per
 settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan peranti. Cuba lagi.
 
 extension-session-hint = Biarkan tab sesi ini terbuka semasa menggunakan Confidex dalam pelayar.
+
+extension-startup-error = Confidex tidak dapat dimulakan. Muat semula sambungan dan cuba lagi.

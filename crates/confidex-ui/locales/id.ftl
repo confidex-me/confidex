@@ -617,3 +617,5 @@ settings-auto-lock-hint = Pengaturan ini hanya berlaku untuk brankas ini di pera
 settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan perangkat. Coba lagi.
 
 extension-session-hint = Biarkan tab sesi ini tetap terbuka saat menggunakan Confidex di browser.
+
+extension-startup-error = Confidex tidak dapat dimulai. Muat ulang ekstensi dan coba lagi.

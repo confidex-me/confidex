@@ -622,3 +622,5 @@ settings-auto-lock-hint = Toto nastavení platí pouze pro tento trezor na tomto
 settings-device-unlock-error = Odemknutí pomocí zařízení nelze změnit. Zkuste to znovu.
 
 extension-session-hint = Při používání Confidexu v prohlížeči nechte tuto kartu relace otevřenou.
+
+extension-startup-error = Confidex se nepodařilo spustit. Znovu načtěte rozšíření a zkuste to znovu.

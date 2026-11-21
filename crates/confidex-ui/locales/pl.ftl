@@ -622,3 +622,5 @@ settings-auto-lock-hint = To ustawienie dotyczy tylko tego sejfu na tym urządze
 settings-device-unlock-error = Nie udało się zmienić odblokowywania urządzeniem. Spróbuj ponownie.
 
 extension-session-hint = Pozostaw tę kartę sesji otwartą, gdy korzystasz z Confidex w przeglądarce.
+
+extension-startup-error = Nie udało się uruchomić Confidex. Załaduj rozszerzenie ponownie i spróbuj jeszcze raz.

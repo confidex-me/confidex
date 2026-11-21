@@ -620,3 +620,5 @@ settings-auto-lock-hint = Esta configuração vale apenas para este cofre neste 
 settings-device-unlock-error = Não foi possível alterar o desbloqueio com o dispositivo. Tente novamente.
 
 extension-session-hint = Mantenha esta aba da sessão aberta enquanto usa o Confidex no navegador.
+
+extension-startup-error = Não foi possível iniciar o Confidex. Recarregue a extensão e tente novamente.

@@ -9,6 +9,11 @@
 <script type="module" src="session-boot.js"></script>
 </head>
 <body>
+<div id="startup" role="status" aria-live="polite">
+<p id="startup-message">Confidex</p>
+<pre id="startup-detail" hidden></pre>
+<button id="startup-reload" type="button" hidden>↻</button>
+</div>
 <canvas id="session" aria-label="Confidex"></canvas>
 </body>
 </html>

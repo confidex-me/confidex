@@ -620,3 +620,5 @@ settings-auto-lock-hint = Diese Einstellung gilt nur für diesen Tresor auf dies
 settings-device-unlock-error = Die Geräteentsperrung konnte nicht geändert werden. Versuchen Sie es erneut.
 
 extension-session-hint = Lassen Sie diesen Sitzungstab geöffnet, solange Sie Confidex im Browser verwenden.
+
+extension-startup-error = Confidex konnte nicht gestartet werden. Laden Sie die Erweiterung neu und versuchen Sie es erneut.

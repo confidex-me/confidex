@@ -620,3 +620,5 @@ settings-auto-lock-hint = Mpangilio huu unatumika kwa sefu hii kwenye kifaa hiki
 settings-device-unlock-error = Imeshindikana kubadilisha ufunguaji kwa kifaa. Jaribu tena.
 
 extension-session-hint = Acha kichupo hiki cha kipindi kikiwa wazi unapotumia Confidex kwenye kivinjari.
+
+extension-startup-error = Confidex haikuweza kuanza. Pakia upya kiendelezi na ujaribu tena.

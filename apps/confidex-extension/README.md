@@ -27,7 +27,15 @@ Load `dist/extension` as an unpacked extension in a test profile. Click the
 Confidex toolbar action to open the session tab. The server field defaults to
 `https://sync.confidex.me/` and accepts a custom HTTPS sync-server origin.
 
+The builder compiles into a temporary directory and validates the packaged
+modules before replacing `dist/extension`. A failed build preserves the previous
+package. After rebuilding, refresh the session tab. Startup failures display
+an error and a reload button.
+
 ## Browser checks
+
+Check visible startup errors for missing JavaScript and WASM assets with
+`node apps/confidex-extension/startup-check.mjs "/path/to/chrome" dist/extension`.
 
 ```sh
 make web

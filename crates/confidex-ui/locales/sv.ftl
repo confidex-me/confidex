@@ -620,3 +620,5 @@ settings-auto-lock-hint = Inställningen gäller bara det här valvet på den h�
 settings-device-unlock-error = Det gick inte att ändra upplåsning med enheten. Försök igen.
 
 extension-session-hint = Låt den här sessionsfliken vara öppen medan du använder Confidex i webbläsaren.
+
+extension-startup-error = Confidex kunde inte starta. Ladda om tillägget och försök igen.

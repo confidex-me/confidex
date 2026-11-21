@@ -617,3 +617,5 @@ settings-auto-lock-hint = 此设置仅适用于此设备上的此保险库。再
 settings-device-unlock-error = 无法更改设备解锁设置。请重试。
 
 extension-session-hint = 在浏览器中使用 Confidex 时，请保持此会话标签页打开。
+
+extension-startup-error = 无法启动 Confidex。请重新加载扩展程序后重试。
