@@ -624,3 +624,7 @@ settings-device-unlock-error = Не вдалося змінити розблок
 extension-session-hint = Тримайте вкладку сеансу відкритою, поки користуєтеся Confidex у браузері.
 
 extension-startup-error = Не вдалося запустити Confidex. Перезавантажте розширення та спробуйте ще раз.
+
+extension-sites-grant = Дозволити доступ до HTTPS-сайтів
+extension-sites-revoke = Відкликати доступ до HTTPS-сайтів
+extension-sites-unavailable = Не вдалося змінити доступ до сайтів.

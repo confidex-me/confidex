@@ -619,3 +619,7 @@ settings-device-unlock-error = ডিভাইস দিয়ে আনলক �
 extension-session-hint = ব্রাউজারে Confidex ব্যবহার করার সময় এই সেশন ট্যাবটি খোলা রাখুন।
 
 extension-startup-error = Confidex চালু করা যায়নি। এক্সটেনশন পুনরায় লোড করে আবার চেষ্টা করুন।
+
+extension-sites-grant = HTTPS সাইটে অ্যাক্সেস দিন
+extension-sites-revoke = HTTPS সাইটের অ্যাক্সেস সরান
+extension-sites-unavailable = সাইটে অ্যাক্সেসের অনুমতি বদলানো যায়নি।

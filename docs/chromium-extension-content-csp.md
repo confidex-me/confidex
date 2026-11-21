@@ -21,12 +21,17 @@ dynamic registration at `document_start`. Compiling the same module from an
 the tested browser and launch mode. It does not establish the behavior of
 other Chromium versions. [Chrome content-script CSP](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts#content-security-policy)
 
+The session-routing stage reproduced the same WASM compile error in Chrome
+158.0.8127.36 on macOS 15.7.7. The ordinary-page WASM control and isolated
+messaging under strict CSP both passed.
+
 ## Pending architecture decision
 
-Strict-CSP integration is a gate for the content architecture. The unpacked
-prototype keeps the packaged WASM probe and does not register content scripts
-during normal use. The smoke test uses a disposable copy with access to the
-local fixture host and fails if the strict page cannot initialize the module.
+Strict-CSP integration is a gate for the content architecture. The unpacked extension can register a document-addressing channel after an
+explicit HTTPS permission grant. This channel works independently from the
+packaged WASM probe and performs no form inspection. The standalone WASM smoke
+test uses a disposable copy with access to the local fixture host and fails if
+the strict page cannot initialize the module.
 
 A candidate design is to keep DOM access and field mutation in a restricted
 isolated-world adapter and move form classification to Rust/WASM in an

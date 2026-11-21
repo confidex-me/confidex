@@ -15,7 +15,8 @@ def fixture(bundle):
     bundle.mkdir(parents=True)
     for name in ('manifest.json', 'session.html', 'session.css', 'session-boot.js',
                  'session-messages.json', 'session-worker.js', 'background.js',
-                 'content-bootstrap.js', 'engine/engine.js', 'ui/ui.js', 'content/content.js'):
+                 'content-bootstrap.js', 'content-channel.js', 'site-permissions.js',
+                 'engine/engine.js', 'ui/ui.js', 'content/content.js'):
         path = bundle / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('{}')

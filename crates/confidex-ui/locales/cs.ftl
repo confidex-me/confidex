@@ -624,3 +624,7 @@ settings-device-unlock-error = Odemknutí pomocí zařízení nelze změnit. Zku
 extension-session-hint = Při používání Confidexu v prohlížeči nechte tuto kartu relace otevřenou.
 
 extension-startup-error = Confidex se nepodařilo spustit. Znovu načtěte rozšíření a zkuste to znovu.
+
+extension-sites-grant = Povolit přístup k webům HTTPS
+extension-sites-revoke = Odebrat přístup k webům HTTPS
+extension-sites-unavailable = Přístup k webům se nepodařilo změnit.

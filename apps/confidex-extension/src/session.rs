@@ -1,6 +1,9 @@
 use crate::{
+    lease::Lease,
     logins::{LOGIN_PAGE_SIZE, append_previews},
-    protocol::{Action, LoginCursor, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response},
+    protocol::{
+        Action, FormReport, LoginCursor, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response,
+    },
 };
 use confidex_app::{Command, DeviceKeys, Error, Output};
 use confidex_browser::{BrowserStore, Net, Runtime};
@@ -23,19 +26,54 @@ impl DeviceKeys for NoDeviceKeys {
     }
 }
 
+fn now() -> u64 {
+    js_sys::Date::now() as u64
+}
+
+// Worker control can validate liveness while Engine awaits storage or the network.
 #[wasm_bindgen]
-#[derive(Default)]
+pub struct SessionLease(Lease);
+
+#[wasm_bindgen]
+impl SessionLease {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self(Lease::default())
+    }
+
+    pub fn remaining(&self) -> i32 {
+        self.0.remaining(now())
+    }
+
+    pub fn was_locked(&self) -> bool {
+        self.0.was_locked()
+    }
+
+    pub fn activity(&self) {
+        self.0.activity(now());
+    }
+
+    pub fn accept_form(&self, context: &str, report: &str) -> bool {
+        self.remaining() > 0 && FormReport::valid(context, report)
+    }
+}
+
+#[wasm_bindgen]
 pub struct Session {
     runtime: Runtime<Net>,
     server: Option<String>,
-    unlocked: bool,
+    lease: Lease,
 }
 
 #[wasm_bindgen]
 impl Session {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(lease: &SessionLease) -> Self {
+        Self {
+            runtime: Runtime::default(),
+            server: None,
+            lease: lease.0.clone(),
+        }
     }
 
     pub async fn execute(&mut self, input: Uint8Array) -> Result<Uint8Array, JsValue> {
@@ -52,6 +90,13 @@ impl Session {
                 Err(error) => Err(error),
             }
         };
+        let result = if self.lease.remaining(now()) == 0
+            && !matches!(result, Ok(Reply::Locked { .. } | Reply::Disconnected))
+        {
+            Err(Error::Locked)
+        } else {
+            result
+        };
         let bytes = Zeroizing::new(
             serde_json::to_vec(&result).map_err(|_| JsValue::from_str("Invalid session reply"))?,
         );
@@ -63,6 +108,10 @@ impl Session {
 }
 
 impl Session {
+    fn is_open(&self) -> bool {
+        self.lease.remaining(now()) > 0
+    }
+
     async fn command(&mut self, command: Command) -> Result<Output, Error> {
         self.runtime
             .execute(
@@ -87,7 +136,7 @@ impl Session {
     async fn status(&self) -> Response {
         Ok(match Self::vault().await? {
             None => Reply::Disconnected,
-            Some(info) if self.unlocked => Reply::Opened {
+            Some(info) if self.is_open() => Reply::Opened {
                 name: info.name,
                 can_sync: self.server.is_some(),
             },
@@ -96,6 +145,9 @@ impl Session {
     }
 
     async fn run(&mut self, action: Action) -> Response {
+        if self.lease.remaining(now()) == 0 {
+            return Err(Error::Locked);
+        }
         match action {
             Action::Status => self.status().await,
             Action::Connect {
@@ -123,7 +175,7 @@ impl Session {
                 self.opened(opened)
             }
             Action::Unlock(mut credentials) => {
-                if self.unlocked
+                if self.is_open()
                     || credentials.password.len() > 4096
                     || credentials.key.len() > 1024
                 {
@@ -141,13 +193,13 @@ impl Session {
                 self.opened(opened)
             }
             Action::Lock => {
-                self.unlocked = false;
+                self.lease.retire();
                 self.server = None;
                 self.command(Command::Lock).await?;
                 self.status().await
             }
             Action::Sync => {
-                if !self.unlocked {
+                if !self.is_open() {
                     return Err(Error::Locked);
                 }
                 let server = self.server.clone().ok_or(Error::SyncDisabled)?;
@@ -159,7 +211,8 @@ impl Session {
                     more: report.more,
                 })
             }
-            Action::Logins { after } => self.logins(after).await,
+            Action::Logins { after } if self.is_open() => self.logins(after).await,
+            Action::Logins { .. } => Err(Error::Locked),
         }
     }
 
@@ -168,7 +221,7 @@ impl Session {
             return Err(Error::Integrity);
         };
         self.server = server.filter(|url| url.starts_with("https://"));
-        self.unlocked = true;
+        self.lease.open(now());
         Ok(Reply::Opened {
             name: info.name,
             can_sync: self.server.is_some(),
@@ -193,6 +246,9 @@ impl Session {
             .map(|cursor| (cursor.head, cursor.offset))
             .chain(rows.iter().map(|row| (row.head.clone(), 0)))
         {
+            if !self.is_open() {
+                return Err(Error::Locked);
+            }
             if logins.len() == LOGIN_PAGE_SIZE {
                 return Ok(Reply::Logins {
                     rows: logins,

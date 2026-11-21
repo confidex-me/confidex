@@ -619,3 +619,7 @@ settings-device-unlock-error = 기기를 사용한 잠금 해제를 변경할 �
 extension-session-hint = 브라우저에서 Confidex를 사용하는 동안 이 세션 탭을 열어 두세요.
 
 extension-startup-error = Confidex를 시작할 수 없습니다. 확장 프로그램을 새로고침한 후 다시 시도하세요.
+
+extension-sites-grant = HTTPS 사이트 접근 허용
+extension-sites-revoke = HTTPS 사이트 접근 권한 삭제
+extension-sites-unavailable = 사이트 접근 권한을 변경할 수 없습니다.

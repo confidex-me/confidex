@@ -11,9 +11,10 @@ import {createInterface} from 'node:readline';
 import {setTimeout as delay} from 'node:timers/promises';
 import {releaseAssets} from '../confidex/web/assets.mjs';
 
-const [chromePath, extensionPath, webPath, daemonPath, option] = process.argv.slice(2);
-assert(daemonPath, 'Usage: node browser-check.mjs CHROME EXTENSION WEB SYNC_DAEMON [--vault-only]');
-assert(option == null || option === '--vault-only', 'Unknown check option');
+const [chromePath, extensionPath, webPath, daemonPath, ...options] = process.argv.slice(2);
+assert(daemonPath, 'Usage: node browser-check.mjs CHROME EXTENSION WEB SYNC_DAEMON [--vault-only] [--interactive-permission]');
+assert(options.every(option => ['--vault-only', '--interactive-permission'].includes(option)), 'Unknown check option');
+const interactive = options.includes('--interactive-permission');
 const directory = await mkdtemp(join(tmpdir(), 'confidex-extension-'));
 let chrome, daemon, server;
 const password = 'public-extension-master-fixture';
@@ -71,7 +72,8 @@ path = ${JSON.stringify(blobPath)}
       if (req.url === '/strict') {
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'none'; object-src 'none'");
       }
-      res.end('<!doctype html><title>CSP fixture</title><input type="password">');
+      const frame = req.url === '/ordinary' ? '<iframe src="/seed"></iframe>' : '';
+      res.end('<!doctype html><title>CSP fixture</title><input type="password">' + frame);
       return;
     }
     if (req.url === '/seed') {
@@ -97,11 +99,13 @@ path = ${JSON.stringify(blobPath)}
   const manifestPath = join(cspExtension, 'manifest.json');
   const manifest = JSON.parse(await readFile(manifestPath));
   assert.equal(manifest.host_permissions, undefined);
+  assert.equal(manifest.externally_connectable, undefined);
   manifest.host_permissions = ['https://127.0.0.1/*'];
   await writeFile(manifestPath, JSON.stringify(manifest));
 
   chrome = spawn(chromePath, [
-    '--headless=new', '--remote-debugging-pipe', '--enable-unsafe-extension-debugging',
+    ...(interactive ? [] : ['--headless=new']),
+    '--remote-debugging-pipe', '--enable-unsafe-extension-debugging',
     '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
     '--disable-component-update', '--disable-sync', '--enable-unsafe-swiftshader',
     `--ignore-certificate-errors-spki-list=${fingerprint}`,
@@ -109,6 +113,7 @@ path = ${JSON.stringify(blobPath)}
   ], {stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe']});
   const command = devTools(chrome);
   const browser = await command('Browser.getVersion');
+  await command('Target.setDiscoverTargets', {discover: true});
   const {id} = await command('Extensions.loadUnpacked', {path: resolve(extensionPath)});
   const {id: cspId} = await command('Extensions.loadUnpacked', {path: cspExtension});
   const tabTargets = () => command('Target.getTargets', {filter: [{type: 'tab'}]}).then(response => response.targetInfos);
@@ -204,6 +209,89 @@ path = ${JSON.stringify(blobPath)}
   const expected = {Ok: {Logins: {rows: [{title: 'Synthetic login', username: 'chromium-fixture@example.test'}], next: null}}};
   assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
 
+  const hostPermission = "{origins: ['https://*/*']}";
+  const permission = () => session.evaluate(`chrome.permissions.contains(${hostPermission})`);
+  const registered = () => session.evaluate(`chrome.scripting.getRegisteredContentScripts({
+    ids: ['confidex-site-channel'],
+  }).then(scripts => scripts.length === 1)`);
+  assert.equal(await permission(), false);
+  assert.equal(await registered(), false);
+  await until(() => session.evaluate("!document.querySelector('#site-permissions').hidden"), 'permission control');
+  await session.evaluate("document.querySelector('#site-permissions-toggle').click()");
+  assert.equal(await permission(), false, 'A synthetic click requested site access');
+  if (interactive) {
+    console.log('Accept the HTTPS host permission prompt in the temporary Chromium window.');
+  } else {
+    // Record prior consent through Chromium's own settings in the disposable
+    // profile, so the real optional-permission API can run without a native dialog.
+    const settings = await newTab(command, 'chrome://extensions/',
+      ['chrome://extensions/', 'edge://extensions/', 'brave://extensions/']);
+    await settings.evaluate(`chrome.developerPrivate.addHostPermission(${JSON.stringify(id)}, 'https://*/*')`);
+    await command('Target.closeTarget', {targetId: settings.targetId});
+    assert.equal(await permission(), false, 'Prior consent activated host access before the click');
+  }
+  await click(session, '#site-permissions-toggle');
+  await until(permission, 'HTTPS site permission', interactive ? 600 : 100);
+  await until(registered, 'content channel registration');
+
+  const ordinaryUrl = origin + '/ordinary';
+  const strictUrl = origin + '/strict';
+  const ordinaryTab = await newTab(command, ordinaryUrl);
+  const strictTab = await newTab(command, strictUrl);
+  assert.equal(await ordinaryTab.evaluate('globalThis.chrome?.runtime?.id === undefined'), true);
+  // A trusted extension page drives test injections even when the session is closed.
+  const siteDriver = await newTab(command, `chrome-extension://${id}/session-messages.json`);
+  const report = {kind: 'FormPresence', version: 1, hasPassword: true};
+  const fromSite = (url, message, allFrames = false) => siteDriver.evaluate(`(async () => {
+    const [tab] = await chrome.tabs.query({url: ${JSON.stringify(url)}});
+    const results = await chrome.scripting.executeScript({
+      target: {tabId: tab.id, allFrames: ${allFrames}}, world: 'ISOLATED',
+      args: [${JSON.stringify(message)}],
+      func: request => chrome.runtime.sendMessage(request).then(value => value ?? null, () => null),
+    });
+    return results.map(({frameId, result}) => ({frameId, result}));
+  })()`);
+  const reportFrom = async url => (await fromSite(url, report))[0].result;
+  await until(() => reportFrom(ordinaryUrl), 'validated top-frame report');
+  assert.equal(await reportFrom(strictUrl), true, 'Strict CSP blocked the routing channel');
+  const frames = await fromSite(ordinaryUrl, report, true);
+  assert.equal(frames.find(frame => frame.frameId === 0)?.result, true);
+  assert.equal(frames.find(frame => frame.frameId > 0)?.result, false);
+  for (const malformed of [
+    {...report, version: 2},
+    {...report, hasPassword: 'true'},
+    {...report, origin: 'https://forged.test', frameId: 0, tabId: 123, documentId: 'abc'},
+    {...report, extra: 'x'.repeat(4096)},
+    {version: 2, action: 'Lock'},
+    {version: 2, action: {Logins: {after: null}}},
+    {version: 1, kind: 'ConfidexRoutedForm', context: {}, report},
+  ]) {
+    const [response] = await fromSite(ordinaryUrl, malformed);
+    assert([false, null].includes(response.result), 'An invalid content request was accepted');
+  }
+  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  assert.equal(await session.evaluate(`chrome.runtime.sendMessage(${JSON.stringify(report)})`), false);
+
+  const backgroundUrl = `chrome-extension://${id}/background.js`;
+  const targetsAt = (type, url) => command('Target.getTargets')
+    .then(({targetInfos}) => targetInfos.filter(target => target.type === type && target.url === url));
+  const [background] = await targetsAt('service_worker', backgroundUrl);
+  assert(background, 'No MV3 service worker target');
+  await session.call('ServiceWorker.enable');
+  await session.call('ServiceWorker.stopAllWorkers');
+  await until(async () => !(await targetsAt('service_worker', backgroundUrl)).length, 'background stopped');
+  assert.equal(await reportFrom(ordinaryUrl), true, 'Restarted background did not route to the live worker');
+  const [restarted] = await targetsAt('service_worker', backgroundUrl);
+  assert.notEqual(restarted?.targetId, background.targetId);
+  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+
+  await click(session, '#site-permissions-toggle');
+  await until(async () => !await permission() && !await registered(), 'site permission and registration removed');
+  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  await click(session, '#site-permissions-toggle');
+  await until(permission, 'site permission restored');
+  await until(registered, 'content channel re-registered');
+
   const duplicateId = await session.evaluate(`(async () => {
     const current = await chrome.tabs.getCurrent();
     const duplicate = await chrome.tabs.duplicate(current.id);
@@ -252,10 +340,56 @@ path = ${JSON.stringify(blobPath)}
   })()`);
   assert.equal(plaintextFound, false, 'Plaintext appeared in extension storage');
 
+  const workers = new Map();
+  const workerUrl = `chrome-extension://${id}/session-worker.js`;
+  command.on('Target.attachedToTarget', ({sessionId, targetInfo}) => {
+    if (targetInfo.url === workerUrl) workers.set(sessionId, targetInfo.targetId);
+  });
+  command.on('Target.detachedFromTarget', ({sessionId}) => workers.delete(sessionId));
+  await session.call('Target.setAutoAttach', {
+    autoAttach: true, waitForDebuggerOnStart: false, flatten: true, filter: [{type: 'worker'}],
+  });
+  const currentWorker = () => until(() => {
+    for (const [sessionId] of workers) return debuggerSession(command, sessionId);
+    return false;
+  }, 'session worker attached');
+  const shiftWorkerClock = async (worker, shift) => {
+    await worker.evaluate(`globalThis.realTime ??= Date.now; Date.now = () => realTime() + ${shift}; true`);
+  };
+  const idleMs = 15 * 60 * 1000;
+  const expiring = await currentWorker();
+  await shiftWorkerClock(expiring, idleMs - 15_000);
+  assert.equal(await reportFrom(ordinaryUrl), true);
+  await click(session, '#session');
+  await shiftWorkerClock(expiring, idleMs + 5_000);
+  assert.equal(await reportFrom(ordinaryUrl), true, 'A trusted interaction failed to renew the lease');
+  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  await session.evaluate("window.dispatchEvent(new KeyboardEvent('keydown', {key: 'x'}))");
+  await shiftWorkerClock(expiring, 2 * idleMs);
+  assert.equal(await reportFrom(ordinaryUrl), false, 'Background or synthetic input renewed the session');
+  await until(() => !workers.size, 'expired worker terminates');
+  assert.deepEqual(await action(session, {Logins: {after: null}}), {Err: 'Locked'});
+  assert((await action(session, {Unlock: credentials})).Ok?.Opened, 'Unlock after expiry failed');
+
+  const stopped = await currentWorker();
+  await stopped.evaluate('setTimeout(() => self.close(), 0); true');
+  assert.equal(await reportFrom(ordinaryUrl), false, 'A stopped worker allowed routing');
+  await until(async () => (await status(session)).Ok?.Locked, 'worker loss locks the vault');
+  assert((await action(session, {Unlock: credentials})).Ok?.Opened, 'Unlock after worker loss failed');
+
   assert.equal((await action(session, 'Lock')).Ok?.Locked?.name, 'Synthetic extension vault');
   assert.deepEqual(await action(session, {Logins: {after: null}}), {Err: 'Locked'});
+  assert.equal(await reportFrom(ordinaryUrl), false, 'A locked session allowed routing');
   assert((await action(session, {Unlock: credentials})).Ok?.Opened, 'Could not unlock the original session');
+  const timeOrigin = await session.evaluate('performance.timeOrigin');
+  await session.call('Page.reload');
+  await until(() => session.evaluate(`performance.timeOrigin !== ${timeOrigin}`), 'session reload');
+  await waitForUi(session);
+  assert.equal((await status(session)).Ok?.Locked?.name, 'Synthetic extension vault');
+  assert.equal(await reportFrom(ordinaryUrl), false, 'Reload restored the open session');
+  assert((await action(session, {Unlock: credentials})).Ok?.Opened, 'Could not unlock the reloaded session');
   await command('Target.closeTarget', {targetId: session.targetId});
+  assert.equal(await reportFrom(ordinaryUrl), false, 'A closed session allowed routing');
   const reopened = await newTab(command, extensionUrl);
   await waitForUi(reopened);
   assert.equal((await status(reopened)).Ok?.Locked?.name, 'Synthetic extension vault');
@@ -267,9 +401,14 @@ path = ${JSON.stringify(blobPath)}
   assert((await action(reopened, {Unlock: credentials})).Ok?.Opened, 'Offline unlock failed');
   assert.deepEqual(await action(reopened, {Logins: {after: null}}), expected);
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, offlineUnlock: true,
-    duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false}));
+    duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
+    optionalSitePermission: true, senderValidation: true, strictCspRouting: true,
+    backgroundRestart: true, idleExpiry: true, workerLoss: true}));
 
-  if (option !== '--vault-only') {
+  if (!options.includes('--vault-only')) {
+    for (const page of [ordinaryTab, strictTab]) {
+      await command('Target.closeTarget', {targetId: page.targetId});
+    }
     server.listen(Number(new URL(origin).port), '127.0.0.1');
     await once(server, 'listening');
     const cspPage = await newTab(command, `chrome-extension://${cspId}/session.html`);
@@ -315,6 +454,7 @@ path = ${JSON.stringify(blobPath)}
 
 function devTools(child) {
   const pending = new Map();
+  const listeners = new Map();
   let sequence = 0;
   let buffer = '';
   child.stdio[4].setEncoding('utf8');
@@ -323,13 +463,14 @@ function devTools(child) {
     buffer = frames.pop();
     for (const frame of frames) {
       const response = JSON.parse(frame);
+      listeners.get(response.method)?.(response.params);
       const finish = pending.get(response.id);
       if (!finish) continue;
       pending.delete(response.id);
       finish(response);
     }
   });
-  return (method, params = {}, sessionId) => new Promise((resolve, reject) => {
+  const request = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
     const id = ++sequence;
     const timer = setTimeout(() => {
       pending.delete(id);
@@ -342,10 +483,12 @@ function devTools(child) {
     });
     child.stdio[3].write(JSON.stringify({id, method, params, sessionId}) + '\0');
   });
+  request.on = (method, handle) => listeners.set(method, handle);
+  return request;
 }
 
-async function until(check, description) {
-  for (let attempt = 0; attempt < 100; attempt++) {
+async function until(check, description, attempts = 100) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const result = await check();
     if (result) return result;
     await delay(100);
@@ -353,12 +496,28 @@ async function until(check, description) {
   throw new Error(`Browser did not reach ${description}`);
 }
 
+async function click(page, selector) {
+  await page.call('Page.bringToFront');
+  const {x, y} = await page.evaluate(`(() => {
+    const rect = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();
+    return {x: rect.x + rect.width / 2, y: rect.y + rect.height / 2};
+  })()`);
+  for (const type of ['mousePressed', 'mouseReleased']) {
+    await page.call('Input.dispatchMouseEvent', {type, x, y, button: 'left', clickCount: 1});
+  }
+}
+
 async function attach(command, targetId) {
   const {sessionId} = await command('Target.attachToTarget', {targetId, flatten: true});
-  return {targetId, async evaluate(expression) {
-    const result = await command('Runtime.evaluate', {
+  return {targetId, ...debuggerSession(command, sessionId)};
+}
+
+function debuggerSession(command, sessionId) {
+  const call = (method, params) => command(method, params, sessionId);
+  return {call, async evaluate(expression) {
+    const result = await call('Runtime.evaluate', {
       expression, awaitPromise: true, returnByValue: true,
-    }, sessionId);
+    });
     if (result.exceptionDetails) {
       throw new Error(result.exceptionDetails.exception?.description ?? 'Browser evaluation failed');
     }
@@ -370,9 +529,10 @@ async function waitForUi(tab) {
   await until(() => tab.evaluate("document.querySelector('#session-text-input') !== null"), 'egui startup');
 }
 
-async function newTab(command, url) {
+async function newTab(command, url, expectedUrls = [url]) {
   const {targetId} = await command('Target.createTarget', {url});
   const page = await attach(command, targetId);
-  await until(() => page.evaluate(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`), 'page load');
+  await until(() => page.evaluate(`${JSON.stringify(expectedUrls)}.includes(location.href) && document.readyState === 'complete'`),
+    `page load for ${url}`);
   return page;
 }

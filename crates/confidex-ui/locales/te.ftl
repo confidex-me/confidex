@@ -622,3 +622,7 @@ settings-device-unlock-error = పరికరంతో అన్‌లాక్
 extension-session-hint = బ్రౌజర్‌లో Confidex వాడుతున్నప్పుడు ఈ సెషన్ ట్యాబ్‌ను తెరిచి ఉంచండి.
 
 extension-startup-error = Confidex ప్రారంభం కాలేదు. పొడిగింపును మళ్లీ లోడ్ చేసి ప్రయత్నించండి.
+
+extension-sites-grant = HTTPS సైట్‌లకు ప్రాప్యతను అనుమతించండి
+extension-sites-revoke = HTTPS సైట్‌ల ప్రాప్యతను తొలగించండి
+extension-sites-unavailable = సైట్ ప్రాప్యతను మార్చడం సాధ్యం కాలేదు.

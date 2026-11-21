@@ -619,3 +619,7 @@ settings-device-unlock-error = Không thể thay đổi tính năng mở khóa b
 extension-session-hint = Giữ tab phiên này mở trong khi sử dụng Confidex trên trình duyệt.
 
 extension-startup-error = Không thể khởi động Confidex. Hãy tải lại tiện ích mở rộng và thử lại.
+
+extension-sites-grant = Cho phép truy cập các trang HTTPS
+extension-sites-revoke = Thu hồi quyền truy cập các trang HTTPS
+extension-sites-unavailable = Không thể thay đổi quyền truy cập trang web.

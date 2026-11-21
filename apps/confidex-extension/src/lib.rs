@@ -1,3 +1,9 @@
+#[cfg(any(
+    test,
+    all(feature = "session", target_arch = "wasm32", target_os = "unknown")
+))]
+mod lease;
+
 #[cfg(any(test, feature = "session", feature = "ui"))]
 mod protocol;
 

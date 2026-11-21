@@ -1,29 +1,132 @@
 let worker;
 let pending;
+let startupTimer;
+let workingTimer;
+let checking = false;
+let routing = false;
+let revision = 0;
+let notify;
 
-function stop() {
-  worker?.terminate();
+function stop(output) {
+  if (!worker) return;
+  worker.terminate();
   worker = undefined;
-  pending?.reject(new Error('Confidex session closed'));
+  clearTimeout(startupTimer);
+  clearInterval(workingTimer);
+  workingTimer = undefined;
+  revision++;
+  const request = pending;
   pending = undefined;
+  if (output && request) request.resolve(output);
+  else request?.reject(new Error('Confidex session closed'));
+  notify?.();
 }
 
 function start() {
-  worker = new Worker(chrome.runtime.getURL('session-worker.js'), {type: 'module'});
-  worker.onmessage = ({data}) => {
-    if (!(data instanceof Uint8Array)) {
-      stop();
+  const current = new Worker(chrome.runtime.getURL('session-worker.js'), {type: 'module'});
+  worker = current;
+  startupTimer = setTimeout(stop, 20000);
+  current.onmessage = ({data}) => {
+    if (worker !== current) return;
+    if (data === 'ready' && !workingTimer) {
+      clearTimeout(startupTimer);
+      workingTimer = setInterval(checkWorker, 5000);
+      return;
+    }
+    if (!(data instanceof Uint8Array) || !pending) {
+      stop(data?.retired);
       return;
     }
     const request = pending;
     pending = undefined;
-    request?.resolve(data);
+    request.resolve(data);
   };
-  worker.onerror = stop;
-  worker.onmessageerror = stop;
+  current.onerror = current.onmessageerror = () => {
+    if (worker === current) stop();
+  };
 }
 
-addEventListener('pagehide', stop);
+async function probe(current, form) {
+  const {port1, port2} = new MessageChannel();
+  let timer;
+  try {
+    return await new Promise((resolve, reject) => {
+      timer = setTimeout(() => reject(new Error('Confidex session unavailable')), 3000);
+      port1.onmessage = ({data}) => resolve(data === true && current === worker);
+      current.postMessage({kind: 'Probe', form}, [port2]);
+    });
+  } finally {
+    clearTimeout(timer);
+    port1.close();
+    port2.close();
+  }
+}
+
+async function checkWorker() {
+  const current = worker;
+  if (!current || !workingTimer || checking) return;
+  checking = true;
+  try {
+    if (!await probe(current) && current === worker) stop();
+  } catch {
+    if (current === worker) stop();
+  } finally {
+    checking = false;
+  }
+}
+
+function userActivity(event) {
+  if (event.isTrusted && worker) worker.postMessage({kind: 'Activity'});
+}
+
+function visibilityChanged() {
+  if (!document.hidden) void checkWorker();
+}
+
+function receiveForm(message, sender, reply) {
+  if (message?.kind !== 'ConfidexRoutedForm' || message.version !== 1
+      || sender.id !== chrome.runtime.id || sender.tab
+      || sender.url !== chrome.runtime.getURL('background.js')) return;
+  const current = worker;
+  if (!current || routing) {
+    reply(false);
+    return;
+  }
+  routing = true;
+  const form = {context: JSON.stringify(message.context), report: JSON.stringify(message.report)};
+  probe(current, form).then(reply, () => {
+    if (current === worker) stop();
+    reply(false);
+  }).finally(() => { routing = false; });
+  return true;
+}
+
+const activityEvents = ['pointerdown', 'keydown', 'wheel'];
+
+export function observeSession(callback) {
+  notify = callback;
+  chrome.runtime.onMessage.addListener(receiveForm);
+  for (const event of activityEvents) addEventListener(event, userActivity, {capture: true, passive: true});
+  document.addEventListener('visibilitychange', visibilityChanged);
+  addEventListener('pagehide', disposeSession, {once: true});
+}
+
+export function disposeSession() {
+  notify = undefined;
+  stop();
+  removeEventListener('pagehide', disposeSession);
+  chrome.runtime.onMessage.removeListener(receiveForm);
+  for (const event of activityEvents) removeEventListener(event, userActivity, true);
+  document.removeEventListener('visibilitychange', visibilityChanged);
+}
+
+export function cancelSession() {
+  stop();
+}
+
+export function sessionRevision() {
+  return revision;
+}
 
 export function exchange(input) {
   return new Promise((resolve, reject) => {
@@ -38,7 +141,7 @@ export function exchange(input) {
       worker.postMessage(input, [input.buffer]);
     } catch (error) {
       input.fill(0);
-      pending = undefined;
+      stop();
       reject(error);
     }
   });

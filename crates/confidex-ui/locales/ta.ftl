@@ -622,3 +622,7 @@ settings-device-unlock-error = சாதனத்தின் மூலம் �
 extension-session-hint = உலாவியில் Confidex ஐப் பயன்படுத்தும்போது இந்த அமர்வு தாவலைத் திறந்தே வைத்திருங்கள்.
 
 extension-startup-error = Confidex ஐத் தொடங்க முடியவில்லை. நீட்டிப்பை மீண்டும் ஏற்றி முயற்சிக்கவும்.
+
+extension-sites-grant = HTTPS தளங்களுக்கான அணுகலை அனுமதி
+extension-sites-revoke = HTTPS தளங்களுக்கான அணுகலை நீக்கு
+extension-sites-unavailable = தள அணுகலை மாற்ற முடியவில்லை.

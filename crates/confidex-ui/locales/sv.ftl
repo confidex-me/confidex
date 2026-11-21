@@ -622,3 +622,7 @@ settings-device-unlock-error = Det gick inte att ändra upplåsning med enheten.
 extension-session-hint = Låt den här sessionsfliken vara öppen medan du använder Confidex i webbläsaren.
 
 extension-startup-error = Confidex kunde inte starta. Ladda om tillägget och försök igen.
+
+extension-sites-grant = Tillåt åtkomst till HTTPS-webbplatser
+extension-sites-revoke = Ta bort åtkomst till HTTPS-webbplatser
+extension-sites-unavailable = Det gick inte att ändra webbplatsåtkomsten.

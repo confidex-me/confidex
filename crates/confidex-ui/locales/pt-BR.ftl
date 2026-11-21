@@ -622,3 +622,7 @@ settings-device-unlock-error = Não foi possível alterar o desbloqueio com o di
 extension-session-hint = Mantenha esta aba da sessão aberta enquanto usa o Confidex no navegador.
 
 extension-startup-error = Não foi possível iniciar o Confidex. Recarregue a extensão e tente novamente.
+
+extension-sites-grant = Permitir acesso a sites HTTPS
+extension-sites-revoke = Remover acesso a sites HTTPS
+extension-sites-unavailable = Não foi possível alterar o acesso aos sites.

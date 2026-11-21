@@ -619,3 +619,7 @@ settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan peranti. C
 extension-session-hint = Biarkan tab sesi ini terbuka semasa menggunakan Confidex dalam pelayar.
 
 extension-startup-error = Confidex tidak dapat dimulakan. Muat semula sambungan dan cuba lagi.
+
+extension-sites-grant = Benarkan akses ke laman HTTPS
+extension-sites-revoke = Tarik balik akses ke laman HTTPS
+extension-sites-unavailable = Akses laman tidak dapat diubah.

@@ -1,3 +1,9 @@
+import {setupSitePermissions} from './site-permissions.js';
+
+addEventListener('pageshow', event => {
+  if (event.persisted) location.reload();
+});
+
 const startup = document.getElementById('startup');
 const message = document.getElementById('startup-message');
 const detail = document.getElementById('startup-detail');
@@ -44,6 +50,7 @@ try {
       const handle = new WebHandle();
       try {
         await handle.start(document.getElementById('session'));
+        if (globalThis.chrome?.permissions) await setupSitePermissions(text);
         startup.remove();
         await new Promise(resolve => window.addEventListener('pagehide', resolve, {once: true}));
       } finally {

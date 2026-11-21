@@ -622,3 +622,7 @@ settings-device-unlock-error = Δεν ήταν δυνατή η αλλαγή το
 extension-session-hint = Κρατήστε ανοιχτή αυτή την καρτέλα συνεδρίας όσο χρησιμοποιείτε το Confidex στο πρόγραμμα περιήγησης.
 
 extension-startup-error = Δεν ήταν δυνατή η εκκίνηση του Confidex. Επαναφορτώστε την επέκταση και δοκιμάστε ξανά.
+
+extension-sites-grant = Να επιτρέπεται η πρόσβαση σε ιστοτόπους HTTPS
+extension-sites-revoke = Κατάργηση πρόσβασης σε ιστοτόπους HTTPS
+extension-sites-unavailable = Δεν ήταν δυνατή η αλλαγή πρόσβασης σε ιστοτόπους.

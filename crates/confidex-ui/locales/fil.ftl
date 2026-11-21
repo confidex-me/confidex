@@ -619,3 +619,7 @@ settings-device-unlock-error = Hindi mabago ang pag-unlock gamit ang device. Sub
 extension-session-hint = Panatilihing bukas ang tab ng sesyon habang ginagamit ang Confidex sa browser.
 
 extension-startup-error = Hindi masimulan ang Confidex. I-reload ang extension at subukang muli.
+
+extension-sites-grant = Payagan ang access sa mga HTTPS site
+extension-sites-revoke = Alisin ang access sa mga HTTPS site
+extension-sites-unavailable = Hindi mabago ang access sa mga site.

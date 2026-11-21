@@ -622,3 +622,7 @@ settings-device-unlock-error = Imeshindikana kubadilisha ufunguaji kwa kifaa. Ja
 extension-session-hint = Acha kichupo hiki cha kipindi kikiwa wazi unapotumia Confidex kwenye kivinjari.
 
 extension-startup-error = Confidex haikuweza kuanza. Pakia upya kiendelezi na ujaribu tena.
+
+extension-sites-grant = Ruhusu ufikiaji wa tovuti za HTTPS
+extension-sites-revoke = Ondoa ruhusa ya kufikia tovuti za HTTPS
+extension-sites-unavailable = Haikuwezekana kubadilisha ruhusa ya kufikia tovuti.

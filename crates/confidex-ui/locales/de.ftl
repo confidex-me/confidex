@@ -622,3 +622,7 @@ settings-device-unlock-error = Die Geräteentsperrung konnte nicht geändert wer
 extension-session-hint = Lassen Sie diesen Sitzungstab geöffnet, solange Sie Confidex im Browser verwenden.
 
 extension-startup-error = Confidex konnte nicht gestartet werden. Laden Sie die Erweiterung neu und versuchen Sie es erneut.
+
+extension-sites-grant = Zugriff auf HTTPS-Websites erlauben
+extension-sites-revoke = Zugriff auf HTTPS-Websites entziehen
+extension-sites-unavailable = Der Websitezugriff konnte nicht geändert werden.

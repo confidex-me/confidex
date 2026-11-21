@@ -619,3 +619,7 @@ settings-device-unlock-error = ไม่สามารถเปลี่ยน�
 extension-session-hint = เปิดแท็บเซสชันนี้ไว้ขณะใช้ Confidex ในเบราว์เซอร์
 
 extension-startup-error = ไม่สามารถเริ่ม Confidex ได้ โปรดโหลดส่วนขยายใหม่แล้วลองอีกครั้ง
+
+extension-sites-grant = อนุญาตให้เข้าถึงเว็บไซต์ HTTPS
+extension-sites-revoke = ยกเลิกการเข้าถึงเว็บไซต์ HTTPS
+extension-sites-unavailable = ไม่สามารถเปลี่ยนสิทธิ์การเข้าถึงเว็บไซต์ได้

@@ -12,17 +12,30 @@ use eframe::egui;
 use js_sys::Uint8Array;
 use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 #[wasm_bindgen(module = "/web/session-host.js")]
 extern "C" {
     #[wasm_bindgen(catch)]
     async fn exchange(input: Uint8Array) -> Result<Uint8Array, JsValue>;
+
+    #[wasm_bindgen(js_name = observeSession)]
+    fn observe_session(callback: &js_sys::Function);
+
+    #[wasm_bindgen(js_name = disposeSession)]
+    fn dispose_session();
+
+    #[wasm_bindgen(js_name = cancelSession)]
+    fn cancel_session();
+
+    #[wasm_bindgen(js_name = sessionRevision)]
+    fn session_revision() -> u32;
 }
 
 #[wasm_bindgen]
 pub struct WebHandle {
     runner: eframe::WebRunner,
+    repaint: RefCell<Option<Closure<dyn FnMut()>>>,
 }
 
 #[wasm_bindgen]
@@ -31,10 +44,13 @@ impl WebHandle {
     pub fn new() -> Self {
         Self {
             runner: eframe::WebRunner::new(),
+            repaint: RefCell::default(),
         }
     }
 
     pub fn destroy(&self) {
+        dispose_session();
+        self.repaint.borrow_mut().take();
         self.runner.destroy();
     }
 
@@ -49,6 +65,8 @@ impl WebHandle {
         let locale = Localizer::from_preferences(languages)?;
         let input_id = format!("{}-text-input", canvas.id());
         let plugin_input_id = input_id.clone();
+        let repaint = Rc::new(RefCell::new(None));
+        let app_repaint = repaint.clone();
         self.runner
             .start(
                 canvas.clone(),
@@ -64,6 +82,10 @@ impl WebHandle {
                         .find(|theme| theme.dark == dark)
                         .unwrap_or(&theme::THEMES[0]);
                     theme.apply(&cc.egui_ctx);
+                    let ctx = cc.egui_ctx.clone();
+                    *app_repaint.borrow_mut() = Some(Closure::<dyn FnMut()>::new(move || {
+                        ctx.request_repaint();
+                    }));
                     let mut app = App {
                         locale,
                         colors: theme.colors,
@@ -74,6 +96,7 @@ impl WebHandle {
                         },
                         server: confidex_browser::DEFAULT_SYNC_SERVER.to_owned(),
                         page: Page::Starting,
+                        revision: session_revision(),
                         pending: None,
                         rows: Vec::new(),
                         next: None,
@@ -84,7 +107,12 @@ impl WebHandle {
                 }),
             )
             .await?;
-        browser_input::install(&self.runner, &canvas, &input_id)
+        browser_input::install(&self.runner, &canvas, &input_id)?;
+        if let Some(callback) = repaint.borrow_mut().take() {
+            observe_session(callback.as_ref().unchecked_ref());
+            *self.repaint.borrow_mut() = Some(callback);
+        }
+        Ok(())
     }
 }
 
@@ -104,6 +132,7 @@ struct App {
     credentials: Credentials,
     server: String,
     page: Page,
+    revision: u32,
     pending: Option<Pending>,
     rows: Vec<Login>,
     next: Option<LoginCursor>,
@@ -229,6 +258,19 @@ impl App {
         }
         if self.pending.is_some() {
             ui_kit::spinner(ui, self.colors, 20., &self.locale.text("vault-working"));
+            if matches!(self.page, Page::Opened { .. })
+                && ui_kit::button(
+                    ui,
+                    self.colors,
+                    &self.locale.text("vault-lock"),
+                    ButtonRole::Secondary,
+                    0.,
+                    true,
+                )
+                .clicked()
+            {
+                cancel_session();
+            }
             return;
         }
 
@@ -330,6 +372,21 @@ impl App {
 
 impl eframe::App for App {
     fn logic(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
+        let revision = session_revision();
+        if revision != self.revision {
+            self.revision = revision;
+            self.rows.clear();
+            self.next = None;
+            self.credentials.key.zeroize();
+            self.credentials.password.zeroize();
+            self.status = None;
+            let pending = self.pending.take().is_some();
+            self.page = match std::mem::replace(&mut self.page, Page::Starting) {
+                Page::Opened { name, .. } => Page::Locked(name),
+                Page::Disconnected if pending => Page::Starting,
+                page => page,
+            };
+        }
         let response = self
             .pending
             .as_ref()
@@ -374,6 +431,7 @@ async fn send(action: Action) -> Response {
     drop(bytes);
     let output = exchange(input).await.map_err(|_| Error::Locked)?;
     if output.length() as usize > MAX_RESPONSE {
+        output.fill(0, 0, output.length());
         return Err(Error::Integrity);
     }
     let bytes = Zeroizing::new(output.to_vec());

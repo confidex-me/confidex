@@ -619,3 +619,7 @@ settings-device-unlock-error = 無法變更裝置解鎖設定。請重試。
 extension-session-hint = 在瀏覽器中使用 Confidex 時，請保持此工作階段分頁開啟。
 
 extension-startup-error = 無法啟動 Confidex。請重新載入擴充功能後再試一次。
+
+extension-sites-grant = 允許存取 HTTPS 網站
+extension-sites-revoke = 撤銷存取 HTTPS 網站的權限
+extension-sites-unavailable = 無法變更網站存取權限。

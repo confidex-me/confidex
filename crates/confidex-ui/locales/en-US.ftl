@@ -682,3 +682,7 @@ settings-device-unlock-error = Could not change device unlock. Try again.
 extension-session-hint = Keep this session tab open while using Confidex in your browser.
 
 extension-startup-error = Confidex could not start. Reload the extension and try again.
+
+extension-sites-grant = Allow access to HTTPS sites
+extension-sites-revoke = Remove access to HTTPS sites
+extension-sites-unavailable = Could not change site access.

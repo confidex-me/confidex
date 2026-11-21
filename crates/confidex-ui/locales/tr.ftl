@@ -619,3 +619,7 @@ settings-device-unlock-error = Cihazla kilit açma ayarı değiştirilemedi. Tek
 extension-session-hint = Confidex’i tarayıcıda kullanırken bu oturum sekmesini açık tutun.
 
 extension-startup-error = Confidex başlatılamadı. Uzantıyı yeniden yükleyip tekrar deneyin.
+
+extension-sites-grant = HTTPS sitelerine erişime izin ver
+extension-sites-revoke = HTTPS sitelerine erişimi kaldır
+extension-sites-unavailable = Site erişimi değiştirilemedi.

@@ -95,6 +95,63 @@ impl Drop for Login {
 
 pub type Response = Result<Reply, Error>;
 
+// The browser adapter supplies this context separately from the form report.
+#[cfg(any(test, feature = "session"))]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct SenderContext {
+    tab_id: u32,
+    frame_id: u32,
+    document_id: String,
+    origin: String,
+}
+
+#[cfg(any(test, feature = "session"))]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FormReport {
+    version: u8,
+    kind: FormKind,
+    has_password: bool,
+}
+
+#[cfg(any(test, feature = "session"))]
+#[derive(Deserialize)]
+enum FormKind {
+    FormPresence,
+}
+
+#[cfg(any(test, feature = "session"))]
+impl FormReport {
+    pub fn valid(context: &str, report: &str) -> bool {
+        if context.len() > 1024 || report.len() > 128 {
+            return false;
+        }
+        let (Ok(context), Ok(report)) = (
+            serde_json::from_str::<SenderContext>(context),
+            serde_json::from_str::<Self>(report),
+        ) else {
+            return false;
+        };
+        let Ok(origin) = confidex_app::sync::server_url(&context.origin) else {
+            return false;
+        };
+        context.tab_id <= i32::MAX as u32
+            && context.frame_id == 0
+            && context.document_id.len() <= 64
+            && !context.document_id.is_empty()
+            && context
+                .document_id
+                .bytes()
+                .all(|b| b.is_ascii_hexdigit() || b == b'-')
+            && origin.starts_with("https://")
+            && origin.strip_suffix('/') == Some(context.origin.as_str())
+            && matches!(report.kind, FormKind::FormPresence)
+            && report.version == 1
+            && report.has_password
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,6 +172,33 @@ mod tests {
             &[b' '; MAX_REQUEST + 1],
         ] {
             assert!(matches!(Request::decode(bytes), Err(Error::Input)));
+        }
+    }
+
+    #[test]
+    fn only_a_versioned_form_report_with_separate_top_frame_context_is_accepted() {
+        let context =
+            r#"{"tabId":2,"frameId":0,"documentId":"a0b1","origin":"https://example.test:8443"}"#;
+        let report = r#"{"version":1,"kind":"FormPresence","hasPassword":true}"#;
+        assert!(FormReport::valid(context, report));
+        for invalid in [
+            report.replace("true", "1"),
+            report.replace("true", "false"),
+            report.replace("Presence", "Fill"),
+            report.replace("1", "2"),
+            report.replace(r#""hasPassword""#, r#""origin""#),
+            report.replace("true", r#"true,"tabId":2"#),
+            " ".repeat(129),
+        ] {
+            assert!(!FormReport::valid(context, &invalid));
+        }
+        for invalid in [
+            context.replace(r#""frameId":0"#, r#""frameId":1"#),
+            context.replace("https:", "http:"),
+            context.replace(":8443", "/login"),
+            context.replace("a0b1", "opaque"),
+        ] {
+            assert!(!FormReport::valid(&invalid, report));
         }
     }
 

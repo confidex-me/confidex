@@ -15,15 +15,21 @@ def build_bundle(bundle):
     source = ROOT / 'apps/confidex-extension/web'
     bundle.mkdir(parents=True)
     for name in ('manifest.json', 'background.js', 'session.html', 'session.css',
-                 'session-boot.js', 'session-worker.js', 'content-bootstrap.js'):
+                 'session-boot.js', 'session-worker.js', 'content-bootstrap.js',
+                 'content-channel.js', 'site-permissions.js'):
         shutil.copy2(source / name, bundle)
     messages = {}
+    message_ids = (
+        'extension-startup-error', 'vault-working', 'vault-refresh',
+        'extension-sites-grant', 'extension-sites-revoke', 'extension-sites-unavailable',
+    )
+    message_pattern = r'^({}) = (.+)$'.format('|'.join(message_ids))
     for path in sorted((ROOT / 'crates/confidex-ui/locales').glob('*.ftl')):
         if path.name.startswith('gallery.'):
             continue
-        catalogue = dict(re.findall(r'^(extension-startup-error|vault-working|vault-refresh) = (.+)$',
+        catalogue = dict(re.findall(message_pattern,
                                     path.read_text(), re.MULTILINE))
-        if len(catalogue) != 3:
+        if len(catalogue) != len(message_ids):
             raise ValueError(f'Missing startup translations in {path.name}')
         messages[path.stem] = catalogue
     (bundle / 'session-messages.json').write_text(json.dumps(messages, ensure_ascii=False))
@@ -51,7 +57,8 @@ def build_bundle(bundle):
 def validate_bundle(bundle):
     for name in ('manifest.json', 'session.html', 'session.css', 'session-boot.js',
                  'session-messages.json', 'session-worker.js', 'background.js',
-                 'content-bootstrap.js', 'engine/engine.js', 'ui/ui.js', 'content/content.js'):
+                 'content-bootstrap.js', 'content-channel.js', 'site-permissions.js',
+                 'engine/engine.js', 'ui/ui.js', 'content/content.js'):
         if not (bundle / name).is_file() or not (bundle / name).stat().st_size:
             raise ValueError(f'Missing extension asset: {name}')
     for name in ('engine/engine_bg.wasm', 'ui/ui_bg.wasm', 'content/content_bg.wasm'):

@@ -622,3 +622,7 @@ settings-device-unlock-error = Ontgrendeling met het apparaat kon niet worden ge
 extension-session-hint = Houd dit sessietabblad open zolang je Confidex in je browser gebruikt.
 
 extension-startup-error = Confidex kon niet starten. Laad de extensie opnieuw en probeer het nogmaals.
+
+extension-sites-grant = Toegang tot HTTPS-sites toestaan
+extension-sites-revoke = Toegang tot HTTPS-sites intrekken
+extension-sites-unavailable = De sitetoegang kon niet worden gewijzigd.
