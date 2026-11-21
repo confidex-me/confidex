@@ -31,6 +31,7 @@ fn creates_a_standard_login_and_stores_only_the_https_origin() {
         username: "user".into(),
         password: "fixture-secret".into(),
         url: "https://Bücher.example:8443/path?query#fragment".into(),
+        notes: "First line\nSecond line".into(),
     };
     let record = new_content(&login).unwrap();
     assert_eq!(title(&record).unwrap(), "Test");
@@ -46,6 +47,7 @@ fn creates_a_standard_login_and_stores_only_the_https_origin() {
         text(&record.entries[2], "url"),
         Some("https://xn--bcher-kva.example:8443")
     );
+    assert_eq!(text(&record.entries[3], "text"), Some(login.notes.as_str()));
     assert_eq!(pairs(&record).0.count(), 1);
     for invalid in [
         "http://example.test",

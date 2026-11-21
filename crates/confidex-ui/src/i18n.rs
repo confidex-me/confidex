@@ -71,7 +71,22 @@ fn bundle(index: usize) -> Result<FluentBundle<FluentResource>, String> {
     }
     Ok(bundle)
 }
+pub(crate) fn starter_name_key(name: &str) -> String {
+    format!(
+        "starter-{}",
+        name.split(|c: char| !c.is_ascii_alphanumeric())
+            .filter(|part| !part.is_empty())
+            .map(str::to_ascii_lowercase)
+            .collect::<Vec<_>>()
+            .join("-")
+    )
+}
+
 impl Localizer {
+    pub fn starter_name(&self, name: &str) -> String {
+        self.text(&starter_name_key(name))
+    }
+
     pub fn generator_labels(&self) -> [String; 18] {
         [
             "generate",

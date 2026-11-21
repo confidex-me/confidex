@@ -3,8 +3,8 @@ use crate::{
     i18n::Localizer,
     theme::THEMES,
     ui_kit::{
-        self as design, ButtonRole, Icon, Metrics, dialog, fonts::Weight, large_type, layout,
-        record, settings as form, value, window,
+        self as design, ButtonRole, Icon, Metrics, dialog, field::kind_label as field_label,
+        fonts::Weight, large_type, layout, record, settings as form, value, window,
     },
 };
 use confidex_app::{self as app, Command, Draft, Error, Output, Request, Response};
@@ -4185,27 +4185,6 @@ fn field_visible(field: &app::Field) -> bool {
         || !app::FIELD_KINDS.contains(&field.type_name.as_str())
         || field.values.values().any(|value| !value.is_empty())
 }
-fn field_label(locale: &Localizer, kind: &str) -> String {
-    locale.text(match kind {
-        "text/v1" => "vault-text",
-        "username/v1" => "vault-username",
-        "url/v1" => "vault-url",
-        "secret/v1" => "vault-secret",
-        "password/v1" => "vault-password",
-        "note/v1" => "vault-note",
-        "secure-note/v1" => "vault-secure-note",
-        "wifi-qr/v1" => "gallery-field-kind-6",
-        "photo/v1" => "gallery-field-kind-4",
-        "file/v1" => "gallery-file",
-        "card/v1" => "gallery-card",
-        "totp/v1" => "gallery-totp",
-        "ssh/v1" => "field-ssh-key",
-        "date/v1" => "field-date",
-        "month-year/v1" => "field-month-year",
-        "location/v1" => "field-location-type",
-        _ => return kind.to_owned(),
-    })
-}
 fn value_protected(kind: &str, protected: bool, key: &str) -> bool {
     if kind == "ssh/v1" {
         key == "private_key"
@@ -4235,7 +4214,7 @@ fn template_field_label(
     if let Some(template) = app::templates::get(kind)
         && let Some(spec) = template.fields.get(index)
     {
-        return locale.text(&templates::name_key(spec.name));
+        return locale.starter_name(spec.name);
     }
     if kind == "wifi" && index == 0 {
         return "SSID".into();

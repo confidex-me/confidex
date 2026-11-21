@@ -4,14 +4,14 @@ use crate::protocol::{
 use confidex_app::{
     Error,
     browser_logins::{Change, Cursor, Issues, Login, MAX_LOGIN_TEXT, NewLogin, Selection},
-    new_record,
+    new_record, templates,
 };
 use confidex_storage::RecordId;
 use confidex_ui::{
     browser_input,
     i18n::Localizer,
     theme::{self, Palette},
-    ui_kit::{self, ButtonRole, Icon, Metrics},
+    ui_kit::{self, ButtonRole, Icon, Metrics, record},
 };
 use eframe::egui;
 use js_sys::Uint8Array;
@@ -141,6 +141,7 @@ struct Editor {
     record: RecordId,
     target: Option<(Selection, Zeroizing<String>)>,
     form: NewLogin,
+    focus_title: bool,
 }
 
 struct App {
@@ -233,39 +234,63 @@ impl App {
             return;
         };
         let existing = editor.target.is_some();
-        if existing {
-            ui.heading(&editor.form.title);
-        } else {
-            ui.heading(self.locale.text("vault-new-record"));
-            field(
-                ui,
-                self.locale.text("vault-record-title"),
-                &mut editor.form.title,
-                false,
-            );
-            field(
-                ui,
-                self.locale.text("vault-url"),
-                &mut editor.form.url,
-                false,
-            );
+        record::toolbar(
+            ui,
+            self.colors,
+            &self.locale.text(if existing {
+                "vault-record"
+            } else {
+                "vault-unsaved"
+            }),
+            |_| {},
+        );
+        let title = record::heading(
+            ui,
+            &mut editor.form.title,
+            !existing,
+            &self.locale.text("vault-record-title"),
+        );
+        if std::mem::take(&mut editor.focus_title) {
+            title.request_focus();
+            title.scroll_to_me(Some(egui::Align::TOP));
         }
-        field(
-            ui,
-            self.locale.text("vault-username"),
-            &mut editor.form.username,
-            false,
-        );
-        let password = field(
-            ui,
-            self.locale.text("vault-password"),
-            &mut editor.form.password,
-            true,
-        );
-        let ready = valid_length(&editor.form.password)
-            && editor.form.username.len() <= MAX_LOGIN_TEXT
-            && (existing
-                || valid_length(editor.form.title.trim()) && valid_length(editor.form.url.trim()));
+
+        ui.add_space(Metrics::LG);
+        let template = templates::get("login").expect("login template");
+        let list = ui.make_persistent_id(editor.record);
+        for spec in template.fields {
+            let (value, secret, multiline) = match spec.type_name {
+                "username/v1" => (&mut editor.form.username, false, false),
+                "password/v1" => (&mut editor.form.password, true, false),
+                "url/v1" if !existing => (&mut editor.form.url, false, false),
+                "note/v1" if !existing => (&mut editor.form.notes, false, true),
+                _ => continue,
+            };
+            let id = list.with(spec.type_name);
+            let card = ui_kit::field::Field {
+                id,
+                list,
+                name: &mut self.locale.starter_name(spec.name),
+                kind: &ui_kit::field::kind_label(&self.locale, spec.type_name),
+                editing: false,
+                move_label: "",
+                remove_label: "",
+            };
+            let response = card.show(ui, self.colors, |ui| {
+                ui_kit::field_with_id(ui, id.with("value"), value, secret, multiline, true)
+            });
+            let value = response.inner.labelled_by(response.name.id);
+            if value.gained_focus() {
+                value.scroll_to_me(None);
+            }
+        }
+
+        ui.add_space(Metrics::LG);
+        let ready = if existing {
+            valid_length(&editor.form.password) && editor.form.username.len() <= MAX_LOGIN_TEXT
+        } else {
+            editor.form.has_valid_lengths()
+        };
         let (submit, cancel) = ui
             .horizontal_wrapped(|ui| {
                 let submit = ui_kit::button(
@@ -277,7 +302,15 @@ impl App {
                     ready,
                 )
                 .clicked();
-                let cancel = ui.button(self.locale.text("vault-cancel")).clicked();
+                let cancel = ui_kit::button(
+                    ui,
+                    self.colors,
+                    &self.locale.text("vault-cancel"),
+                    ButtonRole::Secondary,
+                    0.,
+                    true,
+                )
+                .clicked();
                 (submit, cancel)
             })
             .inner;
@@ -286,7 +319,10 @@ impl App {
             self.status = None;
         } else if ready
             && (submit
-                || password.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter)))
+                || ui.memory(|memory| memory.focused().is_none())
+                    && ui.input_mut(|input| {
+                        input.consume_key(egui::Modifiers::NONE, egui::Key::Enter)
+                    }))
         {
             let password = std::mem::take(&mut editor.form.password);
             let action = match &editor.target {
@@ -305,6 +341,7 @@ impl App {
                         url: editor.form.url.clone(),
                         username: editor.form.username.clone(),
                         password,
+                        notes: editor.form.notes.clone(),
                     },
                 },
             };
@@ -499,6 +536,7 @@ impl App {
                                     record: draft.record,
                                     target: None,
                                     form: NewLogin::default(),
+                                    focus_title: true,
                                 })
                             }
                             Err(error) => self.status = Some((error_label(error), true)),
@@ -533,7 +571,9 @@ impl App {
                                     username: login.username.clone(),
                                     url: String::new(),
                                     password: String::new(),
+                                    notes: String::new(),
                                 },
+                                focus_title: false,
                             });
                         }
                     });

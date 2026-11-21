@@ -7,8 +7,9 @@ use serde::{Deserialize, Serialize};
 use zeroize::ZeroizeOnDrop;
 
 pub const VERSION: u8 = 3;
+// Five bounded login fields can each expand sixfold when JSON escapes control characters.
 #[cfg(any(test, feature = "session"))]
-pub const MAX_REQUEST: usize = 32 * 1024;
+pub const MAX_REQUEST: usize = 128 * 1024;
 pub const MAX_RESPONSE: usize = 1024 * 1024;
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]

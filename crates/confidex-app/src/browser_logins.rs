@@ -56,6 +56,20 @@ pub struct NewLogin {
     pub url: String,
     pub username: String,
     pub password: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub notes: String,
+}
+
+impl NewLogin {
+    pub fn has_valid_lengths(&self) -> bool {
+        !self.title.trim().is_empty()
+            && self.title.len() <= MAX_LOGIN_TEXT
+            && !self.url.trim().is_empty()
+            && self.url.len() <= MAX_LOGIN_TEXT
+            && self.username.len() <= MAX_LOGIN_TEXT
+            && valid_password(&self.password)
+            && self.notes.len() <= MAX_LOGIN_TEXT
+    }
 }
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
@@ -130,13 +144,7 @@ fn replace(record: &mut Record, field: usize, key: &str, value: &str, retired: &
 }
 
 fn new_content(login: &NewLogin) -> Result<Record, Error> {
-    let title = login.title.trim();
-    if title.is_empty()
-        || title.len() > MAX_LOGIN_TEXT
-        || login.username.len() > MAX_LOGIN_TEXT
-        || login.url.len() > MAX_LOGIN_TEXT
-        || !valid_password(&login.password)
-    {
+    if !login.has_valid_lengths() {
         return Err(Error::Input);
     }
     let url = url::Url::parse(login.url.trim()).map_err(|_| Error::Input)?;
@@ -155,6 +163,7 @@ fn new_content(login: &NewLogin) -> Result<Record, Error> {
             "username/v1" => ("username", login.username.as_str()),
             "password/v1" => ("password", login.password.as_str()),
             "url/v1" => ("url", origin.as_str()),
+            "note/v1" => ("text", login.notes.as_str()),
             _ => continue,
         };
         field.values.insert(key.into(), value.into());
@@ -162,7 +171,9 @@ fn new_content(login: &NewLogin) -> Result<Record, Error> {
     let mut record = Record::default();
     sections::apply(&mut record, Some(&template.sections()), fields.len())?;
     fields::apply(&mut record, &fields)?;
-    record.extra.insert(TITLE_KEY.into(), Value::from(title));
+    record
+        .extra
+        .insert(TITLE_KEY.into(), Value::from(login.title.trim()));
     Ok(record)
 }
 

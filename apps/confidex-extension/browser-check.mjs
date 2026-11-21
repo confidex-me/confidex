@@ -448,15 +448,20 @@ path = ${JSON.stringify(blobPath)}
   await reopened.evaluate("document.querySelector('#session').focus()");
   for (let button = 0; button < 3; button++) await press(reopened, 'Tab', 9);
   await press(reopened, 'Enter', 13);
+  const noteLines = ['Offline note from the extension', 'Second line'];
   const login = {
-    title: 'Offline login', url: 'https://example.test/account?private=1#login',
-    username: 'offline-fixture@example.test', password: offlinePassword,
+    title: 'Offline login', username: 'offline-fixture@example.test', password: offlinePassword,
+    url: 'https://example.test/account?private=1#login', notes: noteLines.join('\n'),
   };
-  // Focus can return to the toolbar when the New login button is disabled by the editor.
-  await tabAndType(reopened, login.title, 'new login title', 4);
-  await tabAndType(reopened, login.url, 'new login URL');
+  await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'record title focus');
+  await reopened.call('Input.insertText', {text: login.title});
   await tabAndType(reopened, login.username, 'new login username');
   await tabAndType(reopened, login.password, 'new login password');
+  await tabAndType(reopened, login.url, 'new login website');
+  await tabAndType(reopened, noteLines[0], 'new login notes');
+  await press(reopened, 'Enter', 13);
+  await reopened.call('Input.insertText', {text: noteLines[1]});
+  await press(reopened, 'Tab', 9);
   await press(reopened, 'Enter', 13);
 
   const offline = await until(async () => {
@@ -475,7 +480,7 @@ path = ${JSON.stringify(blobPath)}
   assert(updated, 'Offline update did not finish');
   assert.deepEqual(await action(reopened, {UpdateLogin: {target: offline.target, change}}), {Err: {Storage: 'Conflict'}});
   await checkStorage(reopened, [password, credentials.key, loginPassword, offlinePassword,
-    updatedPassword, 'chromium-fixture@example.test', 'offline-fixture@example.test']);
+    updatedPassword, noteLines[0], 'chromium-fixture@example.test', 'offline-fixture@example.test']);
 
   // Shut down Chromium while the server is still unreachable. Reuse only the
   // temporary profile, just as a user would after a browser restart.
@@ -505,6 +510,8 @@ path = ${JSON.stringify(blobPath)}
   assert.deepEqual(draft.fields.map(field => field.type_name), ['username/v1', 'password/v1', 'url/v1', 'note/v1']);
   assert(draft.fields[1].values.password === updatedPassword, 'Web cache did not receive the offline update');
   assert.equal(draft.fields[2].values.url, 'https://example.test');
+  assert.deepEqual(draft.fields.map(field => field.name), ['Username', 'Password', 'Website', 'Notes']);
+  assert.equal(draft.fields[3].values.text, login.notes);
   assert.deepEqual(draft.revision, updated.revision);
 
   draft.fields[0].values.username = 'edited-in-web@example.test';
@@ -744,15 +751,11 @@ async function press(page, key, windowsVirtualKeyCode) {
   await page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
 }
 
-async function tabAndType(page, text, field, tabStops = 1) {
-  for (let step = 0; step < tabStops; step++) {
-    await press(page, 'Tab', 9);
-    if (await page.evaluate("document.activeElement.id === 'session-text-input'")) {
-      await page.call('Input.insertText', {text});
-      return;
-    }
-  }
-  throw new Error(`Browser did not focus ${field}`);
+async function tabAndType(page, text, field) {
+  await press(page, 'Tab', 9);
+  assert(await page.evaluate("document.activeElement.id === 'session-text-input'"),
+    `Browser did not focus ${field}`);
+  await page.call('Input.insertText', {text});
 }
 
 async function attach(command, targetId) {

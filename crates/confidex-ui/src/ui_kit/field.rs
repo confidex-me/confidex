@@ -4,8 +4,30 @@ use super::{
     Icon, Metrics as M, fonts,
     record::{TagRole, tag},
 };
-use crate::theme::Palette;
+use crate::{i18n::Localizer, theme::Palette};
 use eframe::egui::{self, Id, Rect, RichText, Sense, Vec2};
+
+pub fn kind_label(locale: &Localizer, kind: &str) -> String {
+    locale.text(match kind {
+        "text/v1" => "vault-text",
+        "username/v1" => "vault-username",
+        "url/v1" => "vault-url",
+        "secret/v1" => "vault-secret",
+        "password/v1" => "vault-password",
+        "note/v1" => "vault-note",
+        "secure-note/v1" => "vault-secure-note",
+        "wifi-qr/v1" => "gallery-field-kind-6",
+        "photo/v1" => "gallery-field-kind-4",
+        "file/v1" => "gallery-file",
+        "card/v1" => "gallery-card",
+        "totp/v1" => "gallery-totp",
+        "ssh/v1" => "field-ssh-key",
+        "date/v1" => "field-date",
+        "month-year/v1" => "field-month-year",
+        "location/v1" => "field-location-type",
+        _ => return kind.to_owned(),
+    })
+}
 
 #[derive(Clone, Copy)]
 struct FieldDrag {
