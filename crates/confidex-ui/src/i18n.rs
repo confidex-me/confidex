@@ -207,6 +207,12 @@ impl Localizer {
         }
         id.to_owned()
     }
+    pub fn field_count(&self, count: usize) -> String {
+        let mut args = FluentArgs::new();
+        args.set("count", count as i64);
+        self.format("vault-field-count", &args)
+    }
+
     pub fn title(&self) -> String {
         let mut args = FluentArgs::new();
         args.set(

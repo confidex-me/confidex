@@ -3553,8 +3553,6 @@ impl VaultApp {
                 } else {
                     row.title.clone()
                 };
-                let mut args = fluent_bundle::FluentArgs::new();
-                args.set("count", row.fields as i64);
                 let current = self.draft.as_ref().is_some_and(|d| {
                     d.record == row.head.record && d.revision == Some(row.head.revision)
                 });
@@ -3564,7 +3562,7 @@ impl VaultApp {
                             ui,
                             p,
                             &title,
-                            &self.locale.format("vault-field-count", &args),
+                            &self.locale.field_count(row.fields),
                             current,
                             !self.busy && !self.editing,
                         )

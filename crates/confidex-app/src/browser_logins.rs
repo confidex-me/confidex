@@ -27,6 +27,7 @@ pub struct Login {
     pub target: Selection,
     pub title: String,
     pub username: String,
+    pub fields: usize,
 }
 
 impl Drop for Login {
@@ -480,6 +481,7 @@ fn append_previews(record: &Record, head: &Head, offset: usize, page: &mut Page)
         .get(TITLE_KEY)
         .and_then(Value::as_str)
         .unwrap_or("");
+    let fields = fields::count(record);
     for (index, pair) in pairs.enumerate().skip(offset) {
         if page.rows.len() == PAGE_SIZE {
             return Some(index);
@@ -489,6 +491,7 @@ fn append_previews(record: &Record, head: &Head, offset: usize, page: &mut Page)
                 head: head.clone(),
                 field: pair.password,
             },
+            fields,
             title: title.chars().take(128).collect(),
             username: text(&record.entries[pair.username], "username")
                 .unwrap_or("")

@@ -202,6 +202,7 @@ path = ${JSON.stringify(blobPath)}
     assert.deepEqual(rows[0].target.head.record, webRecord);
     assert.equal(rows[0].title, 'Synthetic login');
     assert.equal(rows[0].username, 'chromium-fixture@example.test');
+    assert.equal(rows[0].fields, 3);
     assert.equal(next, null);
     assert.deepEqual(issues, {ambiguous: false, conflicts: false});
   };
@@ -479,6 +480,7 @@ path = ${JSON.stringify(blobPath)}
     }
   }, `saved login ${title}`);
   const offline = await waitForLogin(login.title);
+  assert.equal(offline.fields, 4);
   const {record} = offline.target.head;
   const create = {CreateLogin: {record, login}};
   assert.deepEqual(await action(reopened, create), {Err: {Storage: 'Conflict'}});

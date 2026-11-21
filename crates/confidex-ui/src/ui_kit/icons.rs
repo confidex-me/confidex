@@ -12,6 +12,7 @@ pub enum Icon {
     Plus,
     Back,
     Trash,
+    Edit,
     Eye,
     EyeOff,
     LargeType,
@@ -164,6 +165,17 @@ impl Icon {
             }
             Self::Back => {
                 line(&[(12., 3.), (5., 10.), (12., 17.)]);
+            }
+            Self::Edit => {
+                line(&[
+                    (3., 17.),
+                    (4., 12.5),
+                    (14., 2.5),
+                    (17.5, 6.),
+                    (7.5, 16.),
+                    (3., 17.),
+                ]);
+                line(&[(11.5, 5.), (15., 8.5)]);
             }
             Self::Trash => {
                 line(&[(3., 5.), (17., 5.)]);

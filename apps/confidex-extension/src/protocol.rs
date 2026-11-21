@@ -230,6 +230,7 @@ mod tests {
                     },
                     title: "Test".into(),
                     username: "fixture".into(),
+                    fields: 4,
                 }],
                 next: None,
                 issues: Issues::default(),
@@ -244,7 +245,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             row.keys().map(String::as_str).collect::<Vec<_>>(),
-            ["target", "title", "username"]
+            ["fields", "target", "title", "username"]
         );
     }
 }

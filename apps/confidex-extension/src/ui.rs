@@ -654,17 +654,40 @@ impl App {
                 if self.rows.is_empty() {
                     ui_kit::muted(ui, self.colors, self.locale.text("vault-no-results"));
                 }
+                let edit = self.locale.text("vault-edit");
                 for login in &self.rows {
-                    ui.group(|ui| {
-                        ui.strong(&login.title);
-                        ui.label(&login.username);
-                        if ui.button(self.locale.text("vault-edit")).clicked() {
-                            self.status = None;
-                            selected = Some(Action::LoginEditor {
-                                target: login.target.clone(),
-                            });
-                        }
-                    });
+                    let title = if login.title.is_empty() {
+                        self.locale.text("vault-untitled")
+                    } else {
+                        login.title.clone()
+                    };
+                    let count = self.locale.field_count(login.fields);
+                    let detail = if login.username.is_empty() {
+                        count
+                    } else {
+                        format!("{count} · {}", login.username)
+                    };
+                    let target = &login.target;
+                    let button = ui
+                        .push_id(
+                            (target.head.record, target.head.revision, target.field),
+                            |ui| {
+                                ui_kit::record_row_action(
+                                    ui,
+                                    self.colors,
+                                    &title,
+                                    &detail,
+                                    &format!("{edit}: {title}"),
+                                    Icon::Edit,
+                                )
+                            },
+                        )
+                        .inner;
+                    if button.clicked() {
+                        selected = Some(Action::LoginEditor {
+                            target: target.clone(),
+                        });
+                    }
                 }
                 if self.next.is_some() && ui.button(self.locale.text("vault-more")).clicked() {
                     selected = Some(Action::Logins {
