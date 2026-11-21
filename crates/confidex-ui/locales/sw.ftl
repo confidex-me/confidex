@@ -626,6 +626,8 @@ extension-sync-pending = Inasubiri usawazishaji.
 extension-login-conflicts = Tatua migongano ya rekodi katika programu kuu ya Confidex.
 extension-login-ambiguous = Sahihisha sehemu za kuingia zenye utata katika programu kuu ya Confidex.
 extension-login-changed = Rekodi imebadilika. Ichague tena ili kuhariri toleo la sasa.
+extension-current-revision = Toleo la sasa
+extension-reapply-draft = Tekeleza tena mabadiliko yangu
 extension-password-replacement-hint = Weka nenosiri jipya ili kubadilisha lililohifadhiwa.
 
 extension-startup-error = Confidex haikuweza kuanza. Pakia upya kiendelezi na ujaribu tena.

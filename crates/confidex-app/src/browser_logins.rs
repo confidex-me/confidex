@@ -226,8 +226,15 @@ fn login_pair(record: &Record, field: usize) -> Result<Pair, Error> {
         .ok_or(Error::Input)
 }
 
+fn unprotected_text<'a>(entry: &'a Entry, key: &str) -> Option<&'a str> {
+    if field_protected(entry) {
+        return None;
+    }
+    text(entry, key)
+}
+
 fn editable_text<'a>(entry: &'a Entry, key: &str) -> Option<&'a str> {
-    text(entry, key).filter(|value| !field_protected(entry) && value.len() <= MAX_LOGIN_TEXT)
+    unprotected_text(entry, key).filter(|value| value.len() <= MAX_LOGIN_TEXT)
 }
 
 // An unambiguous ordinary note is record-wide, even for a compound login.
@@ -404,6 +411,38 @@ impl Engine {
         Ok(page)
     }
 
+    pub async fn browser_login_choices(
+        &self,
+        store: &mut impl Store,
+        record: RecordId,
+        after: Option<Cursor>,
+    ) -> Result<Page, Error> {
+        let vault = self.vault.as_ref().ok_or(Error::Locked)?;
+        let mut page = Page {
+            rows: Vec::new(),
+            next: None,
+            issues: Issues::default(),
+        };
+        let head = match record_head(store, vault.vault_id(), record).await {
+            Ok(Some(head)) => head,
+            Ok(None) => return Ok(page),
+            Err(CONFLICT) => {
+                page.issues.conflicts = true;
+                return Ok(page);
+            }
+            Err(error) => return Err(error),
+        };
+        let offset = after
+            .filter(|cursor| cursor.head == head)
+            .map_or(0, |cursor| cursor.offset);
+        if let Some(content) = read_record(store, vault, record, head.revision).await?
+            && let Some(offset) = append_previews(&content, &head, offset, &mut page)
+        {
+            page.next = Some(Cursor { head, offset });
+        }
+        Ok(page)
+    }
+
     pub async fn browser_login_editor(
         &self,
         store: &mut impl Store,
@@ -493,7 +532,7 @@ fn append_previews(record: &Record, head: &Head, offset: usize, page: &mut Page)
             },
             fields,
             title: title.chars().take(128).collect(),
-            username: text(&record.entries[pair.username], "username")
+            username: unprotected_text(&record.entries[pair.username], "username")
                 .unwrap_or("")
                 .chars()
                 .take(128)

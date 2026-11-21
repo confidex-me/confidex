@@ -623,6 +623,8 @@ extension-sync-pending = 等待同步。
 extension-login-conflicts = 請在 Confidex 主應用程式中解決項目衝突。
 extension-login-ambiguous = 請在 Confidex 主應用程式中修正有歧義的登入欄位。
 extension-login-changed = 項目已變更。請重新選取以編輯目前版本。
+extension-current-revision = 目前的修訂版本
+extension-reapply-draft = 重新套用我的編輯
 extension-password-replacement-hint = 輸入新密碼以取代已儲存的密碼。
 
 extension-startup-error = 無法啟動 Confidex。請重新載入擴充功能後再試一次。

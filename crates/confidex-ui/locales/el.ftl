@@ -626,6 +626,8 @@ extension-sync-pending = Εκκρεμεί συγχρονισμός.
 extension-login-conflicts = Επιλύστε τις διενέξεις εγγραφών στην κύρια εφαρμογή Confidex.
 extension-login-ambiguous = Διορθώστε τα ασαφή πεδία σύνδεσης στην κύρια εφαρμογή Confidex.
 extension-login-changed = Η εγγραφή άλλαξε. Επιλέξτε την ξανά για να επεξεργαστείτε την τρέχουσα έκδοση.
+extension-current-revision = Τρέχουσα έκδοση
+extension-reapply-draft = Εφαρμογή των αλλαγών μου ξανά
 extension-password-replacement-hint = Εισαγάγετε νέο κωδικό πρόσβασης για να αντικαταστήσετε τον αποθηκευμένο.
 
 extension-startup-error = Δεν ήταν δυνατή η εκκίνηση του Confidex. Επαναφορτώστε την επέκταση και δοκιμάστε ξανά.

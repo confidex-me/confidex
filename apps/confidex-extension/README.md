@@ -50,6 +50,11 @@ An ordinary note can be edited when it can be identified unambiguously.
 Use the main Confidex app for protected or ambiguous fields and for
 records with conflicting revisions.
 
+When a save detects a newer revision, the session keeps the draft in memory.
+Use **Compare versions** to inspect the current values, then **Reapply my edits**
+to carry the draft changes onto that revision. Use **Save** to submit the edit
+with a fresh revision check.
+
 A saved login is committed to the encrypted IndexedDB vault before
 synchronization. Pending writes survive locking and browser restarts.
 The worker synchronizes after unlock, after a local write, and every minute

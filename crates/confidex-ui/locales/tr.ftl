@@ -623,6 +623,8 @@ extension-sync-pending = Eşitleme bekleniyor.
 extension-login-conflicts = Kayıt çakışmalarını ana Confidex uygulamasında çözün.
 extension-login-ambiguous = Belirsiz giriş alanlarını ana Confidex uygulamasında düzeltin.
 extension-login-changed = Kayıt değişti. Güncel sürümü düzenlemek için kaydı yeniden seçin.
+extension-current-revision = Güncel sürüm
+extension-reapply-draft = Değişikliklerimi yeniden uygula
 extension-password-replacement-hint = Kayıtlı parolayı değiştirmek için yeni bir parola girin.
 
 extension-startup-error = Confidex başlatılamadı. Uzantıyı yeniden yükleyip tekrar deneyin.

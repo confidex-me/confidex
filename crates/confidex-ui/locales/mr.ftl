@@ -623,6 +623,8 @@ extension-sync-pending = सिंक बाकी आहे.
 extension-login-conflicts = मुख्य Confidex ॲपमध्ये नोंदींचे संघर्ष सोडवा.
 extension-login-ambiguous = मुख्य Confidex ॲपमध्ये लॉगिनची संदिग्ध फील्ड दुरुस्त करा.
 extension-login-changed = नोंद बदलली आहे. नवीनतम आवृत्ती संपादित करण्यासाठी ती पुन्हा निवडा.
+extension-current-revision = सध्याची आवृत्ती
+extension-reapply-draft = माझे बदल पुन्हा लागू करा
 extension-password-replacement-hint = जतन केलेला पासवर्ड बदलण्यासाठी नवीन पासवर्ड प्रविष्ट करा.
 
 extension-startup-error = Confidex सुरू करता आले नाही. विस्तार पुन्हा लोड करा आणि पुन्हा प्रयत्न करा.

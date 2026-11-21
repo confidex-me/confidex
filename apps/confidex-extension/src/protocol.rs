@@ -41,6 +41,10 @@ pub enum Action {
     Logins {
         after: Option<Cursor>,
     },
+    LoginChoices {
+        record: RecordId,
+        after: Option<Cursor>,
+    },
     LoginEditor {
         target: Selection,
     },
@@ -86,6 +90,7 @@ pub enum Reply {
         page: Page,
         sync: SyncStatus,
     },
+    LoginChoices(Page),
     LoginEditor {
         target: Selection,
         fields: EditLogin,

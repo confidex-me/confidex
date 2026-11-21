@@ -4,7 +4,8 @@ use crate::protocol::{
 use confidex_app::{
     Error,
     browser_logins::{
-        Change, Cursor, EditLogin, Issues, Login, MAX_LOGIN_TEXT, NewLogin, Selection,
+        Change, Cursor, EditLogin, Issues, Login, MAX_LOGIN_TEXT, NewLogin, Page as LoginPage,
+        Selection,
     },
     new_record, templates,
 };
@@ -15,6 +16,7 @@ use confidex_ui::{
     theme::{self, Palette},
     ui_kit::{self, ButtonRole, Icon, Metrics, record, tags},
 };
+use confidex_vault::record::MAX_TAGS;
 use eframe::egui;
 use js_sys::Uint8Array;
 use std::{cell::RefCell, rc::Rc};
@@ -139,12 +141,19 @@ enum Page {
 
 type Pending = Rc<RefCell<Option<Response>>>;
 
+enum ConflictReview {
+    Needed,
+    Choices(LoginPage),
+    Current(Selection, EditLogin),
+}
+
 struct Editor {
     record: RecordId,
     original: Option<(Selection, EditLogin)>,
     form: NewLogin,
     focus_title: bool,
     tag_editor: tags::Editor,
+    review: Option<ConflictReview>,
 }
 
 impl Editor {
@@ -170,6 +179,159 @@ impl Editor {
             && (!username_changed || form.username.len() <= MAX_LOGIN_TEXT)
             && (!notes_changed || form.notes.len() <= MAX_LOGIN_TEXT)
             && form.password.len() <= MAX_LOGIN_TEXT
+    }
+
+    fn can_rebase(&self, fields: &EditLogin) -> bool {
+        let Some((_, original)) = &self.original else {
+            return false;
+        };
+        [
+            (&self.form.username, &original.username, &fields.username),
+            (&self.form.url, &original.url, &fields.url),
+            (&self.form.notes, &original.notes, &fields.notes),
+        ]
+        .into_iter()
+        .all(|(value, before, after)| after.is_some() || !differs(value, before.as_deref()))
+    }
+
+    fn rebase(&mut self, target: Selection, fields: EditLogin) {
+        let Some((_, original)) = &self.original else {
+            return;
+        };
+        for (value, before, after) in [
+            (
+                &mut self.form.title,
+                Some(original.title.as_str()),
+                Some(fields.title.as_str()),
+            ),
+            (
+                &mut self.form.username,
+                original.username.as_deref(),
+                fields.username.as_deref(),
+            ),
+            (
+                &mut self.form.url,
+                original.url.as_deref(),
+                fields.url.as_deref(),
+            ),
+            (
+                &mut self.form.notes,
+                original.notes.as_deref(),
+                fields.notes.as_deref(),
+            ),
+        ] {
+            if !differs(value, before) {
+                value.zeroize();
+                value.push_str(after.unwrap_or_default());
+            }
+        }
+
+        let mut tags = fields.tags.clone();
+        tags.retain(|tag| !original.tags.contains(tag) || self.form.tags.contains(tag));
+        for tag in &self.form.tags {
+            if !original.tags.contains(tag) && !tags.contains(tag) {
+                tags.push(tag.clone());
+            }
+        }
+        tags.sort_unstable();
+        self.form.tags.zeroize();
+        self.form.tags = tags;
+        self.original = Some((target, fields));
+        self.focus_title = true;
+    }
+
+    fn show_review(
+        &mut self,
+        ui: &mut egui::Ui,
+        colors: Palette,
+        locale: &Localizer,
+    ) -> Option<Action> {
+        use ConflictReview::{Choices, Current};
+        let Some(review) = &self.review else {
+            return None;
+        };
+        ui.colored_label(colors.error, locale.text("vault-record-updated"));
+        if ui.button(locale.text("sync-compare")).clicked() {
+            return Some(Action::LoginChoices {
+                record: self.record,
+                after: None,
+            });
+        }
+
+        let mut use_current = false;
+        match review {
+            Choices(page) => {
+                if page.issues.conflicts {
+                    ui.colored_label(colors.error, locale.text("extension-login-conflicts"));
+                } else if page.rows.is_empty() {
+                    ui_kit::muted(ui, colors, locale.text("vault-no-results"));
+                }
+                for row in &page.rows {
+                    let title = if row.title.is_empty() {
+                        locale.text("vault-untitled")
+                    } else {
+                        row.title.clone()
+                    };
+                    let label = if row.username.is_empty() {
+                        title
+                    } else {
+                        format!("{title} · {}", row.username)
+                    };
+                    if ui.button(label).clicked() {
+                        return Some(Action::LoginEditor {
+                            target: row.target.clone(),
+                        });
+                    }
+                }
+                if let Some(after) = &page.next
+                    && ui.button(locale.text("vault-more")).clicked()
+                {
+                    return Some(Action::LoginChoices {
+                        record: self.record,
+                        after: Some(after.clone()),
+                    });
+                }
+            }
+            Current(_, fields) => {
+                ui_kit::card(colors).show(ui, |ui| {
+                    ui.strong(locale.text("extension-current-revision"));
+                    ui.label(&fields.title);
+                    for (key, value) in [
+                        ("Username", fields.username.as_deref()),
+                        ("Website", fields.url.as_deref()),
+                        ("Notes", fields.notes.as_deref()),
+                    ] {
+                        ui_kit::muted(ui, colors, locale.starter_name(key));
+                        ui.label(value.unwrap_or("–"));
+                    }
+                    ui_kit::muted(ui, colors, locale.text("vault-tags"));
+                    ui_kit::layout::flow(ui, Metrics::SM, |ui| {
+                        for tag in &fields.tags {
+                            record::tag(ui, colors, tag, record::TagRole::Neutral);
+                        }
+                    });
+                    let allowed = self.can_rebase(fields);
+                    use_current = ui_kit::button(
+                        ui,
+                        colors,
+                        &locale.text("extension-reapply-draft"),
+                        ButtonRole::Secondary,
+                        0.,
+                        allowed,
+                    )
+                    .clicked();
+                    if !allowed {
+                        ui_kit::muted(ui, colors, locale.text("vault-opaque-fields"));
+                    }
+                });
+            }
+            ConflictReview::Needed => {}
+        }
+        if use_current && let Some(Current(target, fields)) = self.review.take() {
+            self.rebase(target, fields);
+        }
+        ui.add_space(Metrics::LG);
+        None
     }
 
     fn save_action(&self) -> Action {
@@ -254,8 +416,14 @@ impl App {
                         self.editor = None;
                     }
                     Error::Storage(confidex_storage::Error::Conflict) => {
-                        self.editor = None;
-                        self.request(ctx, Action::Logins { after: None });
+                        if let Some(editor) = &mut self.editor {
+                            if editor.original.is_some() {
+                                editor.review = Some(ConflictReview::Needed);
+                                self.status = None;
+                            }
+                        } else {
+                            self.request(ctx, Action::Logins { after: None });
+                        }
                     }
                     _ => {}
                 }
@@ -264,6 +432,7 @@ impl App {
                 self.page = Page::Disconnected;
                 self.rows.clear();
                 self.next = None;
+                self.editor = None;
             }
             Ok(Reply::Locked { name }) => {
                 self.page = Page::Locked(name);
@@ -287,7 +456,30 @@ impl App {
                 self.issues.ambiguous |= page.issues.ambiguous;
                 self.issues.conflicts |= page.issues.conflicts;
             }
+            Ok(Reply::LoginChoices(page)) => {
+                if let Some(editor) = &mut self.editor
+                    && editor.review.is_some()
+                {
+                    if let ([row], None) = (page.rows.as_slice(), &page.next) {
+                        self.request(
+                            ctx,
+                            Action::LoginEditor {
+                                target: row.target.clone(),
+                            },
+                        );
+                    } else {
+                        editor.review = Some(ConflictReview::Choices(page));
+                    }
+                }
+            }
             Ok(Reply::LoginEditor { target, fields }) => {
+                if let Some(editor) = &mut self.editor
+                    && editor.review.is_some()
+                    && editor.record == target.head.record
+                {
+                    editor.review = Some(ConflictReview::Current(target, fields));
+                    return;
+                }
                 self.editor = Some(Editor {
                     record: target.head.record,
                     form: NewLogin {
@@ -301,6 +493,7 @@ impl App {
                     original: Some((target, fields)),
                     focus_title: true,
                     tag_editor: tags::Editor::default(),
+                    review: None,
                 });
             }
             Ok(Reply::Saved(_)) => {
@@ -315,6 +508,11 @@ impl App {
         let Some(editor) = &mut self.editor else {
             return;
         };
+        if let Some(action) = editor.show_review(ui, self.colors, &self.locale) {
+            self.status = None;
+            self.request(ui.ctx(), action);
+            return;
+        }
         let original = editor.original.as_ref().map(|(_, fields)| fields);
         record::toolbar(
             ui,
@@ -400,8 +598,10 @@ impl App {
             editor.record,
             &mut editor.form.tags,
         );
-        let tag_problem = editor.tag_editor.problem(&editor.form.tags);
-        let ready = tag_problem.is_none() && editor.can_save();
+        let tag_problem = (editor.form.tags.len() > MAX_TAGS)
+            .then_some("vault-tags-full")
+            .or_else(|| editor.tag_editor.problem(&editor.form.tags));
+        let ready = editor.review.is_none() && tag_problem.is_none() && editor.can_save();
 
         ui.add_space(Metrics::LG);
         let (submit, cancel) = ui
@@ -637,6 +837,7 @@ impl App {
                                     form: NewLogin::default(),
                                     focus_title: true,
                                     tag_editor: tags::Editor::default(),
+                                    review: None,
                                 })
                             }
                             Err(error) => self.status = Some((error_label(error), true)),

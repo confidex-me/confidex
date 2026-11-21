@@ -623,6 +623,8 @@ extension-sync-pending = 동기화 대기 중입니다.
 extension-login-conflicts = 기본 Confidex 앱에서 항목 충돌을 해결하세요.
 extension-login-ambiguous = 기본 Confidex 앱에서 모호한 로그인 필드를 수정하세요.
 extension-login-changed = 항목이 변경되었습니다. 최신 버전을 편집하려면 다시 선택하세요.
+extension-current-revision = 현재 리비전
+extension-reapply-draft = 내 변경 사항 다시 적용
 extension-password-replacement-hint = 저장된 비밀번호를 바꾸려면 새 비밀번호를 입력하세요.
 
 extension-startup-error = Confidex를 시작할 수 없습니다. 확장 프로그램을 새로고침한 후 다시 시도하세요.

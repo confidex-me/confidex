@@ -490,13 +490,14 @@ path = ${JSON.stringify(blobPath)}
     title: login.title, username: login.username, url: 'https://example.test', notes: login.notes, tags,
   });
 
-  // Open Edit on this row. The toolbar contributes three tab stops.
-  const rowIndex = (await list(reopened)).rows.findIndex(row => row.title === login.title);
-  assert(rowIndex >= 0);
-  await click(reopened, '#session');
-  for (let stop = 0; stop < rowIndex + 4; stop++) await press(reopened, 'Tab', 9);
-  await press(reopened, 'Enter', 13);
-  await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'edit title focus');
+  // The session toolbar contributes three tab stops before the login actions.
+  const editRow = async title => {
+    const rowIndex = (await list(reopened)).rows.findIndex(row => row.title === title);
+    assert(rowIndex >= 0);
+    await activateFromMargin(reopened, rowIndex + 4);
+    await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'edit title focus');
+  };
+  await editRow(login.title);
   const edited = {
     title: 'Edited offline login',
     url: 'https://edited.example.test/path',
@@ -526,8 +527,64 @@ path = ${JSON.stringify(blobPath)}
     target: editedLogin.target, change: {username: null, password: null, tags: editedTags},
   }})).Ok?.Saved;
   assert(updated, 'Tag-only write did not finish');
+  // A separate write advances the head while the editor still has an unsaved password.
+  // Keep this fixture offline so the later restart still exercises the durable queue.
+  const draftPassword = 'public-extension-conflict-draft';
+  const draftWebsite = 'https://recovered.example.test';
+  const currentTitle = 'Changed by another client';
+  const currentTags = ['concurrent-tag'];
+  const currentNote = 'Changed during revision review';
+  await reopened.call('Emulation.setDeviceMetricsOverride', {
+    width: 1000, height: 1400, deviceScaleFactor: 1, mobile: false,
+  });
+  const reviewTarget = (await list(reopened)).rows.find(row => row.title === 'Synthetic login').target;
+  await editRow('Synthetic login');
+  await press(reopened, 'Tab', 9);
+  await tabAndType(reopened, draftPassword, 'password replacement before conflict');
+  await press(reopened, 'Tab', 9);
+  await replaceFocusedText(reopened, draftWebsite);
+  const concurrent = (await action(reopened, {UpdateLogin: {target: reviewTarget, change: {
+    title: currentTitle, tags: currentTags,
+  }}})).Ok?.Saved;
+  assert(concurrent, 'Concurrent write did not advance the head');
+  for (let stop = 0; stop < 3; stop++) await press(reopened, 'Tab', 9);
+  await press(reopened, 'Enter', 13);
+  await status(reopened);
+  assert.deepEqual((await waitForLogin(currentTitle)).target.head, concurrent);
+
+  const reapplyDraft = async () => {
+    // Lock, Sync now, Compare versions, then Reapply my edits.
+    await activateFromMargin(reopened, 3);
+    await status(reopened);
+    await activateFromMargin(reopened, 4);
+    await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'rebased draft focus');
+  };
+  const saveRebasedDraft = async () => {
+    for (let stop = 0; stop < 6 + currentTags.length; stop++) await press(reopened, 'Tab', 9);
+    await press(reopened, 'Enter', 13);
+    await status(reopened);
+  };
+  await reapplyDraft();
+  assert.deepEqual((await waitForLogin(currentTitle)).target.head, concurrent);
+  const afterReview = (await action(reopened, {UpdateLogin: {
+    target: {...reviewTarget, head: concurrent}, change: {notes: currentNote},
+  }})).Ok?.Saved;
+  assert(afterReview, 'Second concurrent write did not advance the head');
+  await saveRebasedDraft();
+  assert.deepEqual((await waitForLogin(currentTitle)).target.head, afterReview);
+  await reapplyDraft();
+  await saveRebasedDraft();
+  const recoveredDraft = await until(async () => {
+    const row = await waitForLogin(currentTitle);
+    return row.target.head.revision.join(',') !== afterReview.revision.join(',') && row;
+  }, 'draft saved after reviewing the newest revision');
+  const {fields: recoveredFields} = (await openEditor(reopened, recoveredDraft.target)).Ok.LoginEditor;
+  assert.equal(recoveredFields.url, draftWebsite);
+  assert.equal(recoveredFields.notes, currentNote);
+  assert.deepEqual(recoveredFields.tags, currentTags);
+
   await checkStorage(reopened, [password, credentials.key, loginPassword, offlinePassword,
-    updatedPassword, noteLines[0], edited.notes, 'chromium-fixture@example.test', 'offline-fixture@example.test']);
+    updatedPassword, draftPassword, noteLines[0], edited.notes, 'chromium-fixture@example.test', 'offline-fixture@example.test']);
 
   // Shut down Chromium while the server is still unreachable. Reuse only the
   // temporary profile, just as a user would after a browser restart.
@@ -551,6 +608,10 @@ path = ${JSON.stringify(blobPath)}
   const {Catalog} = (await web('Catalog')).Ok;
   assert((await web({Unlock: {vault: Catalog[0].id, ...credentials, remember: false}})).Ok?.Opened);
   await syncWeb(web, origin);
+  const {Draft: reviewed} = (await web({Open: {record: webRecord}})).Ok;
+  assert.deepEqual(reviewed.revision, recoveredDraft.target.head.revision);
+  assert(reviewed.fields.find(field => field.type_name === 'password/v1')?.values.password === draftPassword,
+    'The draft password was lost during revision review');
   const read = () => web({Open: {record}});
   const {Draft: draft} = (await read()).Ok;
   assert.equal(draft.title, edited.title);
@@ -623,7 +684,8 @@ path = ${JSON.stringify(blobPath)}
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
     offlineUnlock: true, newLoginThroughUi: true, editedLoginThroughUi: true, tagsSyncedBothWays: true,
     offlineWritesSurviveBrowserRestart: true, automaticSync: true,
-    duplicateCreateRejected: true, staleUpdateRejected: true, conflictPreservedAndResolved: true,
+    duplicateCreateRejected: true, staleUpdateRejected: true, draftRecoveredAfterConflict: true,
+    conflictPreservedAndResolved: true,
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
     optionalSitePermission: true, senderValidation: true, strictCspRouting: true,
     backgroundRestart: true, idleExpiry: true, workerLoss: true,
@@ -795,6 +857,15 @@ async function click(page, selector) {
   for (const type of ['mousePressed', 'mouseReleased']) {
     await page.call('Input.dispatchMouseEvent', {type, x, y, button: 'left', clickCount: 1});
   }
+}
+
+async function activateFromMargin(page, tabStops) {
+  const x = await page.evaluate('innerWidth - 16');
+  for (const type of ['mousePressed', 'mouseReleased']) {
+    await page.call('Input.dispatchMouseEvent', {type, x, y: 200, button: 'left', clickCount: 1});
+  }
+  for (let stop = 0; stop < tabStops; stop++) await press(page, 'Tab', 9);
+  await press(page, 'Enter', 13);
 }
 
 async function press(page, key, windowsVirtualKeyCode, modifiers = 0) {

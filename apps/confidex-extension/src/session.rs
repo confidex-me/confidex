@@ -236,6 +236,14 @@ impl Session {
                     sync: self.sync.status(),
                 })
             }
+            Action::LoginChoices { record, after } if self.is_open() => {
+                let page = self
+                    .runtime
+                    .engine_mut()
+                    .browser_login_choices(&mut BrowserStore, record, after)
+                    .await?;
+                Ok(Reply::LoginChoices(page))
+            }
             Action::LoginEditor { target } if self.is_open() => {
                 let fields = self
                     .runtime

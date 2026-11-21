@@ -623,6 +623,8 @@ extension-sync-pending = সিঙ্কের অপেক্ষায়।
 extension-login-conflicts = মূল Confidex অ্যাপে রেকর্ডের দ্বন্দ্ব মেটান।
 extension-login-ambiguous = মূল Confidex অ্যাপে লগইনের অস্পষ্ট ক্ষেত্রগুলি ঠিক করুন।
 extension-login-changed = রেকর্ডটি বদলেছে। সর্বশেষ সংস্করণ সম্পাদনা করতে আবার বেছে নিন।
+extension-current-revision = বর্তমান সংস্করণ
+extension-reapply-draft = আমার পরিবর্তনগুলি আবার প্রয়োগ করুন
 extension-password-replacement-hint = সংরক্ষিত পাসওয়ার্ড বদলাতে নতুন পাসওয়ার্ড লিখুন।
 
 extension-startup-error = Confidex চালু করা যায়নি। এক্সটেনশন পুনরায় লোড করে আবার চেষ্টা করুন।

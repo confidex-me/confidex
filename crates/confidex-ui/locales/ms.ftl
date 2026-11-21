@@ -623,6 +623,8 @@ extension-sync-pending = Menunggu penyegerakan.
 extension-login-conflicts = Selesaikan konflik rekod dalam apl utama Confidex.
 extension-login-ambiguous = Betulkan medan log masuk yang tidak jelas dalam apl utama Confidex.
 extension-login-changed = Rekod telah berubah. Pilih sekali lagi untuk mengedit versi terkini.
+extension-current-revision = Semakan semasa
+extension-reapply-draft = Gunakan semula perubahan saya
 extension-password-replacement-hint = Masukkan kata laluan baharu untuk menggantikan kata laluan yang disimpan.
 
 extension-startup-error = Confidex tidak dapat dimulakan. Muat semula sambungan dan cuba lagi.

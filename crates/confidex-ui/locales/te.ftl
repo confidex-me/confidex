@@ -626,6 +626,8 @@ extension-sync-pending = సమకాలీకరణ పెండింగ్‌
 extension-login-conflicts = ప్రధాన Confidex యాప్‌లో రికార్డు వైరుధ్యాలను పరిష్కరించండి.
 extension-login-ambiguous = ప్రధాన Confidex యాప్‌లో అస్పష్టమైన లాగిన్ ఫీల్డ్‌లను సరిచేయండి.
 extension-login-changed = రికార్డు మారింది. తాజా సంస్కరణను సవరించడానికి మళ్లీ ఎంచుకోండి.
+extension-current-revision = ప్రస్తుత సవరణ
+extension-reapply-draft = నా మార్పులను మళ్లీ వర్తింపజేయి
 extension-password-replacement-hint = సేవ్ చేసిన పాస్‌వర్డ్‌ను మార్చడానికి కొత్త పాస్‌వర్డ్‌ను నమోదు చేయండి.
 
 extension-startup-error = Confidex ప్రారంభం కాలేదు. పొడిగింపును మళ్లీ లోడ్ చేసి ప్రయత్నించండి.

@@ -229,6 +229,52 @@ fn edits_selected_website_and_title_and_only_an_unambiguous_note() {
 }
 
 #[test]
+fn serialized_previews_omit_protected_separate_and_compound_usernames() {
+    let protect = |mut entry: Entry| {
+        entry.extra.insert(
+            "metadata".into(),
+            Value::Map(vec![(Value::from("protected"), Value::from(true))]),
+        );
+        entry
+    };
+    let record = Record {
+        entries: vec![
+            protect(entry(
+                "username/v1",
+                &[("username", "private-separate-user")],
+            )),
+            entry("password/v1", &[("password", "fixture-password")]),
+            entry("url/v1", &[("url", "https://example.test")]),
+            protect(compound("private-compound-user")),
+            compound("public-compound-user"),
+        ],
+        tags: vec![],
+        extra: BTreeMap::new(),
+    };
+    let mut page = Page {
+        rows: vec![],
+        next: None,
+        issues: Issues::default(),
+    };
+    let head = Head {
+        record: [1; 16],
+        revision: [2; 32],
+    };
+    assert!(append_previews(&record, &head, 0, &mut page).is_none());
+    let serialized = serde_json::to_string(&page).unwrap();
+    assert!(!serialized.contains("private-separate-user"));
+    assert!(!serialized.contains("private-compound-user"));
+    assert!(serialized.contains("public-compound-user"));
+    let rows = serde_json::from_str::<Page>(&serialized).unwrap().rows;
+    assert_eq!(
+        rows.iter()
+            .map(|row| row.username.as_str())
+            .collect::<Vec<_>>(),
+        ["", "public-compound-user", ""],
+    );
+}
+
+#[test]
 fn previews_page_within_a_revision_and_serialize_no_secrets() {
     let record = Record {
         entries: (0..PAGE_SIZE + 2)
