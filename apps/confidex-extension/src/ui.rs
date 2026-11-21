@@ -178,14 +178,14 @@ impl App {
         }
         field(
             ui,
-            self.locale.text("vault-password"),
-            &mut self.credentials.password,
-            true,
-        );
-        let key = field(
-            ui,
             self.locale.text("vault-secret-key"),
             &mut self.credentials.key,
+            true,
+        );
+        let password = field(
+            ui,
+            self.locale.text("vault-password"),
+            &mut self.credentials.password,
             true,
         );
         let ready = !self.credentials.key.is_empty()
@@ -207,7 +207,7 @@ impl App {
         .clicked();
         ready
             && (pressed
-                || (key.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter))))
+                || (password.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter))))
     }
 
     fn show(&mut self, ui: &mut egui::Ui) {
