@@ -21,6 +21,7 @@ pub mod record;
 pub mod section;
 mod select;
 pub mod settings;
+pub mod tags;
 pub mod totp;
 pub mod value;
 pub mod wifi_qr;

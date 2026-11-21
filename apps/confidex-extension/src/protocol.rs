@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use zeroize::ZeroizeOnDrop;
 
 pub const VERSION: u8 = 3;
-// Five bounded login fields can each expand sixfold when JSON escapes control characters.
+// A full tag list and five login fields can each expand sixfold in JSON.
 #[cfg(any(test, feature = "session"))]
-pub const MAX_REQUEST: usize = 128 * 1024;
+pub const MAX_REQUEST: usize = 512 * 1024;
 pub const MAX_RESPONSE: usize = 1024 * 1024;
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
@@ -41,6 +41,9 @@ pub enum Action {
     Logins {
         after: Option<Cursor>,
     },
+    LoginTags {
+        target: Selection,
+    },
     CreateLogin {
         record: RecordId,
         login: NewLogin,
@@ -68,10 +71,25 @@ impl Request {
 #[derive(Deserialize, Serialize)]
 pub enum Reply {
     Disconnected,
-    Locked { name: String },
-    Opened { name: String, sync: SyncStatus },
-    Synced { sync: SyncStatus, more: bool },
-    Logins { page: Page, sync: SyncStatus },
+    Locked {
+        name: String,
+    },
+    Opened {
+        name: String,
+        sync: SyncStatus,
+    },
+    Synced {
+        sync: SyncStatus,
+        more: bool,
+    },
+    Logins {
+        page: Page,
+        sync: SyncStatus,
+    },
+    LoginTags {
+        target: Selection,
+        tags: Vec<String>,
+    },
     Saved(Head),
 }
 
@@ -160,10 +178,13 @@ mod tests {
             br#"{"version":3,"action":"Open"}"#,
             br#"{"version":3,"action":"Status","origin":"https://example.test"}"#,
             br#"{"version":3,"action":{"Unlock":{"password":"p","key":"k","remember":true}}}"#,
-            &[b' '; MAX_REQUEST + 1],
         ] {
             assert!(matches!(Request::decode(bytes), Err(Error::Input)));
         }
+        assert!(matches!(
+            Request::decode(&vec![b' '; MAX_REQUEST + 1]),
+            Err(Error::Input)
+        ));
     }
 
     #[test]

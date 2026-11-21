@@ -32,6 +32,7 @@ fn creates_a_standard_login_and_stores_only_the_https_origin() {
         password: "fixture-secret".into(),
         url: "https://Bücher.example:8443/path?query#fragment".into(),
         notes: "First line\nSecond line".into(),
+        tags: vec!["work".into(), "admin".into()],
     };
     let record = new_content(&login).unwrap();
     assert_eq!(title(&record).unwrap(), "Test");
@@ -48,6 +49,7 @@ fn creates_a_standard_login_and_stores_only_the_https_origin() {
         Some("https://xn--bcher-kva.example:8443")
     );
     assert_eq!(text(&record.entries[3], "text"), Some(login.notes.as_str()));
+    assert_eq!(record.tags, ["admin", "work"]);
     assert_eq!(pairs(&record).0.count(), 1);
     for invalid in [
         "http://example.test",
@@ -108,7 +110,8 @@ fn update_changes_only_the_selected_raw_keys() {
     let before = record.encode_content(MAX_OPEN_MEMORY).unwrap();
     let change = Change {
         username: Some("updated".into()),
-        password: "replacement".into(),
+        password: Some("replacement".into()),
+        tags: None,
     };
     update_content(&mut record, 0, &change).unwrap();
     assert_eq!(text(&record.entries[0], "username"), Some("updated"));
@@ -122,12 +125,41 @@ fn update_changes_only_the_selected_raw_keys() {
         0,
         &Change {
             username: Some("first".into()),
-            password: "fixture-secret".into(),
+            password: Some("fixture-secret".into()),
+            tags: None,
         },
     )
     .unwrap();
     let after = record.encode_content(MAX_OPEN_MEMORY).unwrap();
     assert_eq!(*before.bytes, *after.bytes);
+}
+
+#[test]
+fn tags_can_be_replaced_without_touching_credentials_or_other_fields() {
+    let mut record = Record {
+        entries: vec![compound("fixture")],
+        tags: vec!["original".into()],
+        extra: BTreeMap::new(),
+    };
+    let mut change = Change {
+        username: None,
+        password: None,
+        tags: Some(vec!["work".into(), "work".into()]),
+    };
+    assert!(matches!(
+        update_content(&mut record, 0, &change),
+        Err(Error::Input)
+    ));
+    assert_eq!(record.tags, ["original"]);
+    change.tags = Some(vec!["work".into(), "admin".into()]);
+    update_content(&mut record, 0, &change).unwrap();
+    assert_eq!(record.tags, ["admin", "work"]);
+    assert_eq!(text(&record.entries[0], "username"), Some("fixture"));
+    assert_eq!(text(&record.entries[0], "password"), Some("fixture-secret"));
+    assert_eq!(text(&record.entries[0], "vendor-setting"), Some("keep"));
+    change.tags = Some(vec![]);
+    update_content(&mut record, 0, &change).unwrap();
+    assert!(record.tags.is_empty());
 }
 
 #[test]

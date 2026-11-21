@@ -180,7 +180,7 @@ pub struct VaultApp {
     totp_times: BTreeMap<u64, (u64, u64)>,
     attachments: attachments::Attachments,
     file_drop: file_drop::State,
-    tag_editor: tags::State,
+    tag_editor: design::tags::Editor,
     next_field: u64,
     clipboard: Clipboard,
     pub zoom_factor: f32,

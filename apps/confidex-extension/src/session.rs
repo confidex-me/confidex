@@ -236,6 +236,14 @@ impl Session {
                     sync: self.sync.status(),
                 })
             }
+            Action::LoginTags { target } if self.is_open() => {
+                let tags = self
+                    .runtime
+                    .engine_mut()
+                    .browser_login_tags(&mut BrowserStore, &target)
+                    .await?;
+                Ok(Reply::LoginTags { target, tags })
+            }
             Action::CreateLogin { record, login } if self.is_open() => {
                 let head = self
                     .runtime

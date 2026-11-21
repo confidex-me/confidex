@@ -48,6 +48,10 @@ selected when the form was opened and preserves the other record fields,
 including the original website, sections, and notes. Ambiguous separate
 fields and records with conflicting revisions require the main Confidex app.
 
+The **Tags** editor uses the same controls as the main app. Add or remove tags
+when creating or editing a login. A tag-only edit can be saved with the password
+field empty.
+
 A saved login is committed to the encrypted IndexedDB vault before
 synchronization. Pending writes survive locking and browser restarts.
 The worker synchronizes after unlock, after a local write, and every minute

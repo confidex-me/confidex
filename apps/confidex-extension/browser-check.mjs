@@ -431,7 +431,7 @@ path = ${JSON.stringify(blobPath)}
   assert.equal(await reportFrom(ordinaryUrl), false, 'A closed session allowed routing');
   const reopened = await newTab(command, extensionUrl);
   await reopened.call('Emulation.setDeviceMetricsOverride', {
-    width: 1000, height: 850, deviceScaleFactor: 1, mobile: false,
+    width: 1000, height: 1050, deviceScaleFactor: 1, mobile: false,
   });
   await waitForUi(reopened);
   assert.equal((await status(reopened)).Ok?.Locked?.name, 'Synthetic extension vault');
@@ -449,9 +449,11 @@ path = ${JSON.stringify(blobPath)}
   for (let button = 0; button < 3; button++) await press(reopened, 'Tab', 9);
   await press(reopened, 'Enter', 13);
   const noteLines = ['Offline note from the extension', 'Second line'];
+  const tags = ['admin', 'work'];
+  const editedTags = ['admin', 'project'];
   const login = {
     title: 'Offline login', username: 'offline-fixture@example.test', password: offlinePassword,
-    url: 'https://example.test/account?private=1#login', notes: noteLines.join('\n'),
+    url: 'https://example.test/account?private=1#login', notes: noteLines.join('\n'), tags,
   };
   await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'record title focus');
   await reopened.call('Input.insertText', {text: login.title});
@@ -461,6 +463,10 @@ path = ${JSON.stringify(blobPath)}
   await tabAndType(reopened, noteLines[0], 'new login notes');
   await press(reopened, 'Enter', 13);
   await reopened.call('Input.insertText', {text: noteLines[1]});
+  await tabAndType(reopened, ` ${tags[0]} `, 'new login tag');
+  await press(reopened, 'Enter', 13);
+  await reopened.call('Input.insertText', {text: tags[1]});
+  await press(reopened, 'Enter', 13);
   await press(reopened, 'Tab', 9);
   await press(reopened, 'Enter', 13);
 
@@ -475,10 +481,17 @@ path = ${JSON.stringify(blobPath)}
   const {record} = offline.target.head;
   const create = {CreateLogin: {record, login}};
   assert.deepEqual(await action(reopened, create), {Err: {Storage: 'Conflict'}});
+  const readTags = (page, target) => action(page, {LoginTags: {target}});
+  assert.deepEqual((await readTags(reopened, offline.target)).Ok?.LoginTags?.tags, tags);
   const change = {username: null, password: updatedPassword};
-  const updated = (await action(reopened, {UpdateLogin: {target: offline.target, change}})).Ok?.Saved;
-  assert(updated, 'Offline update did not finish');
+  const passwordUpdate = (await action(reopened, {UpdateLogin: {target: offline.target, change}})).Ok?.Saved;
+  assert(passwordUpdate, 'Offline update did not finish');
   assert.deepEqual(await action(reopened, {UpdateLogin: {target: offline.target, change}}), {Err: {Storage: 'Conflict'}});
+  assert.deepEqual(await readTags(reopened, offline.target), {Err: {Storage: 'Conflict'}});
+  const updated = (await action(reopened, {UpdateLogin: {
+    target: {...offline.target, head: passwordUpdate}, change: {username: null, password: null, tags: editedTags},
+  }})).Ok?.Saved;
+  assert(updated, 'Tag-only write did not finish');
   await checkStorage(reopened, [password, credentials.key, loginPassword, offlinePassword,
     updatedPassword, noteLines[0], 'chromium-fixture@example.test', 'offline-fixture@example.test']);
 
@@ -512,10 +525,12 @@ path = ${JSON.stringify(blobPath)}
   assert.equal(draft.fields[2].values.url, 'https://example.test');
   assert.deepEqual(draft.fields.map(field => field.name), ['Username', 'Password', 'Website', 'Notes']);
   assert.equal(draft.fields[3].values.text, login.notes);
+  assert.deepEqual(draft.tags, editedTags);
   assert.deepEqual(draft.revision, updated.revision);
 
   draft.fields[0].values.username = 'edited-in-web@example.test';
   draft.fields[3].values.text = 'Note edited in the main app';
+  draft.tags.push('web');
   const fromWeb = (await web({Save: {draft, epoch: Date.now()}})).Ok?.Saved;
   assert(fromWeb, 'Web update did not finish');
   await syncWeb(web, origin);
@@ -524,6 +539,7 @@ path = ${JSON.stringify(blobPath)}
   const common = (await list(recovered)).rows.find(row => row.title === 'Offline login');
   assert.equal(common.username, 'edited-in-web@example.test');
   assert.deepEqual(common.target.head, fromWeb);
+  assert.deepEqual((await readTags(recovered, common.target)).Ok?.LoginTags?.tags, [...editedTags, 'web']);
 
   networkBlocked = true;
   const localBranch = (await action(recovered, {UpdateLogin: {target: common.target, change: {
@@ -567,9 +583,11 @@ path = ${JSON.stringify(blobPath)}
   const finalDraft = (await read()).Ok.Draft;
   assert.deepEqual(finalDraft.revision, onlineWrite.revision);
   assert.equal(finalDraft.fields[3].values.text, 'Note edited in the main app');
+  assert.deepEqual(finalDraft.tags, [...editedTags, 'web']);
 
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
-    offlineUnlock: true, newLoginThroughUi: true, offlineWritesSurviveBrowserRestart: true, automaticSync: true,
+    offlineUnlock: true, newLoginThroughUi: true, tagsSyncedBothWays: true,
+    offlineWritesSurviveBrowserRestart: true, automaticSync: true,
     duplicateCreateRejected: true, staleUpdateRejected: true, conflictPreservedAndResolved: true,
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
     optionalSitePermission: true, senderValidation: true, strictCspRouting: true,

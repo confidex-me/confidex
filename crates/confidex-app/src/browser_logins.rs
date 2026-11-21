@@ -6,7 +6,7 @@ const PAGE_SIZE: usize = 128;
 const CONFLICT: Error = Error::Storage(confidex_storage::Error::Conflict);
 pub const MAX_LOGIN_TEXT: usize = 4096;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Selection {
     pub head: Head,
@@ -58,6 +58,8 @@ pub struct NewLogin {
     pub password: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub notes: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 
 impl NewLogin {
@@ -76,7 +78,9 @@ impl NewLogin {
 #[serde(deny_unknown_fields)]
 pub struct Change {
     pub username: Option<String>,
-    pub password: String,
+    pub password: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>,
 }
 
 struct Pair {
@@ -169,6 +173,7 @@ fn new_content(login: &NewLogin) -> Result<Record, Error> {
         field.values.insert(key.into(), value.into());
     }
     let mut record = Record::default();
+    set_tags(&mut record, &login.tags)?;
     sections::apply(&mut record, Some(&template.sections()), fields.len())?;
     fields::apply(&mut record, &fields)?;
     record
@@ -181,12 +186,26 @@ fn valid_password(password: &str) -> bool {
     !password.is_empty() && password.len() <= MAX_LOGIN_TEXT
 }
 
+fn set_tags(record: &mut Record, tags: &[String]) -> Result<(), Error> {
+    let mut sorted = Zeroizing::new(tags.to_vec());
+    sorted.sort_unstable();
+    if !confidex_storage::valid_tags(&sorted) {
+        return Err(Error::Input);
+    }
+    std::mem::swap(&mut record.tags, &mut sorted);
+    Ok(())
+}
+
 fn update_content(record: &mut Record, field: usize, change: &Change) -> Result<(), Error> {
-    if !valid_password(&change.password)
+    if change
+        .password
+        .as_deref()
+        .is_some_and(|password| !valid_password(password))
         || change
             .username
             .as_ref()
             .is_some_and(|name| name.len() > MAX_LOGIN_TEXT)
+        || (change.password.is_none() && change.username.is_none() && change.tags.is_none())
     {
         return Err(Error::Input);
     }
@@ -194,18 +213,34 @@ fn update_content(record: &mut Record, field: usize, change: &Change) -> Result<
         .0
         .find(|pair| pair.password == field)
         .ok_or(Error::Input)?;
+    if let Some(tags) = &change.tags {
+        set_tags(record, tags)?;
+    }
     let mut retired = Record::default();
     if let Some(username) = &change.username {
         replace(record, pair.username, "username", username, &mut retired);
     }
-    replace(
-        record,
-        pair.password,
-        "password",
-        &change.password,
-        &mut retired,
-    );
+    if let Some(password) = &change.password {
+        replace(record, pair.password, "password", password, &mut retired);
+    }
     Ok(())
+}
+
+async fn read_current_login(
+    store: &mut impl Store,
+    vault: &lock::OpenedVault,
+    head: &Head,
+) -> Result<Record, Error> {
+    if record_head(store, vault.vault_id(), head.record)
+        .await?
+        .as_ref()
+        != Some(head)
+    {
+        return Err(CONFLICT);
+    }
+    read_record(store, vault, head.record, head.revision)
+        .await?
+        .ok_or(CONFLICT)
 }
 
 impl Engine {
@@ -256,6 +291,19 @@ impl Engine {
         Ok(page)
     }
 
+    pub async fn browser_login_tags(
+        &self,
+        store: &mut impl Store,
+        target: &Selection,
+    ) -> Result<Vec<String>, Error> {
+        let vault = self.vault.as_ref().ok_or(Error::Locked)?;
+        let mut content = read_current_login(store, vault, &target.head).await?;
+        if !pairs(&content).0.any(|pair| pair.password == target.field) {
+            return Err(Error::Input);
+        }
+        Ok(std::mem::take(&mut content.tags))
+    }
+
     pub async fn create_browser_login(
         &mut self,
         store: &mut impl Store,
@@ -293,12 +341,7 @@ impl Engine {
     ) -> Result<Head, Error> {
         let vault = self.vault.as_ref().ok_or(Error::Locked)?;
         let Head { record, revision } = target.head;
-        if record_head(store, vault.vault_id(), record).await?.as_ref() != Some(&target.head) {
-            return Err(CONFLICT);
-        }
-        let mut content = read_record(store, vault, record, revision)
-            .await?
-            .ok_or(CONFLICT)?;
+        let mut content = read_current_login(store, vault, &target.head).await?;
         update_content(&mut content, target.field, change)?;
         let revision = append(
             store,

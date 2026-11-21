@@ -11,7 +11,7 @@ use confidex_ui::{
     browser_input,
     i18n::Localizer,
     theme::{self, Palette},
-    ui_kit::{self, ButtonRole, Icon, Metrics, record},
+    ui_kit::{self, ButtonRole, Icon, Metrics, record, tags},
 };
 use eframe::egui;
 use js_sys::Uint8Array;
@@ -142,6 +142,8 @@ struct Editor {
     target: Option<(Selection, Zeroizing<String>)>,
     form: NewLogin,
     focus_title: bool,
+    tag_editor: tags::Editor,
+    tags_changed: bool,
 }
 
 struct App {
@@ -221,6 +223,25 @@ impl App {
                 self.issues.ambiguous |= page.issues.ambiguous;
                 self.issues.conflicts |= page.issues.conflicts;
             }
+            Ok(Reply::LoginTags { target, tags }) => {
+                if let Some(login) = self.rows.iter().find(|login| login.target == target) {
+                    self.editor = Some(Editor {
+                        record: target.head.record,
+                        target: Some((target, Zeroizing::new(login.username.clone()))),
+                        form: NewLogin {
+                            title: login.title.clone(),
+                            username: login.username.clone(),
+                            url: String::new(),
+                            password: String::new(),
+                            notes: String::new(),
+                            tags,
+                        },
+                        focus_title: false,
+                        tag_editor: tags::Editor::default(),
+                        tags_changed: false,
+                    });
+                }
+            }
             Ok(Reply::Saved(_)) => {
                 self.editor = None;
                 self.status = Some(("extension-saved-local", false));
@@ -285,12 +306,28 @@ impl App {
             }
         }
 
+        editor.tags_changed |= editor
+            .tag_editor
+            .show(
+                ui,
+                self.colors,
+                &self.locale,
+                editor.record,
+                &mut editor.form.tags,
+            )
+            .changed;
+        let tag_problem = editor.tag_editor.problem(&editor.form.tags);
+        let tags_changed = editor.tags_changed || editor.tag_editor.has_pending_tag();
+
         ui.add_space(Metrics::LG);
-        let ready = if existing {
-            valid_length(&editor.form.password) && editor.form.username.len() <= MAX_LOGIN_TEXT
-        } else {
-            editor.form.has_valid_lengths()
-        };
+        let ready = tag_problem.is_none()
+            && if existing {
+                (tags_changed || !editor.form.password.is_empty())
+                    && editor.form.password.len() <= MAX_LOGIN_TEXT
+                    && editor.form.username.len() <= MAX_LOGIN_TEXT
+            } else {
+                editor.form.has_valid_lengths()
+            };
         let (submit, cancel) = ui
             .horizontal_wrapped(|ui| {
                 let submit = ui_kit::button(
@@ -314,6 +351,9 @@ impl App {
                 (submit, cancel)
             })
             .inner;
+        if let Some(key) = tag_problem {
+            ui.colored_label(self.colors.error, self.locale.text(key));
+        }
         if cancel {
             self.editor = None;
             self.status = None;
@@ -324,6 +364,10 @@ impl App {
                         input.consume_key(egui::Modifiers::NONE, egui::Key::Enter)
                     }))
         {
+            if !editor.tag_editor.apply(&mut editor.form.tags) {
+                return;
+            }
+            editor.tags_changed = tags_changed;
             let password = std::mem::take(&mut editor.form.password);
             let action = match &editor.target {
                 Some((target, original_username)) => Action::UpdateLogin {
@@ -331,7 +375,8 @@ impl App {
                     change: Change {
                         username: (editor.form.username.as_str() != original_username.as_str())
                             .then(|| editor.form.username.clone()),
-                        password,
+                        password: (!password.is_empty()).then_some(password),
+                        tags: tags_changed.then(|| editor.form.tags.clone()),
                     },
                 },
                 None => Action::CreateLogin {
@@ -342,6 +387,7 @@ impl App {
                         username: editor.form.username.clone(),
                         password,
                         notes: editor.form.notes.clone(),
+                        tags: editor.form.tags.clone(),
                     },
                 },
             };
@@ -537,6 +583,8 @@ impl App {
                                     target: None,
                                     form: NewLogin::default(),
                                     focus_title: true,
+                                    tag_editor: tags::Editor::default(),
+                                    tags_changed: false,
                                 })
                             }
                             Err(error) => self.status = Some((error_label(error), true)),
@@ -560,20 +608,8 @@ impl App {
                         ui.label(&login.username);
                         if ui.button(self.locale.text("vault-edit")).clicked() {
                             self.status = None;
-                            self.editor = Some(Editor {
-                                record: login.target.head.record,
-                                target: Some((
-                                    login.target.clone(),
-                                    Zeroizing::new(login.username.clone()),
-                                )),
-                                form: NewLogin {
-                                    title: login.title.clone(),
-                                    username: login.username.clone(),
-                                    url: String::new(),
-                                    password: String::new(),
-                                    notes: String::new(),
-                                },
-                                focus_title: false,
+                            selected = Some(Action::LoginTags {
+                                target: login.target.clone(),
                             });
                         }
                     });
@@ -644,10 +680,6 @@ impl eframe::App for App {
             });
         });
     }
-}
-
-fn valid_length(value: &str) -> bool {
-    !value.is_empty() && value.len() <= MAX_LOGIN_TEXT
 }
 
 fn field(ui: &mut egui::Ui, label: String, value: &mut String, secret: bool) -> egui::Response {
