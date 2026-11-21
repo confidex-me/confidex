@@ -17,9 +17,12 @@ assert(options.every(option => ['--vault-only', '--interactive-permission'].incl
 const interactive = options.includes('--interactive-permission');
 const directory = await mkdtemp(join(tmpdir(), 'confidex-extension-'));
 let chrome, daemon, server;
+let networkBlocked = false;
 const password = 'public-extension-master-fixture';
 const loginPassword = 'public-extension-login-fixture';
-const sessionProtocol = 2;
+const sessionProtocol = 3;
+const offlinePassword = 'public-extension-offline-fixture';
+const updatedPassword = 'public-extension-updated-fixture';
 
 try {
   const certFile = join(directory, 'cert.pem');
@@ -58,6 +61,10 @@ path = ${JSON.stringify(blobPath)}
   const assets = await releaseAssets(webPath);
   server = createServer({cert, key}, (req, res) => {
     if (req.url.startsWith('/v1/')) {
+      if (networkBlocked) {
+        req.socket.destroy();
+        return;
+      }
       const proxy = httpRequest({hostname: '127.0.0.1', port, path: req.url,
         method: req.method, headers: req.headers}, incoming => {
         res.writeHead(incoming.statusCode, incoming.headers);
@@ -103,62 +110,43 @@ path = ${JSON.stringify(blobPath)}
   manifest.host_permissions = ['https://127.0.0.1/*'];
   await writeFile(manifestPath, JSON.stringify(manifest));
 
-  chrome = spawn(chromePath, [
-    ...(interactive ? [] : ['--headless=new']),
-    '--remote-debugging-pipe', '--enable-unsafe-extension-debugging',
-    '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
-    '--disable-component-update', '--disable-sync', '--enable-unsafe-swiftshader',
-    `--ignore-certificate-errors-spki-list=${fingerprint}`,
-    `--user-data-dir=${join(directory, 'profile')}`,
-  ], {stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe']});
-  const command = devTools(chrome);
+  const launch = () => {
+    chrome = spawn(chromePath, [
+      ...(interactive ? [] : ['--headless=new']),
+      '--remote-debugging-pipe', '--enable-unsafe-extension-debugging',
+      '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
+      '--disable-component-update', '--disable-sync', '--enable-unsafe-swiftshader',
+      `--ignore-certificate-errors-spki-list=${fingerprint}`,
+      `--user-data-dir=${join(directory, 'profile')}`,
+    ], {stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe']});
+    return devTools(chrome);
+  };
+  const command = launch();
   const browser = await command('Browser.getVersion');
   await command('Target.setDiscoverTargets', {discover: true});
   const {id} = await command('Extensions.loadUnpacked', {path: resolve(extensionPath)});
-  const {id: cspId} = await command('Extensions.loadUnpacked', {path: cspExtension});
   const tabTargets = () => command('Target.getTargets', {filter: [{type: 'tab'}]}).then(response => response.targetInfos);
   const previousTargets = new Set((await tabTargets()).map(target => target.targetId));
   const seed = await newTab(command, origin + '/seed');
-  const credentials = await seed.evaluate(`(async () => {
-    const worker = new Worker('/worker.js', {type: 'module'});
-    await new Promise((resolve, reject) => {
-      worker.onmessage = ({data}) => { if (data === 'ready') resolve(); };
-      worker.onerror = reject;
-    });
-    const call = command => new Promise((resolve, reject) => {
-      worker.onerror = reject;
-      worker.onmessage = ({data}) => {
-        try {
-          const result = JSON.parse(new TextDecoder().decode(data)).result;
-          if ('Err' in result) reject(new Error('Web fixture command failed'));
-          else resolve(result.Ok);
-        } catch (error) { reject(error); }
-        finally { data.fill(0); }
-      };
-      const input = new TextEncoder().encode(JSON.stringify({generation: 1, command}));
-      worker.postMessage(input, [input.buffer]);
-    });
-    const password = ${JSON.stringify(password)};
-    const server = ${JSON.stringify(origin + '/')};
-    const {Created} = await call({Create: {name: 'Synthetic web vault', password, remember: false}});
-    const fields = [
-      ['username/v1', 'username', 'chromium-fixture@example.test'],
-      ['password/v1', 'password', ${JSON.stringify(loginPassword)}],
-      ['url/v1', 'url', 'https://example.test'],
-    ].map(([type_name, key, value]) => ({source: null, name: '', type_name, values: {[key]: value}, opaque: 0, protected: false}));
-    await call({Save: {epoch: 1, draft: {
-      record: Array(16).fill(1), revision: null, title: 'Synthetic login', fields, tags: [],
-    }}});
-    await call({SyncConfig: {server}});
-    for (let step = 0; step < 16; step++) {
-      const {Synced} = await call({Sync: {server}});
-      if (!Synced.more && !Synced.conflicts.length) {
-        worker.terminate();
-        return {password, key: Created.key};
-      }
-    }
-    throw new Error('Web fixture did not sync');
-  })()`);
+  await startWebWorker(seed);
+  const initialWeb = value => webCommand(seed, value);
+  const {Created} = (await initialWeb({Create: {
+    name: 'Synthetic web vault', password, remember: false,
+  }})).Ok;
+  const credentials = {password, key: Created.key};
+  const webRecord = Array(16).fill(1);
+  const fields = [
+    ['username/v1', 'username', 'chromium-fixture@example.test'],
+    ['password/v1', 'password', loginPassword],
+    ['url/v1', 'url', 'https://example.test'],
+  ].map(([type_name, key, value]) => ({
+    source: null, name: '', type_name, values: {[key]: value}, opaque: 0, protected: false,
+  }));
+  assert((await initialWeb({Save: {epoch: 1, draft: {
+    record: webRecord, revision: null, title: 'Synthetic login', fields, tags: [],
+  }}})).Ok?.Saved, 'Test web login was not saved');
+  assert((await initialWeb({SyncConfig: {server: origin + '/'}})).Ok?.Synced);
+  await syncWeb(initialWeb, origin);
 
   const extensionUrl = `chrome-extension://${id}/session.html`;
   const seedTab = (await tabTargets()).find(target => !previousTargets.has(target.targetId));
@@ -189,8 +177,8 @@ path = ${JSON.stringify(blobPath)}
     try {
       return await action(page, 'Status');
     } catch (error) {
-      // The egui startup may still be waiting for its own initial status request.
-      if (!error.message.includes('Confidex session request already pending')) throw error;
+      // Wait for the egui startup request or for the host to retire a stopped worker.
+      if (!/Confidex session (request already pending|closed)/.test(error.message)) throw error;
       return false;
     }
   }, 'session status');
@@ -200,14 +188,24 @@ path = ${JSON.stringify(blobPath)}
   }}), {Err: 'Auth'});
   assert((await action(session, {Connect: {
     name: 'Synthetic extension vault', server: origin + '/', credentials,
-  }})).Ok?.Opened?.can_sync, 'Test vault did not connect');
-  for (let step = 0; step < 16; step++) {
-    const report = (await action(session, 'Sync')).Ok?.Synced;
-    assert(report && !report.conflicts, 'Test vault sync failed');
-    if (!report.more) break;
-  }
-  const expected = {Ok: {Logins: {rows: [{title: 'Synthetic login', username: 'chromium-fixture@example.test'}], next: null}}};
-  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  }})).Ok?.Opened, 'Test vault did not connect');
+  const list = page => action(page, {Logins: {after: null}}).then(reply => {
+    assert(reply.Ok?.Logins, 'Expected login previews');
+    return reply.Ok.Logins.page;
+  });
+  const current = page => until(async () => (await status(page)).Ok?.Opened?.sync === 'Current',
+    'automatic synchronization');
+  await current(session);
+  const expectWebLogin = async page => {
+    const {rows, next, issues} = await list(page);
+    assert.equal(rows.length, 1);
+    assert.deepEqual(rows[0].target.head.record, webRecord);
+    assert.equal(rows[0].title, 'Synthetic login');
+    assert.equal(rows[0].username, 'chromium-fixture@example.test');
+    assert.equal(next, null);
+    assert.deepEqual(issues, {ambiguous: false, conflicts: false});
+  };
+  await expectWebLogin(session);
 
   const hostPermission = "{origins: ['https://*/*']}";
   const permission = () => session.evaluate(`chrome.permissions.contains(${hostPermission})`);
@@ -237,7 +235,7 @@ path = ${JSON.stringify(blobPath)}
   const ordinaryUrl = origin + '/ordinary';
   const strictUrl = origin + '/strict';
   const ordinaryTab = await newTab(command, ordinaryUrl);
-  const strictTab = await newTab(command, strictUrl);
+  await newTab(command, strictUrl);
   assert.equal(await ordinaryTab.evaluate('globalThis.chrome?.runtime?.id === undefined'), true);
   // A trusted extension page drives test injections even when the session is closed.
   const siteDriver = await newTab(command, `chrome-extension://${id}/session-messages.json`);
@@ -262,14 +260,17 @@ path = ${JSON.stringify(blobPath)}
     {...report, hasPassword: 'true'},
     {...report, origin: 'https://forged.test', frameId: 0, tabId: 123, documentId: 'abc'},
     {...report, extra: 'x'.repeat(4096)},
-    {version: 2, action: 'Lock'},
-    {version: 2, action: {Logins: {after: null}}},
+    {version: sessionProtocol, action: 'Lock'},
+    {version: sessionProtocol, action: {Logins: {after: null}}},
+    {version: sessionProtocol, action: {CreateLogin: {record: Array(16).fill(99), login: {
+      title: 'Site request', url: ordinaryUrl, username: 'fixture', password: loginPassword,
+    }}}},
     {version: 1, kind: 'ConfidexRoutedForm', context: {}, report},
   ]) {
     const [response] = await fromSite(ordinaryUrl, malformed);
     assert([false, null].includes(response.result), 'An invalid content request was accepted');
   }
-  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  await expectWebLogin(session);
   assert.equal(await session.evaluate(`chrome.runtime.sendMessage(${JSON.stringify(report)})`), false);
 
   const backgroundUrl = `chrome-extension://${id}/background.js`;
@@ -283,7 +284,7 @@ path = ${JSON.stringify(blobPath)}
   assert.equal(await reportFrom(ordinaryUrl), true, 'Restarted background did not route to the live worker');
   const [restarted] = await targetsAt('service_worker', backgroundUrl);
   assert.notEqual(restarted?.targetId, background.targetId);
-  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  await expectWebLogin(session);
 
   const {frameTree: {frame}} = await ordinaryTab.call('Page.getFrameTree');
   let siteWorld;
@@ -302,7 +303,7 @@ path = ${JSON.stringify(blobPath)}
   await click(session, '#site-permissions-toggle');
   await until(async () => !await permission() && !await registered(), 'site permission and registration removed');
   assert.equal(await reportFromExistingDocument(), false, 'Revoked access still allowed reports from an open document');
-  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  await expectWebLogin(session);
   await click(session, '#site-permissions-toggle');
   await until(permission, 'site permission restored');
   await until(registered, 'content channel re-registered');
@@ -330,30 +331,7 @@ path = ${JSON.stringify(blobPath)}
     }
   })()`);
   assert.equal(rivalWorkerRejected, true, 'A second worker started a vault session');
-  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
-  const plaintextFound = await session.evaluate(`(async () => {
-    const forbidden = ${JSON.stringify([password, credentials.key, loginPassword, 'chromium-fixture@example.test'])};
-    const database = await new Promise((resolve, reject) => {
-      const open = indexedDB.open('confidex');
-      open.onsuccess = () => resolve(open.result);
-      open.onerror = reject;
-    });
-    try {
-      if (forbidden.some(secret => JSON.stringify(localStorage).includes(secret))) return true;
-      for (const name of database.objectStoreNames) {
-        const rows = await new Promise((resolve, reject) => {
-          const query = database.transaction(name).objectStore(name).getAll();
-          query.onsuccess = () => resolve(query.result);
-          query.onerror = reject;
-        });
-        const text = JSON.stringify(rows, (_, value) => ArrayBuffer.isView(value)
-          ? new TextDecoder().decode(value) : value);
-        if (forbidden.some(secret => text.includes(secret))) return true;
-      }
-      return false;
-    } finally { database.close(); }
-  })()`);
-  assert.equal(plaintextFound, false, 'Plaintext appeared in extension storage');
+  await expectWebLogin(session);
 
   const workers = new Map();
   const workerUrl = `chrome-extension://${id}/session-worker.js`;
@@ -378,7 +356,7 @@ path = ${JSON.stringify(blobPath)}
   await click(session, '#session');
   await shiftWorkerClock(expiring, idleMs + 5_000);
   assert.equal(await reportFrom(ordinaryUrl), true, 'A trusted interaction failed to renew the lease');
-  assert.deepEqual(await action(session, {Logins: {after: null}}), expected);
+  await expectWebLogin(session);
   await session.evaluate("window.dispatchEvent(new KeyboardEvent('keydown', {key: 'x'}))");
   await shiftWorkerClock(expiring, 2 * idleMs);
   assert.equal(await reportFrom(ordinaryUrl), false, 'Background or synthetic input renewed the session');
@@ -455,32 +433,130 @@ path = ${JSON.stringify(blobPath)}
   await waitForUi(reopened);
   assert.equal((await status(reopened)).Ok?.Locked?.name, 'Synthetic extension vault');
   assert.deepEqual(await action(reopened, {Logins: {after: null}}), {Err: 'Locked'});
-  await new Promise(resolve => {
-    server.close(resolve);
-    server.closeAllConnections();
-  });
+  networkBlocked = true;
   assert((await action(reopened, {Unlock: credentials})).Ok?.Opened, 'Offline unlock failed');
-  assert.deepEqual(await action(reopened, {Logins: {after: null}}), expected);
-  console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, offlineUnlock: true,
+  await expectWebLogin(reopened);
+  await until(async () => (await status(reopened)).Ok?.Opened?.sync === 'Offline', 'offline status');
+  const record = Array(16).fill(2);
+  const create = {CreateLogin: {record, login: {
+    title: 'Offline login', url: 'https://example.test/account?private=1#login',
+    username: 'offline-fixture@example.test', password: offlinePassword,
+  }}};
+  const saved = (await action(reopened, create)).Ok?.Saved;
+  assert(saved, 'Offline write did not finish');
+  assert.deepEqual(await action(reopened, create), {Err: {Storage: 'Conflict'}});
+  const offlineRows = (await list(reopened)).rows;
+  const offline = offlineRows.find(row => row.title === 'Offline login');
+  assert.deepEqual(offline?.target.head, saved);
+  const change = {username: null, password: updatedPassword};
+  const updated = (await action(reopened, {UpdateLogin: {target: offline.target, change}})).Ok?.Saved;
+  assert(updated, 'Offline update did not finish');
+  assert.deepEqual(await action(reopened, {UpdateLogin: {target: offline.target, change}}), {Err: {Storage: 'Conflict'}});
+  await checkStorage(reopened, [password, credentials.key, loginPassword, offlinePassword,
+    updatedPassword, 'chromium-fixture@example.test', 'offline-fixture@example.test']);
+
+  // Shut down Chromium while the server is still unreachable. Reuse only the
+  // temporary profile, just as a user would after a browser restart.
+  const exited = once(chrome, 'exit');
+  await Promise.race([command('Browser.close'), exited]);
+  await exited;
+  const browserAfterRestart = launch();
+  assert.equal((await browserAfterRestart('Extensions.loadUnpacked', {path: resolve(extensionPath)})).id, id);
+  const recovered = await newTab(browserAfterRestart, extensionUrl);
+  await waitForUi(recovered);
+  assert((await status(recovered)).Ok?.Locked, 'Browser restart restored an unlocked session');
+  assert.deepEqual(await action(recovered, create), {Err: 'Locked'});
+  assert((await action(recovered, {Unlock: credentials})).Ok?.Opened, 'Restarted offline unlock failed');
+  assert.deepEqual((await list(recovered)).rows.find(row => row.title === 'Offline login')?.target.head, updated);
+
+  networkBlocked = false;
+  await current(recovered);
+  const main = await newTab(browserAfterRestart, origin + '/seed');
+  await startWebWorker(main);
+  const web = value => webCommand(main, value);
+  const {Catalog} = (await web('Catalog')).Ok;
+  assert((await web({Unlock: {vault: Catalog[0].id, ...credentials, remember: false}})).Ok?.Opened);
+  await syncWeb(web, origin);
+  const read = () => web({Open: {record}});
+  const {Draft: draft} = (await read()).Ok;
+  assert.equal(draft.title, 'Offline login');
+  assert.deepEqual(draft.fields.map(field => field.type_name), ['username/v1', 'password/v1', 'url/v1', 'note/v1']);
+  assert(draft.fields[1].values.password === updatedPassword, 'Web cache did not receive the offline update');
+  assert.equal(draft.fields[2].values.url, 'https://example.test');
+  assert.deepEqual(draft.revision, updated.revision);
+
+  draft.fields[0].values.username = 'edited-in-web@example.test';
+  draft.fields[3].values.text = 'Note edited in the main app';
+  const fromWeb = (await web({Save: {draft, epoch: Date.now()}})).Ok?.Saved;
+  assert(fromWeb, 'Web update did not finish');
+  await syncWeb(web, origin);
+  await syncExtension(recovered, action);
+  assert.deepEqual(await action(recovered, {UpdateLogin: {target: {head: updated, field: 1}, change}}), {Err: {Storage: 'Conflict'}});
+  const common = (await list(recovered)).rows.find(row => row.title === 'Offline login');
+  assert.equal(common.username, 'edited-in-web@example.test');
+  assert.deepEqual(common.target.head, fromWeb);
+
+  networkBlocked = true;
+  const localBranch = (await action(recovered, {UpdateLogin: {target: common.target, change: {
+    username: 'local-branch@example.test', password: updatedPassword,
+  }}})).Ok?.Saved;
+  assert(localBranch, 'Extension conflict fixture was not saved');
+  const branchDraft = (await read()).Ok.Draft;
+  branchDraft.fields[0].values.username = 'remote-branch@example.test';
+  const remoteBranch = (await web({Save: {draft: branchDraft, epoch: Date.now()}})).Ok?.Saved;
+  assert(remoteBranch, 'Web conflict fixture was not saved');
+  networkBlocked = false;
+  await syncWeb(web, origin);
+  await syncExtension(recovered, action);
+  const conflicted = await list(recovered);
+  assert(conflicted.issues.conflicts, 'Conflict was not reported');
+  assert(!conflicted.rows.some(row => row.title === 'Offline login'), 'Conflicted login remained selectable');
+  assert.deepEqual(await action(recovered, {UpdateLogin: {target: {head: localBranch, field: 1}, change}}), {Err: {Storage: 'Conflict'}});
+  const conflict = (await syncWeb(web, origin)).conflicts.find(entry => entry.record.every((byte, i) => byte === record[i]));
+  assert(conflict, 'The main client did not offer conflict resolution');
+  const revisionKey = revision => revision.join(',');
+  assert.deepEqual([conflict.local.revision, conflict.remote.revision].map(revisionKey).sort(),
+    [localBranch.revision, remoteBranch.revision].map(revisionKey).sort());
+  assert((await web({CheckSync: {server: origin + '/'}})).Ok?.Synced?.conflicts.length,
+    'An unchanged checkpoint hid an unresolved conflict');
+  assert.deepEqual(await read(), {Err: {Storage: 'Conflict'}});
+  assert((await web({Resolve: {record, local: conflict.local.revision, remote: conflict.remote.revision,
+    keep_local: revisionKey(conflict.local.revision) === revisionKey(remoteBranch.revision), epoch: Date.now()}})).Ok?.Synced);
+  await syncWeb(web, origin);
+  await syncExtension(recovered, action);
+  const resolved = await list(recovered);
+  assert(!resolved.issues.conflicts, 'Resolved login still showed a conflict');
+  const resolvedLogin = resolved.rows.find(row => row.title === 'Offline login');
+  assert.equal(resolvedLogin?.username, 'remote-branch@example.test');
+
+  const onlineWrite = (await action(recovered, {UpdateLogin: {target: resolvedLogin.target, change: {
+    username: 'synchronized-after-save@example.test', password: updatedPassword,
+  }}})).Ok?.Saved;
+  assert(onlineWrite, 'Online write did not finish');
+  await current(recovered);
+  await syncWeb(web, origin);
+  const finalDraft = (await read()).Ok.Draft;
+  assert.deepEqual(finalDraft.revision, onlineWrite.revision);
+  assert.equal(finalDraft.fields[3].values.text, 'Note edited in the main app');
+
+  console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
+    offlineUnlock: true, offlineWritesSurviveBrowserRestart: true, automaticSync: true,
+    duplicateCreateRejected: true, staleUpdateRejected: true, conflictPreservedAndResolved: true,
     duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
     optionalSitePermission: true, senderValidation: true, strictCspRouting: true,
     backgroundRestart: true, idleExpiry: true, workerLoss: true,
     slowUnlock: true, workerLossDuringUnlock: true, openDocumentAfterRevocation: true}));
 
   if (!options.includes('--vault-only')) {
-    for (const page of [ordinaryTab, strictTab]) {
-      await command('Target.closeTarget', {targetId: page.targetId});
-    }
-    server.listen(Number(new URL(origin).port), '127.0.0.1');
-    await once(server, 'listening');
-    const cspPage = await newTab(command, `chrome-extension://${cspId}/session.html`);
+    const {id: probeId} = await browserAfterRestart('Extensions.loadUnpacked', {path: cspExtension});
+    const cspPage = await newTab(browserAfterRestart, `chrome-extension://${probeId}/session.html`);
     await cspPage.evaluate(`chrome.scripting.registerContentScripts([{
       id: 'content-smoke', matches: ['https://127.0.0.1/*'], world: 'ISOLATED',
       js: ['content-bootstrap.js'], runAt: 'document_start',
     }])`);
     const inspect = async path => {
       const url = origin + path;
-      const site = await newTab(command, url);
+      const site = await newTab(browserAfterRestart, url);
       assert.equal(await site.evaluate("typeof globalThis.confidexContent"), 'undefined');
       return cspPage.evaluate(`(async () => {
         const [tab] = await chrome.tabs.query({url: ${JSON.stringify(url)}});
@@ -512,6 +588,76 @@ path = ${JSON.stringify(blobPath)}
     await once(child, 'exit');
   }));
   await rm(directory, {recursive: true, force: true});
+}
+
+async function startWebWorker(page) {
+  return page.evaluate(`(async () => {
+    const worker = new Worker('/worker.js', {type: 'module'});
+    await new Promise((resolve, reject) => {
+      worker.onmessage = ({data}) => { if (data === 'ready') resolve(); };
+      worker.onerror = reject;
+    });
+    globalThis.fixtureCall = command => new Promise((resolve, reject) => {
+      worker.onerror = reject;
+      worker.onmessage = ({data}) => {
+        try { resolve(JSON.parse(new TextDecoder().decode(data)).result); }
+        catch (error) { reject(error); }
+        finally { data.fill(0); }
+      };
+      const input = new TextEncoder().encode(JSON.stringify({generation: 1, command}));
+      worker.postMessage(input, [input.buffer]);
+    });
+  })()`);
+}
+
+function webCommand(page, command) {
+  return page.evaluate(`fixtureCall(${JSON.stringify(command)})`);
+}
+
+async function syncWeb(web, origin) {
+  for (let step = 0; step < 16; step++) {
+    const report = (await web({Sync: {server: origin + '/'}})).Ok?.Synced;
+    assert(report, 'Web synchronization failed');
+    if (!report.more) return report;
+  }
+  throw new Error('Web synchronization did not finish');
+}
+
+async function syncExtension(page, action) {
+  for (let step = 0; step < 16; step++) {
+    const report = (await action(page, 'Sync')).Ok?.Synced;
+    assert(report?.sync === 'Current' || report?.sync === 'Pending', 'Extension synchronization failed');
+    if (!report.more) return;
+  }
+  throw new Error('Extension synchronization did not finish');
+}
+
+async function checkStorage(page, forbidden) {
+  const plaintextFound = await page.evaluate(`(async () => {
+    const forbidden = ${JSON.stringify(forbidden)};
+    const database = await new Promise((resolve, reject) => {
+      const open = indexedDB.open('confidex');
+      open.onsuccess = () => resolve(open.result);
+      open.onerror = reject;
+    });
+    try {
+      const settings = [JSON.stringify(localStorage)];
+      if (chrome.storage?.local) settings.push(JSON.stringify(await chrome.storage.local.get()));
+      if (forbidden.some(secret => settings.some(value => value.includes(secret)))) return true;
+      for (const name of database.objectStoreNames) {
+        const rows = await new Promise((resolve, reject) => {
+          const query = database.transaction(name).objectStore(name).getAll();
+          query.onsuccess = () => resolve(query.result);
+          query.onerror = reject;
+        });
+        const text = JSON.stringify(rows, (_, value) => ArrayBuffer.isView(value)
+          ? new TextDecoder().decode(value) : value);
+        if (forbidden.some(secret => text.includes(secret))) return true;
+      }
+      return false;
+    } finally { database.close(); }
+  })()`);
+  assert.equal(plaintextFound, false, 'Plaintext appeared in extension storage');
 }
 
 function devTools(child) {

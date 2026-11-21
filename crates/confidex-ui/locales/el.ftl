@@ -620,6 +620,12 @@ settings-auto-lock-hint = Αυτή η ρύθμιση ισχύει μόνο γι�
 settings-device-unlock-error = Δεν ήταν δυνατή η αλλαγή του ξεκλειδώματος με τη συσκευή. Δοκιμάστε ξανά.
 
 extension-session-hint = Κρατήστε ανοιχτή αυτή την καρτέλα συνεδρίας όσο χρησιμοποιείτε το Confidex στο πρόγραμμα περιήγησης.
+extension-new-login = Νέα σύνδεση
+extension-saved-local = Αποθηκεύτηκε σε αυτήν τη συσκευή.
+extension-sync-pending = Εκκρεμεί συγχρονισμός.
+extension-login-conflicts = Επιλύστε τις διενέξεις εγγραφών στην κύρια εφαρμογή Confidex.
+extension-login-ambiguous = Διορθώστε τα ασαφή πεδία σύνδεσης στην κύρια εφαρμογή Confidex.
+extension-login-changed = Η εγγραφή άλλαξε. Επιλέξτε την ξανά για να επεξεργαστείτε την τρέχουσα έκδοση.
 
 extension-startup-error = Δεν ήταν δυνατή η εκκίνηση του Confidex. Επαναφορτώστε την επέκταση και δοκιμάστε ξανά.
 

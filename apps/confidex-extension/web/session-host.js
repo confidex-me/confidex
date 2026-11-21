@@ -4,9 +4,11 @@ let startupTimer;
 let workingTimer;
 let vaultLock;
 let checking = false;
+let syncing = false;
 let routing = false;
 let revision = 0;
-let commandSequence = 0;
+let syncRevision = 0;
+let workSequence = 0;
 let notify;
 
 function stop(output) {
@@ -17,6 +19,7 @@ function stop(output) {
   clearInterval(workingTimer);
   workingTimer = undefined;
   vaultLock = undefined;
+  syncing = false;
   revision++;
   const request = pending;
   pending = undefined;
@@ -35,6 +38,15 @@ function start() {
       clearTimeout(startupTimer);
       vaultLock = data.ready;
       workingTimer = setInterval(checkWorker, 5000);
+      return;
+    }
+    if (typeof data?.syncing === 'boolean') {
+      syncing = data.syncing;
+      if (syncing) workSequence++;
+      if (data.changed === true) {
+        syncRevision++;
+        notify?.();
+      }
       return;
     }
     if (!(data instanceof Uint8Array) || !pending) {
@@ -70,15 +82,15 @@ async function checkWorker() {
   const current = worker;
   if (!current || !vaultLock || checking) return;
   const request = pending;
-  const sequence = commandSequence;
+  const sequence = workSequence;
   checking = true;
   try {
-    if (request) {
+    if (request || syncing) {
       // The browser can observe the ownership lock while WASM blocks the
       // worker's event loop. A held lock does not require a worker reply.
       const state = await navigator.locks.query().catch(() => undefined);
       if (!state || state.held.some(lock => lock.name === vaultLock)
-          || current !== worker || pending !== request) return;
+          || current !== worker || workSequence !== sequence || pending !== request) return;
     }
     // An orderly exit may already have queued its terminal reply. Give the
     // host time to receive it before rejecting a command whose owner is gone.
@@ -94,9 +106,9 @@ async function checkWorker() {
 }
 
 function stopIfIdle(current, sequence) {
-  // A command can begin while a probe is in flight and block the event loop
-  // during key derivation. A failed probe can retire only an idle worker.
-  if (current === worker && !pending && sequence === commandSequence) stop();
+  // A command or automatic sync can begin while a probe is in flight.
+  // Retire only if the work seen when the probe started is still current.
+  if (current === worker && !pending && sequence === workSequence) stop();
 }
 
 function userActivity(event) {
@@ -117,8 +129,8 @@ function receiveForm(message, sender, reply) {
     return;
   }
   routing = true;
-  const sequence = commandSequence;
-  const idle = !pending;
+  const sequence = workSequence;
+  const idle = !pending && !syncing;
   const form = {context: JSON.stringify(message.context), report: JSON.stringify(message.report)};
   probe(current, form).then(reply, () => {
     if (idle) stopIfIdle(current, sequence);
@@ -154,6 +166,10 @@ export function sessionRevision() {
   return revision;
 }
 
+export function syncStatusRevision() {
+  return syncRevision;
+}
+
 export function exchange(input) {
   return new Promise((resolve, reject) => {
     if (pending) {
@@ -163,7 +179,7 @@ export function exchange(input) {
     }
     try {
       if (!worker) start();
-      commandSequence++;
+      workSequence++;
       pending = {resolve, reject};
       worker.postMessage(input, [input.buffer]);
     } catch (error) {

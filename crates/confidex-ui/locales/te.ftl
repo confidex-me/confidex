@@ -620,6 +620,12 @@ settings-auto-lock-hint = ఈ సెట్టింగ్ ఈ పరికరం
 settings-device-unlock-error = పరికరంతో అన్‌లాక్ చేసే సెట్టింగ్‌ను మార్చలేకపోయాం. మళ్లీ ప్రయత్నించండి.
 
 extension-session-hint = బ్రౌజర్‌లో Confidex వాడుతున్నప్పుడు ఈ సెషన్ ట్యాబ్‌ను తెరిచి ఉంచండి.
+extension-new-login = కొత్త లాగిన్
+extension-saved-local = ఈ పరికరంలో సేవ్ చేయబడింది.
+extension-sync-pending = సమకాలీకరణ పెండింగ్‌లో ఉంది.
+extension-login-conflicts = ప్రధాన Confidex యాప్‌లో రికార్డు వైరుధ్యాలను పరిష్కరించండి.
+extension-login-ambiguous = ప్రధాన Confidex యాప్‌లో అస్పష్టమైన లాగిన్ ఫీల్డ్‌లను సరిచేయండి.
+extension-login-changed = రికార్డు మారింది. తాజా సంస్కరణను సవరించడానికి మళ్లీ ఎంచుకోండి.
 
 extension-startup-error = Confidex ప్రారంభం కాలేదు. పొడిగింపును మళ్లీ లోడ్ చేసి ప్రయత్నించండి.
 

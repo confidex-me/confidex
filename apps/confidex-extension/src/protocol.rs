@@ -1,9 +1,12 @@
-use confidex_app::Error;
-use confidex_storage::Head;
+use confidex_app::{
+    Error,
+    browser_logins::{Change, Cursor, NewLogin, Page, Selection},
+};
+use confidex_storage::{Head, RecordId};
 use serde::{Deserialize, Serialize};
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::ZeroizeOnDrop;
 
-pub const VERSION: u8 = 2;
+pub const VERSION: u8 = 3;
 #[cfg(any(test, feature = "session"))]
 pub const MAX_REQUEST: usize = 32 * 1024;
 pub const MAX_RESPONSE: usize = 1024 * 1024;
@@ -35,16 +38,16 @@ pub enum Action {
     Lock,
     Sync,
     Logins {
-        after: Option<LoginCursor>,
+        after: Option<Cursor>,
     },
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct LoginCursor {
-    pub head: Head,
-    // Zero advances past the head. A positive offset resumes within its revision.
-    pub offset: usize,
+    CreateLogin {
+        record: RecordId,
+        login: NewLogin,
+    },
+    UpdateLogin {
+        target: Selection,
+        change: Change,
+    },
 }
 
 #[cfg(any(test, feature = "session"))]
@@ -64,33 +67,20 @@ impl Request {
 #[derive(Deserialize, Serialize)]
 pub enum Reply {
     Disconnected,
-    Locked {
-        name: String,
-    },
-    Opened {
-        name: String,
-        can_sync: bool,
-    },
-    Synced {
-        conflicts: bool,
-        more: bool,
-    },
-    Logins {
-        rows: Vec<Login>,
-        next: Option<LoginCursor>,
-    },
+    Locked { name: String },
+    Opened { name: String, sync: SyncStatus },
+    Synced { sync: SyncStatus, more: bool },
+    Logins { page: Page, sync: SyncStatus },
+    Saved(Head),
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct Login {
-    pub title: String,
-    pub username: String,
-}
-impl Drop for Login {
-    fn drop(&mut self) {
-        self.title.zeroize();
-        self.username.zeroize();
-    }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub enum SyncStatus {
+    Disabled,
+    Pending,
+    Current,
+    Offline,
+    Failed(Error),
 }
 
 pub type Response = Result<Reply, Error>;
@@ -159,16 +149,16 @@ mod tests {
     #[test]
     fn worker_rejects_unknown_and_oversized_messages() {
         assert!(matches!(
-            Request::decode(br#"{"version":2,"action":"Status"}"#)
+            Request::decode(br#"{"version":3,"action":"Status"}"#)
                 .unwrap()
                 .action,
             Action::Status
         ));
         for bytes in [
             &br#"{"version":1,"action":"Status"}"#[..],
-            br#"{"version":2,"action":"Open"}"#,
-            br#"{"version":2,"action":"Status","origin":"https://example.test"}"#,
-            br#"{"version":2,"action":{"Unlock":{"password":"p","key":"k","remember":true}}}"#,
+            br#"{"version":3,"action":"Open"}"#,
+            br#"{"version":3,"action":"Status","origin":"https://example.test"}"#,
+            br#"{"version":3,"action":{"Unlock":{"password":"p","key":"k","remember":true}}}"#,
             &[b' '; MAX_REQUEST + 1],
         ] {
             assert!(matches!(Request::decode(bytes), Err(Error::Input)));
@@ -203,20 +193,36 @@ mod tests {
     }
 
     #[test]
-    fn login_reply_contains_only_preview_metadata() {
-        let result: Response = Ok(Reply::Logins {
-            rows: vec![Login {
-                title: "Test".into(),
-                username: "public fixture".into(),
-            }],
-            next: None,
+    fn login_reply_serializes_only_selection_metadata() {
+        use confidex_app::browser_logins::{Issues, Login};
+
+        let reply: Response = Ok(Reply::Logins {
+            page: Page {
+                rows: vec![Login {
+                    target: Selection {
+                        head: Head {
+                            record: [1; 16],
+                            revision: [2; 32],
+                        },
+                        field: 1,
+                    },
+                    title: "Test".into(),
+                    username: "fixture".into(),
+                }],
+                next: None,
+                issues: Issues::default(),
+            },
+            sync: SyncStatus::Current,
         });
-        let bytes = serde_json::to_vec(&result).unwrap();
+        let bytes = serde_json::to_vec(&reply).unwrap();
         assert!(bytes.len() < MAX_RESPONSE);
         let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        let row = value["Ok"]["Logins"]["page"]["rows"][0]
+            .as_object()
+            .unwrap();
         assert_eq!(
-            value["Ok"]["Logins"]["rows"][0].as_object().unwrap().len(),
-            2
+            row.keys().map(String::as_str).collect::<Vec<_>>(),
+            ["target", "title", "username"]
         );
     }
 }

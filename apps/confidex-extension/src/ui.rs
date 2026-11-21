@@ -1,7 +1,12 @@
 use crate::protocol::{
-    Action, Credentials, Login, LoginCursor, MAX_RESPONSE, Reply, Request, Response, VERSION,
+    Action, Credentials, MAX_RESPONSE, Reply, Request, Response, SyncStatus, VERSION,
 };
-use confidex_app::Error;
+use confidex_app::{
+    Error,
+    browser_logins::{Change, Cursor, Issues, Login, MAX_LOGIN_TEXT, NewLogin, Selection},
+    new_record,
+};
+use confidex_storage::RecordId;
 use confidex_ui::{
     browser_input,
     i18n::Localizer,
@@ -30,6 +35,9 @@ extern "C" {
 
     #[wasm_bindgen(js_name = sessionRevision)]
     fn session_revision() -> u32;
+
+    #[wasm_bindgen(js_name = syncStatusRevision)]
+    fn sync_status_revision() -> u32;
 }
 
 #[wasm_bindgen]
@@ -98,6 +106,10 @@ impl WebHandle {
                         page: Page::Starting,
                         revision: session_revision(),
                         pending: None,
+                        sync_revision: sync_status_revision(),
+                        sync: SyncStatus::Disabled,
+                        issues: Issues::default(),
+                        editor: None,
                         rows: Vec::new(),
                         next: None,
                         status: None,
@@ -120,10 +132,16 @@ enum Page {
     Starting,
     Disconnected,
     Locked(String),
-    Opened { name: String, can_sync: bool },
+    Opened(String),
 }
 
-type Pending = Rc<RefCell<Option<(Response, bool)>>>;
+type Pending = Rc<RefCell<Option<Response>>>;
+
+struct Editor {
+    record: RecordId,
+    target: Option<(Selection, Zeroizing<String>)>,
+    form: NewLogin,
+}
 
 struct App {
     locale: Localizer,
@@ -135,32 +153,44 @@ struct App {
     revision: u32,
     pending: Option<Pending>,
     rows: Vec<Login>,
-    next: Option<LoginCursor>,
+    next: Option<Cursor>,
+    sync_revision: u32,
+    sync: SyncStatus,
+    issues: Issues,
+    editor: Option<Editor>,
     status: Option<(&'static str, bool)>,
 }
 
 impl App {
     fn request(&mut self, ctx: &egui::Context, action: Action) {
+        if matches!(action, Action::Logins { after: None }) {
+            self.issues = Issues::default();
+        }
         let pending = Pending::default();
         self.pending = Some(pending.clone());
         let ctx = ctx.clone();
         wasm_bindgen_futures::spawn_local(async move {
-            let sync = matches!(action, Action::Sync);
-            *pending.borrow_mut() = Some((send(action).await, sync));
+            *pending.borrow_mut() = Some(send(action).await);
             ctx.request_repaint();
         });
     }
 
-    fn receive(&mut self, ctx: &egui::Context, response: Response, sync: bool) {
+    fn receive(&mut self, ctx: &egui::Context, response: Response) {
         match response {
             Err(error) => {
                 self.status = Some((error_label(error), true));
-                if error == Error::Locked {
-                    self.page = Page::Starting;
-                    self.rows.clear();
-                    self.next = None;
-                } else if sync {
-                    self.request(ctx, Action::Logins { after: None });
+                match error {
+                    Error::Locked => {
+                        self.page = Page::Starting;
+                        self.rows.clear();
+                        self.next = None;
+                        self.editor = None;
+                    }
+                    Error::Storage(confidex_storage::Error::Conflict) => {
+                        self.editor = None;
+                        self.request(ctx, Action::Logins { after: None });
+                    }
+                    _ => {}
                 }
             }
             Ok(Reply::Disconnected) => {
@@ -172,29 +202,142 @@ impl App {
                 self.page = Page::Locked(name);
                 self.rows.clear();
                 self.next = None;
+                self.editor = None;
             }
-            Ok(Reply::Opened { name, can_sync }) => {
-                self.page = Page::Opened { name, can_sync };
-                if can_sync {
-                    self.request(ctx, Action::Sync);
-                } else {
-                    self.request(ctx, Action::Logins { after: None });
-                }
+            Ok(Reply::Opened { name, sync }) => {
+                self.page = Page::Opened(name);
+                self.sync = sync;
+                self.request(ctx, Action::Logins { after: None });
             }
-            Ok(Reply::Synced { conflicts, more }) => {
-                if more && !conflicts {
-                    self.request(ctx, Action::Sync);
-                } else {
-                    if conflicts {
-                        self.status = Some(("sync-conflicts", true));
-                    }
-                    self.request(ctx, Action::Logins { after: None });
-                }
+            Ok(Reply::Synced { sync, .. }) => {
+                self.sync = sync;
+                self.request(ctx, Action::Logins { after: None });
             }
-            Ok(Reply::Logins { rows, next }) => {
-                self.rows = rows;
-                self.next = next;
+            Ok(Reply::Logins { page, sync }) => {
+                self.sync = sync;
+                self.rows = page.rows;
+                self.next = page.next;
+                self.issues.ambiguous |= page.issues.ambiguous;
+                self.issues.conflicts |= page.issues.conflicts;
             }
+            Ok(Reply::Saved(_)) => {
+                self.editor = None;
+                self.status = Some(("extension-saved-local", false));
+                self.request(ctx, Action::Logins { after: None });
+            }
+        }
+    }
+
+    fn show_editor(&mut self, ui: &mut egui::Ui) {
+        let Some(editor) = &mut self.editor else {
+            return;
+        };
+        let existing = editor.target.is_some();
+        if existing {
+            ui.heading(&editor.form.title);
+        } else {
+            ui.heading(self.locale.text("vault-new-record"));
+            field(
+                ui,
+                self.locale.text("vault-record-title"),
+                &mut editor.form.title,
+                false,
+            );
+            field(
+                ui,
+                self.locale.text("vault-url"),
+                &mut editor.form.url,
+                false,
+            );
+        }
+        field(
+            ui,
+            self.locale.text("vault-username"),
+            &mut editor.form.username,
+            false,
+        );
+        let password = field(
+            ui,
+            self.locale.text("vault-password"),
+            &mut editor.form.password,
+            true,
+        );
+        let ready = valid_length(&editor.form.password)
+            && editor.form.username.len() <= MAX_LOGIN_TEXT
+            && (existing
+                || valid_length(editor.form.title.trim()) && valid_length(editor.form.url.trim()));
+        let (submit, cancel) = ui
+            .horizontal_wrapped(|ui| {
+                let submit = ui_kit::button(
+                    ui,
+                    self.colors,
+                    &self.locale.text("vault-save"),
+                    ButtonRole::Primary,
+                    0.,
+                    ready,
+                )
+                .clicked();
+                let cancel = ui.button(self.locale.text("vault-cancel")).clicked();
+                (submit, cancel)
+            })
+            .inner;
+        if cancel {
+            self.editor = None;
+            self.status = None;
+        } else if ready
+            && (submit
+                || password.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter)))
+        {
+            let password = std::mem::take(&mut editor.form.password);
+            let action = match &editor.target {
+                Some((target, original_username)) => Action::UpdateLogin {
+                    target: target.clone(),
+                    change: Change {
+                        username: (editor.form.username.as_str() != original_username.as_str())
+                            .then(|| editor.form.username.clone()),
+                        password,
+                    },
+                },
+                None => Action::CreateLogin {
+                    record: editor.record,
+                    login: NewLogin {
+                        title: editor.form.title.clone(),
+                        url: editor.form.url.clone(),
+                        username: editor.form.username.clone(),
+                        password,
+                    },
+                },
+            };
+            self.status = None;
+            self.request(ui.ctx(), action);
+        }
+    }
+
+    fn show_sync(&self, ui: &mut egui::Ui) {
+        let (message, error) = match self.sync {
+            SyncStatus::Disabled => ("sync-disabled", false),
+            SyncStatus::Pending => ("extension-sync-pending", false),
+            SyncStatus::Current => ("remove-vault-synced", false),
+            SyncStatus::Offline => ("sync-error-network", true),
+            SyncStatus::Failed(error) => (error_label(error), true),
+        };
+        let color = if error {
+            self.colors.error
+        } else {
+            self.colors.text_muted
+        };
+        ui.colored_label(color, self.locale.text(message));
+        if self.issues.conflicts {
+            ui.colored_label(
+                self.colors.error,
+                self.locale.text("extension-login-conflicts"),
+            );
+        }
+        if self.issues.ambiguous {
+            ui.colored_label(
+                self.colors.error,
+                self.locale.text("extension-login-ambiguous"),
+            );
         }
     }
 
@@ -258,7 +401,7 @@ impl App {
         }
         if self.pending.is_some() {
             ui_kit::spinner(ui, self.colors, 20., &self.locale.text("vault-working"));
-            let action = if matches!(self.page, Page::Opened { .. }) {
+            let action = if matches!(self.page, Page::Opened(_)) {
                 "vault-lock"
             } else {
                 "vault-cancel"
@@ -307,8 +450,9 @@ impl App {
                     self.request(ui.ctx(), action);
                 }
             }
-            Page::Opened { name, can_sync } => {
+            Page::Opened(name) => {
                 ui.heading(name);
+                self.show_sync(ui);
                 let mut selected = None;
                 ui.horizontal_wrapped(|ui| {
                     if ui_kit::button(
@@ -321,9 +465,10 @@ impl App {
                     )
                     .clicked()
                     {
+                        cancel_session();
                         self.rows.clear();
                         self.next = None;
-                        selected = Some(Action::Lock);
+                        self.editor = None;
                     }
                     if ui_kit::button(
                         ui,
@@ -331,7 +476,7 @@ impl App {
                         &self.locale.text("sync-now"),
                         ButtonRole::Secondary,
                         0.,
-                        *can_sync,
+                        self.sync != SyncStatus::Disabled,
                     )
                     .clicked()
                     {
@@ -340,17 +485,34 @@ impl App {
                     if ui_kit::button(
                         ui,
                         self.colors,
-                        &self.locale.text("vault-refresh"),
+                        &self.locale.text("extension-new-login"),
                         ButtonRole::Quiet,
                         0.,
-                        true,
+                        self.editor.is_none(),
                     )
                     .clicked()
                     {
-                        selected = Some(Action::Logins { after: None });
+                        self.status = None;
+                        match new_record() {
+                            Ok(draft) => {
+                                self.editor = Some(Editor {
+                                    record: draft.record,
+                                    target: None,
+                                    form: NewLogin::default(),
+                                })
+                            }
+                            Err(error) => self.status = Some((error_label(error), true)),
+                        }
                     }
                 });
                 ui.separator();
+                if self.editor.is_some() {
+                    self.show_editor(ui);
+                    if let Some(action) = selected {
+                        self.request(ui.ctx(), action);
+                    }
+                    return;
+                }
                 if self.rows.is_empty() {
                     ui_kit::muted(ui, self.colors, self.locale.text("vault-no-results"));
                 }
@@ -358,6 +520,22 @@ impl App {
                     ui.group(|ui| {
                         ui.strong(&login.title);
                         ui.label(&login.username);
+                        if ui.button(self.locale.text("vault-edit")).clicked() {
+                            self.status = None;
+                            self.editor = Some(Editor {
+                                record: login.target.head.record,
+                                target: Some((
+                                    login.target.clone(),
+                                    Zeroizing::new(login.username.clone()),
+                                )),
+                                form: NewLogin {
+                                    title: login.title.clone(),
+                                    username: login.username.clone(),
+                                    url: String::new(),
+                                    password: String::new(),
+                                },
+                            });
+                        }
                     });
                 }
                 if self.next.is_some() && ui.button(self.locale.text("vault-more")).clicked() {
@@ -384,9 +562,12 @@ impl eframe::App for App {
             self.credentials.key.zeroize();
             self.credentials.password.zeroize();
             self.status = None;
+            self.sync = SyncStatus::Disabled;
+            self.issues = Issues::default();
+            self.editor = None;
             let pending = self.pending.take().is_some();
             self.page = match std::mem::replace(&mut self.page, Page::Starting) {
-                Page::Opened { name, .. } => Page::Locked(name),
+                Page::Opened(name) => Page::Locked(name),
                 Page::Disconnected if pending => Page::Starting,
                 page => page,
             };
@@ -395,9 +576,16 @@ impl eframe::App for App {
             .pending
             .as_ref()
             .and_then(|pending| pending.borrow_mut().take());
-        if let Some((response, sync)) = response {
+        if let Some(response) = response {
             self.pending = None;
-            self.receive(ctx, response, sync);
+            self.receive(ctx, response);
+        }
+        let sync_revision = sync_status_revision();
+        if self.pending.is_none() && sync_revision != self.sync_revision {
+            self.sync_revision = sync_revision;
+            if matches!(self.page, Page::Opened(_)) {
+                self.request(ctx, Action::Logins { after: None });
+            }
         }
     }
 
@@ -416,6 +604,10 @@ impl eframe::App for App {
             });
         });
     }
+}
+
+fn valid_length(value: &str) -> bool {
+    !value.is_empty() && value.len() <= MAX_LOGIN_TEXT
 }
 
 fn field(ui: &mut egui::Ui, label: String, value: &mut String, secret: bool) -> egui::Response {
@@ -453,6 +645,7 @@ fn error_label(error: Error) -> &'static str {
         Error::Locked => "vault-error-locked",
         Error::SyncDisabled => "sync-disabled",
         Error::Integrity => "vault-error-integrity",
+        Error::Storage(confidex_storage::Error::Conflict) => "extension-login-changed",
         _ => "vault-error-storage",
     }
 }

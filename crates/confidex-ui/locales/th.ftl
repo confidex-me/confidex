@@ -617,6 +617,12 @@ settings-auto-lock-hint = การตั้งค่านี้ใช้กั
 settings-device-unlock-error = ไม่สามารถเปลี่ยนการปลดล็อกด้วยอุปกรณ์ได้ ลองอีกครั้ง
 
 extension-session-hint = เปิดแท็บเซสชันนี้ไว้ขณะใช้ Confidex ในเบราว์เซอร์
+extension-new-login = ข้อมูลเข้าสู่ระบบใหม่
+extension-saved-local = บันทึกในอุปกรณ์นี้แล้ว
+extension-sync-pending = รอการซิงค์
+extension-login-conflicts = แก้ไขรายการที่ขัดแย้งกันในแอปหลักของ Confidex
+extension-login-ambiguous = แก้ไขช่องข้อมูลเข้าสู่ระบบที่กำกวมในแอปหลักของ Confidex
+extension-login-changed = รายการมีการเปลี่ยนแปลง เลือกอีกครั้งเพื่อแก้ไขเวอร์ชันปัจจุบัน
 
 extension-startup-error = ไม่สามารถเริ่ม Confidex ได้ โปรดโหลดส่วนขยายใหม่แล้วลองอีกครั้ง
 

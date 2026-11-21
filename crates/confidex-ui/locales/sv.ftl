@@ -620,6 +620,12 @@ settings-auto-lock-hint = Inställningen gäller bara det här valvet på den h�
 settings-device-unlock-error = Det gick inte att ändra upplåsning med enheten. Försök igen.
 
 extension-session-hint = Låt den här sessionsfliken vara öppen medan du använder Confidex i webbläsaren.
+extension-new-login = Ny inloggning
+extension-saved-local = Sparat på den här enheten.
+extension-sync-pending = Väntar på synkronisering.
+extension-login-conflicts = Lös konflikter mellan poster i Confidex huvudapp.
+extension-login-ambiguous = Rätta otydliga inloggningsfält i Confidex huvudapp.
+extension-login-changed = Posten har ändrats. Välj den igen för att redigera den aktuella versionen.
 
 extension-startup-error = Confidex kunde inte starta. Ladda om tillägget och försök igen.
 

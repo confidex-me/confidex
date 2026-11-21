@@ -617,6 +617,12 @@ settings-auto-lock-hint = यह सेटिंग केवल इस डि�
 settings-device-unlock-error = डिवाइस से अनलॉक करने की सेटिंग नहीं बदली जा सकी। फिर कोशिश करें।
 
 extension-session-hint = ब्राउज़र में Confidex का उपयोग करते समय इस सत्र टैब को खुला रखें।
+extension-new-login = नया लॉगिन
+extension-saved-local = इस डिवाइस पर सहेजा गया।
+extension-sync-pending = सिंक बाकी है।
+extension-login-conflicts = मुख्य Confidex ऐप में रिकॉर्ड के टकराव हल करें।
+extension-login-ambiguous = मुख्य Confidex ऐप में अस्पष्ट लॉगिन फ़ील्ड ठीक करें।
+extension-login-changed = रिकॉर्ड बदल गया है। नवीनतम संस्करण संपादित करने के लिए उसे फिर से चुनें।
 
 extension-startup-error = Confidex शुरू नहीं हो सका। एक्सटेंशन फिर से लोड करें और दोबारा कोशिश करें।
 

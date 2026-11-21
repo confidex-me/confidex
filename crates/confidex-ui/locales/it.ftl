@@ -620,6 +620,12 @@ settings-auto-lock-hint = Questa impostazione vale solo per questo caveau su que
 settings-device-unlock-error = Impossibile modificare lo sblocco con il dispositivo. Riprova.
 
 extension-session-hint = Tieni aperta questa scheda della sessione mentre usi Confidex nel browser.
+extension-new-login = Nuovo accesso
+extension-saved-local = Salvato su questo dispositivo.
+extension-sync-pending = Sincronizzazione in attesa.
+extension-login-conflicts = Risolvi i conflitti delle voci nell’app principale di Confidex.
+extension-login-ambiguous = Correggi i campi di accesso ambigui nell’app principale di Confidex.
+extension-login-changed = La voce è cambiata. Selezionala di nuovo per modificare la versione corrente.
 
 extension-startup-error = Impossibile avviare Confidex. Ricarica l’estensione e riprova.
 

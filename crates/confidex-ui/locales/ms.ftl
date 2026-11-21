@@ -617,6 +617,12 @@ settings-auto-lock-hint = Tetapan ini hanya terpakai pada peti besi ini pada per
 settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan peranti. Cuba lagi.
 
 extension-session-hint = Biarkan tab sesi ini terbuka semasa menggunakan Confidex dalam pelayar.
+extension-new-login = Log masuk baharu
+extension-saved-local = Disimpan pada peranti ini.
+extension-sync-pending = Menunggu penyegerakan.
+extension-login-conflicts = Selesaikan konflik rekod dalam apl utama Confidex.
+extension-login-ambiguous = Betulkan medan log masuk yang tidak jelas dalam apl utama Confidex.
+extension-login-changed = Rekod telah berubah. Pilih sekali lagi untuk mengedit versi terkini.
 
 extension-startup-error = Confidex tidak dapat dimulakan. Muat semula sambungan dan cuba lagi.
 

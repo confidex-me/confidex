@@ -617,6 +617,12 @@ settings-auto-lock-hint = Bu ayar yalnızca bu cihazdaki bu kasa için geçerlid
 settings-device-unlock-error = Cihazla kilit açma ayarı değiştirilemedi. Tekrar deneyin.
 
 extension-session-hint = Confidex’i tarayıcıda kullanırken bu oturum sekmesini açık tutun.
+extension-new-login = Yeni giriş bilgisi
+extension-saved-local = Bu cihaza kaydedildi.
+extension-sync-pending = Eşitleme bekleniyor.
+extension-login-conflicts = Kayıt çakışmalarını ana Confidex uygulamasında çözün.
+extension-login-ambiguous = Belirsiz giriş alanlarını ana Confidex uygulamasında düzeltin.
+extension-login-changed = Kayıt değişti. Güncel sürümü düzenlemek için kaydı yeniden seçin.
 
 extension-startup-error = Confidex başlatılamadı. Uzantıyı yeniden yükleyip tekrar deneyin.
 

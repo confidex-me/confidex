@@ -617,6 +617,12 @@ settings-auto-lock-hint = この設定は、このデバイス上のこの保管
 settings-device-unlock-error = デバイスによるロック解除を変更できませんでした。もう一度お試しください。
 
 extension-session-hint = ブラウザーで Confidex を使用している間は、このセッションタブを開いたままにしてください。
+extension-new-login = 新しいログイン
+extension-saved-local = このデバイスに保存しました。
+extension-sync-pending = 同期待ちです。
+extension-login-conflicts = 競合する項目は Confidex のメインアプリで解決してください。
+extension-login-ambiguous = ログイン項目の曖昧なフィールドを Confidex のメインアプリで修正してください。
+extension-login-changed = 項目が変更されました。最新版を編集するには、もう一度選択してください。
 
 extension-startup-error = Confidex を起動できませんでした。拡張機能を再読み込みして、もう一度お試しください。
 

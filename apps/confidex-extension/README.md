@@ -1,10 +1,9 @@
 # Confidex for Chromium
 
 The toolbar action opens the Confidex egui session tab. The tab can connect
-an existing synchronized vault, display login titles and usernames, and unlock
-the local encrypted cache offline. It recognizes composite logins and separate
-Login template fields, and skips ambiguous or conflicted records. Each page
-contains up to 128 previews, with a cursor to resume within a revision.
+an existing synchronized vault and unlock the local encrypted cache offline.
+It recognizes composite logins and separate Login template fields. Each page
+contains up to 128 previews with titles and usernames.
 
 ## Build and load
 
@@ -39,6 +38,25 @@ Users can cancel a pending connection or unlock from the session tab. The
 background service worker asks the existing session for live authorization
 on each route, so background restarts preserve routing without storing keys
 or granting any session authority to the background.
+
+## Logins and synchronization
+
+Use **New login** to create a record from the standard Login template. The
+record stores the HTTPS origin of the supplied URL. Use **Edit** to update the
+username and password of one listed login. Each edit checks the revision
+selected when the form was opened and preserves the other record fields,
+including the original website, sections, and notes. Ambiguous separate
+fields and records with conflicting revisions require the main Confidex app.
+
+A saved login is committed to the encrypted IndexedDB vault before
+synchronization. Pending writes survive locking and browser restarts.
+The worker synchronizes after unlock, after a local write, and every minute
+while unlocked. **Sync now** requests an immediate run. Automatic retries
+wait 5, 15, and then 60 seconds after failures. Sync uses the same durable
+checkpoint as the main app. It preserves concurrent versions, which can be
+reviewed and resolved from the main app's synchronization screen.
+
+## Site access
 
 Use **Allow access to HTTPS sites** in the session tab to grant optional
 site access. Use the same control to withdraw access. Chromium registers the
@@ -75,9 +93,12 @@ The revocation check sends a report from the original isolated world without
 reloading the page. The slow-unlock check blocks the worker across the previous
 probe timeout and verifies that unlock completes. A separate check closes the
 worker without a reply during unlock and verifies recovery in the same tab.
-The suite also checks incorrect credentials, offline unlock, and absence of
-fixture credentials in persistent extension data. It removes the temporary
-browser profile and server data and does not write traces or screenshots.
+The suite also checks incorrect credentials, offline creation and update,
+duplicate requests, stale revisions, and absence of fixture credentials in
+persistent extension data. It restarts Chromium with the same temporary
+profile, unlocks offline again, and checks both directions of synchronization
+and conflict resolution with the main web runtime. It removes the temporary
+browser profile and server data and writes no traces or screenshots.
 
 Headless runs record prior consent in Chromium's test profile and then use the
 permission button to request actual access. To exercise the first-use native

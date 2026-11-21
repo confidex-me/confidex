@@ -617,6 +617,12 @@ settings-auto-lock-hint = 此设置仅适用于此设备上的此保险库。再
 settings-device-unlock-error = 无法更改设备解锁设置。请重试。
 
 extension-session-hint = 在浏览器中使用 Confidex 时，请保持此会话标签页打开。
+extension-new-login = 新建登录凭据
+extension-saved-local = 已保存在此设备上。
+extension-sync-pending = 等待同步。
+extension-login-conflicts = 请在 Confidex 主应用中解决条目冲突。
+extension-login-ambiguous = 请在 Confidex 主应用中修正有歧义的登录字段。
+extension-login-changed = 条目已更改。请重新选择以编辑当前版本。
 
 extension-startup-error = 无法启动 Confidex。请重新加载扩展程序后重试。
 

@@ -617,6 +617,12 @@ settings-auto-lock-hint = Para lang sa vault na ito sa device na ito ang setting
 settings-device-unlock-error = Hindi mabago ang pag-unlock gamit ang device. Subukan muli.
 
 extension-session-hint = Panatilihing bukas ang tab ng sesyon habang ginagamit ang Confidex sa browser.
+extension-new-login = Bagong login
+extension-saved-local = Na-save sa device na ito.
+extension-sync-pending = Naghihintay ng pag-sync.
+extension-login-conflicts = Ayusin ang mga salungatan ng record sa pangunahing Confidex app.
+extension-login-ambiguous = Ayusin ang mga malabong field ng login sa pangunahing Confidex app.
+extension-login-changed = Nagbago ang record. Piliin ito muli upang i-edit ang pinakabagong bersyon.
 
 extension-startup-error = Hindi masimulan ang Confidex. I-reload ang extension at subukang muli.
 

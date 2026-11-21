@@ -620,6 +620,12 @@ settings-auto-lock-hint = இந்த அமைப்பு இந்தச் 
 settings-device-unlock-error = சாதனத்தின் மூலம் பூட்டை நீக்கும் அமைப்பை மாற்ற முடியவில்லை. மீண்டும் முயலவும்.
 
 extension-session-hint = உலாவியில் Confidex ஐப் பயன்படுத்தும்போது இந்த அமர்வு தாவலைத் திறந்தே வைத்திருங்கள்.
+extension-new-login = புதிய உள்நுழைவு
+extension-saved-local = இந்தச் சாதனத்தில் சேமிக்கப்பட்டது.
+extension-sync-pending = ஒத்திசைவு நிலுவையில் உள்ளது.
+extension-login-conflicts = முரண்பட்ட பதிவுகளை முதன்மை Confidex செயலியில் சரிசெய்யவும்.
+extension-login-ambiguous = குழப்பமான உள்நுழைவுப் புலங்களை முதன்மை Confidex செயலியில் சரிசெய்யவும்.
+extension-login-changed = பதிவு மாறியுள்ளது. தற்போதைய பதிப்பைத் திருத்த மீண்டும் தேர்ந்தெடுக்கவும்.
 
 extension-startup-error = Confidex ஐத் தொடங்க முடியவில்லை. நீட்டிப்பை மீண்டும் ஏற்றி முயற்சிக்கவும்.
 

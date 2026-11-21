@@ -617,6 +617,12 @@ settings-auto-lock-hint = এই সেটিং শুধু এই ডিভ�
 settings-device-unlock-error = ডিভাইস দিয়ে আনলক করার সেটিং বদলানো যায়নি। আবার চেষ্টা করুন।
 
 extension-session-hint = ব্রাউজারে Confidex ব্যবহার করার সময় এই সেশন ট্যাবটি খোলা রাখুন।
+extension-new-login = নতুন লগইন
+extension-saved-local = এই ডিভাইসে সংরক্ষিত হয়েছে।
+extension-sync-pending = সিঙ্কের অপেক্ষায়।
+extension-login-conflicts = মূল Confidex অ্যাপে রেকর্ডের দ্বন্দ্ব মেটান।
+extension-login-ambiguous = মূল Confidex অ্যাপে লগইনের অস্পষ্ট ক্ষেত্রগুলি ঠিক করুন।
+extension-login-changed = রেকর্ডটি বদলেছে। সর্বশেষ সংস্করণ সম্পাদনা করতে আবার বেছে নিন।
 
 extension-startup-error = Confidex চালু করা যায়নি। এক্সটেনশন পুনরায় লোড করে আবার চেষ্টা করুন।
 

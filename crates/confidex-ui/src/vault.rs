@@ -2514,11 +2514,8 @@ impl VaultApp {
                                 };
                                 let selected =
                                     app.sync_choices.get(&conflict.record) == Some(&local);
-                                let label = app.locale.text(if local {
-                                    "sync-local"
-                                } else {
-                                    "sync-remote"
-                                });
+                                let label =
+                                    format!("{} {}", app.locale.text("starter-version"), side + 1);
                                 let frame = design::card(p)
                                     .fill(if selected {
                                         p.accent.gamma_multiply(0.12)
@@ -2672,11 +2669,11 @@ impl VaultApp {
             ui.heading(app.locale.text("sync-compare"));
             let mut comparison = app.comparison.take().unwrap();
             layout::grid(ui, "comparison", 2, 280., 2, Metrics::LG, |ui, side| {
-                ui.heading(app.locale.text(if side == 0 {
-                    "sync-local"
-                } else {
-                    "sync-remote"
-                }));
+                ui.heading(format!(
+                    "{} {}",
+                    app.locale.text("starter-version"),
+                    side + 1
+                ));
                 let Some(draft) = &mut comparison.1[side] else {
                     ui.label(RichText::new(app.locale.text("sync-deleted")).color(p.error));
                     return;

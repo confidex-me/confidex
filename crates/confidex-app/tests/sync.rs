@@ -1036,20 +1036,30 @@ fn two_devices_restore_preserve_branches_and_signed_deletions() {
             assert_eq!(tips, record_branches(&mut a, id, record).await);
             assert_eq!(b.object(id, revision).await.unwrap(), wire);
             assert_eq!(b.snapshot(id).await.unwrap().objects.len(), count + 271);
-            assert!(matches!(
-                run(
-                    &mut ea,
-                    &mut a,
-                    &mut ka,
-                    &mut server,
-                    Command::CheckSync {
-                        server: SERVER.into()
-                    }
-                )
-                .await
-                .unwrap(),
-                Output::SyncUnchanged
-            ));
+            server.methods.clear();
+            let Output::Synced(report) = run(
+                &mut ea,
+                &mut a,
+                &mut ka,
+                &mut server,
+                Command::CheckSync {
+                    server: SERVER.into(),
+                },
+            )
+            .await
+            .unwrap() else {
+                panic!("an unresolved conflict must be reported even at an unchanged checkpoint");
+            };
+            assert_eq!(server.methods, ["HEAD"]);
+            assert!(!report.more);
+            let conflict = report
+                .conflicts
+                .iter()
+                .find(|item| item.record == record)
+                .unwrap();
+            assert_eq!(conflict.local.revision, tips[0].revision);
+            assert_eq!(conflict.remote.revision, tips[1].revision);
+            assert_eq!(record_branches(&mut a, id, record).await, tips);
             assert!(matches!(
                 run(
                     &mut ea,

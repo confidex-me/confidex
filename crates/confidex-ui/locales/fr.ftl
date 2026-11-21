@@ -620,6 +620,12 @@ settings-auto-lock-hint = Ce réglage s’applique uniquement à ce coffre sur c
 settings-device-unlock-error = Impossible de modifier le déverrouillage avec l’appareil. Réessayez.
 
 extension-session-hint = Gardez cet onglet de session ouvert pendant que vous utilisez Confidex dans le navigateur.
+extension-new-login = Nouvel identifiant
+extension-saved-local = Enregistré sur cet appareil.
+extension-sync-pending = Synchronisation en attente.
+extension-login-conflicts = Résolvez les conflits de fiches dans l’application principale Confidex.
+extension-login-ambiguous = Corrigez les champs de connexion ambigus dans l’application principale Confidex.
+extension-login-changed = La fiche a changé. Sélectionnez-la de nouveau pour modifier la version actuelle.
 
 extension-startup-error = Confidex n’a pas pu démarrer. Rechargez l’extension et réessayez.
 

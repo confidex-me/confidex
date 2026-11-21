@@ -620,6 +620,12 @@ settings-auto-lock-hint = Esta definição aplica-se apenas a este cofre neste d
 settings-device-unlock-error = Não foi possível alterar o desbloqueio com o dispositivo. Tente novamente.
 
 extension-session-hint = Mantenha este separador da sessão aberto enquanto utiliza o Confidex no navegador.
+extension-new-login = Novo início de sessão
+extension-saved-local = Guardado neste dispositivo.
+extension-sync-pending = Sincronização pendente.
+extension-login-conflicts = Resolva conflitos de registos na aplicação principal do Confidex.
+extension-login-ambiguous = Corrija os campos ambíguos de início de sessão na aplicação principal do Confidex.
+extension-login-changed = O registo mudou. Selecione-o novamente para editar a versão atual.
 
 extension-startup-error = Não foi possível iniciar o Confidex. Recarregue a extensão e tente novamente.
 

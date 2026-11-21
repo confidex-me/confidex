@@ -1,9 +1,7 @@
 use crate::{
     lease::Lease,
-    logins::{LOGIN_PAGE_SIZE, append_previews},
-    protocol::{
-        Action, FormReport, LoginCursor, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response,
-    },
+    protocol::{Action, FormReport, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response},
+    sync_schedule::SyncSchedule,
 };
 use confidex_app::{Command, DeviceKeys, Error, Output};
 use confidex_browser::{BrowserStore, Net, Runtime};
@@ -63,6 +61,8 @@ pub struct Session {
     runtime: Runtime<Net>,
     server: Option<String>,
     lease: Lease,
+    sync: SyncSchedule,
+    conflicts: bool,
 }
 
 #[wasm_bindgen]
@@ -73,7 +73,25 @@ impl Session {
             runtime: Runtime::default(),
             server: None,
             lease: lease.0.clone(),
+            sync: SyncSchedule::default(),
+            conflicts: false,
         }
+    }
+
+    pub fn sync_delay(&self) -> i32 {
+        if !self.is_open() {
+            return -1;
+        }
+        self.sync.delay(now())
+    }
+
+    pub async fn sync_automatically(&mut self) -> bool {
+        if self.sync_delay() != 0 {
+            return false;
+        }
+        let previous = (self.sync.status(), self.conflicts);
+        self.sync_step().await;
+        self.is_open() && previous != (self.sync.status(), self.conflicts)
     }
 
     pub async fn execute(&mut self, input: Uint8Array) -> Result<Uint8Array, JsValue> {
@@ -138,7 +156,7 @@ impl Session {
             None => Reply::Disconnected,
             Some(info) if self.is_open() => Reply::Opened {
                 name: info.name,
-                can_sync: self.server.is_some(),
+                sync: self.sync.status(),
             },
             Some(info) => Reply::Locked { name: info.name },
         })
@@ -198,21 +216,45 @@ impl Session {
                 self.command(Command::Lock).await?;
                 self.status().await
             }
-            Action::Sync => {
-                if !self.is_open() {
-                    return Err(Error::Locked);
-                }
-                let server = self.server.clone().ok_or(Error::SyncDisabled)?;
-                let Output::Synced(report) = self.command(Command::Sync { server }).await? else {
-                    return Err(Error::Integrity);
-                };
+            Action::Sync if self.is_open() && self.server.is_some() => {
+                let more = self.sync_step().await;
                 Ok(Reply::Synced {
-                    conflicts: !report.conflicts.is_empty(),
-                    more: report.more,
+                    sync: self.sync.status(),
+                    more,
                 })
             }
-            Action::Logins { after } if self.is_open() => self.logins(after).await,
-            Action::Logins { .. } => Err(Error::Locked),
+            Action::Sync if self.is_open() => Err(Error::SyncDisabled),
+            Action::Logins { after } if self.is_open() => {
+                let mut page = self
+                    .runtime
+                    .engine_mut()
+                    .browser_logins(&mut BrowserStore, after)
+                    .await?;
+                page.issues.conflicts |= self.conflicts;
+                Ok(Reply::Logins {
+                    page,
+                    sync: self.sync.status(),
+                })
+            }
+            Action::CreateLogin { record, login } if self.is_open() => {
+                let head = self
+                    .runtime
+                    .engine_mut()
+                    .create_browser_login(&mut BrowserStore, record, &login, now())
+                    .await?;
+                self.sync.local_change(now());
+                Ok(Reply::Saved(head))
+            }
+            Action::UpdateLogin { target, change } if self.is_open() => {
+                let head = self
+                    .runtime
+                    .engine_mut()
+                    .update_browser_login(&mut BrowserStore, &target, &change, now())
+                    .await?;
+                self.sync.local_change(now());
+                Ok(Reply::Saved(head))
+            }
+            _ => Err(Error::Locked),
         }
     }
 
@@ -221,67 +263,32 @@ impl Session {
             return Err(Error::Integrity);
         };
         self.server = server.filter(|url| url.starts_with("https://"));
-        self.lease.open(now());
+        let now = now();
+        self.lease.open(now);
+        if self.server.is_some() {
+            self.sync.start(now);
+        }
         Ok(Reply::Opened {
             name: info.name,
-            can_sync: self.server.is_some(),
+            sync: self.sync.status(),
         })
     }
 
-    async fn logins(&mut self, cursor: Option<LoginCursor>) -> Response {
-        let Output::Rows { rows, more, next } = self
-            .command(Command::List {
-                after: cursor.as_ref().map(|cursor| cursor.head.clone()),
-                tag: None,
-            })
-            .await?
-        else {
-            return Err(Error::Integrity);
+    async fn sync_step(&mut self) -> bool {
+        let Some(server) = self.server.clone() else {
+            return false;
         };
-        let mut logins = Vec::new();
-        let mut scanned = None;
-        let resume = cursor.filter(|cursor| cursor.offset > 0);
-        for (head, offset) in resume
-            .into_iter()
-            .map(|cursor| (cursor.head, cursor.offset))
-            .chain(rows.iter().map(|row| (row.head.clone(), 0)))
-        {
-            if !self.is_open() {
-                return Err(Error::Locked);
+        let result = match self.command(Command::Sync { server }).await {
+            Ok(Output::Synced(report)) => {
+                if !report.more {
+                    self.conflicts = !report.conflicts.is_empty();
+                }
+                Ok(report.more)
             }
-            if logins.len() == LOGIN_PAGE_SIZE {
-                return Ok(Reply::Logins {
-                    rows: logins,
-                    next: scanned,
-                });
-            }
-            let draft = match self
-                .command(Command::Open {
-                    record: head.record,
-                })
-                .await
-            {
-                Ok(Output::Draft(draft)) => draft,
-                Err(Error::Input) if offset > 0 => continue,
-                Err(Error::Storage(confidex_storage::Error::Conflict)) => continue,
-                Err(error) => return Err(error),
-                _ => return Err(Error::Integrity),
-            };
-            if draft.revision == Some(head.revision)
-                && let Some(offset) = append_previews(&draft, offset, &mut logins)
-            {
-                return Ok(Reply::Logins {
-                    rows: logins,
-                    next: Some(LoginCursor { head, offset }),
-                });
-            }
-            scanned = Some(LoginCursor { head, offset: 0 });
-        }
-        Ok(Reply::Logins {
-            rows: logins,
-            next: next
-                .filter(|_| more)
-                .map(|head| LoginCursor { head, offset: 0 }),
-        })
+            Ok(_) => Err(Error::Integrity),
+            Err(error) => Err(error),
+        };
+        self.sync.finish(now(), result);
+        result == Ok(true)
     }
 }

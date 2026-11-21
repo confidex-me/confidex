@@ -3,7 +3,9 @@ import init, {Session, SessionLease} from './engine/engine.js';
 let lease;
 let session;
 let busy = false;
+let queued;
 let expiry;
+let syncTimer;
 
 function openSession() {
   return new Promise((resolve, reject) => {
@@ -21,8 +23,10 @@ function openSession() {
 
 function retire(output) {
   clearTimeout(expiry);
-  // An idle Engine can run its Rust destructors. In-flight calls can still
-  // borrow it, so close the worker to cancel them.
+  clearTimeout(syncTimer);
+  queued?.fill(0);
+  queued = undefined;
+  // The worker can run Rust destructors when the Engine has no active borrow.
   if (!busy) {
     session?.free();
     session = undefined;
@@ -37,9 +41,63 @@ function scheduleExpiry() {
   const remaining = lease.remaining();
   if (remaining === 0) retire();
   if (remaining > 0) expiry = setTimeout(scheduleExpiry, remaining);
+  return remaining !== 0;
 }
 
-self.onmessage = async ({data, ports}) => {
+function resume() {
+  if (queued) {
+    const input = queued;
+    queued = undefined;
+    void execute(input);
+    return;
+  }
+  const delay = session.sync_delay();
+  if (delay >= 0) syncTimer = setTimeout(sync, delay);
+}
+
+async function sync() {
+  busy = true;
+  self.postMessage({syncing: true});
+  try {
+    const changed = await session.sync_automatically();
+    busy = false;
+    if (lease.remaining() === 0) {
+      retire();
+      return;
+    }
+    self.postMessage({syncing: false, changed});
+    resume();
+  } catch {
+    busy = false;
+    retire();
+  }
+}
+
+async function execute(input) {
+  clearTimeout(syncTimer);
+  busy = true;
+  try {
+    session ??= await openSession();
+    const response = await session.execute(input);
+    busy = false;
+    if (lease.remaining() === 0) {
+      if (lease.was_locked()) retire(response);
+      else {
+        response.fill(0);
+        retire();
+      }
+    } else {
+      self.postMessage(response, [response.buffer]);
+      if (scheduleExpiry()) resume();
+    }
+  } catch {
+    busy = false;
+    input.fill(0);
+    retire();
+  }
+}
+
+self.onmessage = ({data, ports}) => {
   if (!(data instanceof Uint8Array)) {
     if (data?.kind === 'Activity' && lease) {
       lease.activity();
@@ -55,30 +113,10 @@ self.onmessage = async ({data, ports}) => {
     }
     return;
   }
-  if (busy) {
+  if (!busy) void execute(data);
+  else if (!queued) queued = data;
+  else {
     data.fill(0);
     retire();
-    return;
-  }
-  busy = true;
-  try {
-    session ??= await openSession();
-    const response = await session.execute(data);
-    busy = false;
-    if (lease.remaining() === 0) {
-      if (lease.was_locked()) retire(response);
-      else {
-        response.fill(0);
-        retire();
-      }
-    } else {
-      self.postMessage(response, [response.buffer]);
-      scheduleExpiry();
-    }
-  } catch {
-    data.fill(0);
-    retire();
-  } finally {
-    busy = false;
   }
 };

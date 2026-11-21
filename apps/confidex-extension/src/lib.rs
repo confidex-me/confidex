@@ -17,4 +17,4 @@ mod ui;
     test,
     all(feature = "session", target_arch = "wasm32", target_os = "unknown")
 ))]
-mod logins;
+mod sync_schedule;

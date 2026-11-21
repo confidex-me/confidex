@@ -617,6 +617,12 @@ settings-auto-lock-hint = Cài đặt này chỉ áp dụng cho két này trên 
 settings-device-unlock-error = Không thể thay đổi tính năng mở khóa bằng thiết bị. Hãy thử lại.
 
 extension-session-hint = Giữ tab phiên này mở trong khi sử dụng Confidex trên trình duyệt.
+extension-new-login = Thông tin đăng nhập mới
+extension-saved-local = Đã lưu trên thiết bị này.
+extension-sync-pending = Đang chờ đồng bộ.
+extension-login-conflicts = Giải quyết xung đột giữa các mục trong ứng dụng Confidex chính.
+extension-login-ambiguous = Sửa các trường đăng nhập không rõ ràng trong ứng dụng Confidex chính.
+extension-login-changed = Mục đã thay đổi. Hãy chọn lại để chỉnh sửa phiên bản mới nhất.
 
 extension-startup-error = Không thể khởi động Confidex. Hãy tải lại tiện ích mở rộng và thử lại.
 

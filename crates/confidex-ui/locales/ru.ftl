@@ -683,6 +683,12 @@ settings-auto-lock-hint = Настройка действует только д�
 settings-device-unlock-error = Не удалось изменить разблокировку с помощью устройства. Повторите попытку.
 
 extension-session-hint = Не закрывайте вкладку сеанса, пока пользуетесь Confidex в браузере.
+extension-new-login = Новый логин
+extension-saved-local = Сохранено на этом устройстве.
+extension-sync-pending = Ожидается синхронизация.
+extension-login-conflicts = Разрешите конфликты записей в основном приложении Confidex.
+extension-login-ambiguous = Проверьте неоднозначные поля логина в основном приложении Confidex.
+extension-login-changed = Запись изменилась. Выберите её снова, чтобы отредактировать актуальную версию.
 
 extension-startup-error = Не удалось запустить Confidex. Перезагрузите расширение и попробуйте снова.
 

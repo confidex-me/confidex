@@ -622,6 +622,12 @@ settings-auto-lock-hint = Toto nastavení platí pouze pro tento trezor na tomto
 settings-device-unlock-error = Odemknutí pomocí zařízení nelze změnit. Zkuste to znovu.
 
 extension-session-hint = Při používání Confidexu v prohlížeči nechte tuto kartu relace otevřenou.
+extension-new-login = Nové přihlášení
+extension-saved-local = Uloženo v tomto zařízení.
+extension-sync-pending = Čeká na synchronizaci.
+extension-login-conflicts = Vyřešte konflikty záznamů v hlavní aplikaci Confidex.
+extension-login-ambiguous = Opravte nejednoznačná přihlašovací pole v hlavní aplikaci Confidex.
+extension-login-changed = Záznam se změnil. Vyberte ho znovu a upravte aktuální verzi.
 
 extension-startup-error = Confidex se nepodařilo spustit. Znovu načtěte rozšíření a zkuste to znovu.
 

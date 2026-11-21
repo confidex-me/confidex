@@ -620,6 +620,12 @@ settings-auto-lock-hint = Mpangilio huu unatumika kwa sefu hii kwenye kifaa hiki
 settings-device-unlock-error = Imeshindikana kubadilisha ufunguaji kwa kifaa. Jaribu tena.
 
 extension-session-hint = Acha kichupo hiki cha kipindi kikiwa wazi unapotumia Confidex kwenye kivinjari.
+extension-new-login = Ingia mpya
+extension-saved-local = Imehifadhiwa kwenye kifaa hiki.
+extension-sync-pending = Inasubiri usawazishaji.
+extension-login-conflicts = Tatua migongano ya rekodi katika programu kuu ya Confidex.
+extension-login-ambiguous = Sahihisha sehemu za kuingia zenye utata katika programu kuu ya Confidex.
+extension-login-changed = Rekodi imebadilika. Ichague tena ili kuhariri toleo la sasa.
 
 extension-startup-error = Confidex haikuweza kuanza. Pakia upya kiendelezi na ujaribu tena.
 
