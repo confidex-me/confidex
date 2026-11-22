@@ -81,12 +81,14 @@ path = ${JSON.stringify(blobPath)}
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'none'; object-src 'none'");
       }
       const frame = req.url === '/ordinary' ? '<iframe src="/seed"></iframe>' : '';
-      const login = '<form id="login"><label>User <input id="user" autocomplete="username"></label>'
-        + '<input id="password" type="password" autocomplete="current-password"><button>Sign in</button></form>';
+      const login = '<form id="login" method="post"><label>User <input id="user" autocomplete="username"></label>'
+        + '<input id="password" name="password" type="password" autocomplete="current-password"><button>Sign in</button></form>';
       const pages = {
         '/fill': login,
         '/fill-first': '<form id="first"><input id="user" autocomplete="username"><button>Next</button></form>',
-        '/fill-second': '<form id="second"><input id="password" type="password" autocomplete="current-password"></form>',
+        '/fill-second': '<form id="second" method="post"><input id="password" type="password" autocomplete="current-password"></form>',
+        '/fill-card': '<form method="post"><label>Card security code <input name="cvc" type="password" autocomplete="cc-csc"></label>'
+          + '<button>Pay</button></form>',
         '/fill-empty': '<main></main>',
         '/fill-iframe': '<iframe src="/fill"></iframe>',
       };
@@ -360,13 +362,44 @@ path = ${JSON.stringify(blobPath)}
   assert.equal(await runFill(fillPacket(await choice(strict))), 'Filled');
   assert(await isFilled(strict, false), 'Autofill failed under strict CSP');
 
+  scenario = 'masked non-login fields and GET form submissions';
+  const card = await newTab(command, origin + '/fill-card');
+  assert.equal((await choice(card)).forms.length, 0, 'A masked CVC was treated as a login');
+  await card.evaluate("document.querySelector('input').autocomplete = 'cc-csc' + ' '.repeat(80) + 'webauthn'");
+  assert.equal((await choice(card)).forms.length, 0, 'Truncating autocomplete turned an explicit role into a password');
+  assert(await expectEmpty(card));
+
+  const methods = await newTab(command, origin + '/fill');
+  const beforeMethodChange = fillPacket(await choice(methods));
+  await methods.evaluate(`document.querySelector('form').setAttribute('method', 'get')`);
+  assert.equal(await runFill(beforeMethodChange), 'Changed', 'Changing the form to GET kept the fill operation valid');
+  assert.equal((await choice(methods)).forms.length, 0, 'An explicit GET form accepted the login');
+  assert(await expectEmpty(methods));
+  await methods.evaluate(`document.querySelector('form').removeAttribute('method')`);
+  assert.equal((await choice(methods)).forms.length, 0, 'The default GET form accepted the login');
+  await methods.evaluate(`document.querySelector('form').setAttribute('method', 'invalid')`);
+  assert.equal((await choice(methods)).forms.length, 0, 'An invalid method defaulted to GET but accepted the login');
+  await methods.evaluate(`document.querySelector('form').setAttribute('method', 'post')`);
+
+  const beforeOverride = fillPacket(await choice(methods));
+  await methods.evaluate(`document.querySelector('button').setAttribute('formmethod', 'get')`);
+  assert.equal(await runFill(beforeOverride), 'Changed', 'Changing a submitter to GET kept the fill operation valid');
+  assert.equal((await choice(methods)).forms.length, 0, 'A GET submitter overrode POST and accepted the login');
+  assert(await expectEmpty(methods));
+  await methods.evaluate(`document.querySelector('button').disabled = true`);
+  assert.equal((await choice(methods)).forms.length, 1, 'A disabled GET submitter blocked a POST form');
+  await methods.evaluate(`document.body.insertAdjacentHTML('beforeend',
+    '<input type="image" form="login" formmethod="invalid">')`);
+  assert.equal((await choice(methods)).forms.length, 0, 'An external image submitter defaulted to GET and accepted the login');
+  await command('Target.closeTarget', {targetId: methods.targetId});
+
   scenario = 'SPA, Shadow DOM and stale form selections';
   const spa = await newTab(command, origin + '/fill-empty');
   assert.equal((await choice(spa)).forms.length, 0);
   await spa.evaluate(`document.querySelector('main').innerHTML =
     '<div id="shadow"></div>'`);
   await spa.evaluate(`document.querySelector('#shadow').attachShadow({mode:'open'}).innerHTML =
-    '<form aria-label="Sign in"><input hidden autocomplete="username"><input readonly autocomplete="username">'
+    '<form method="post" aria-label="Sign in"><input hidden autocomplete="username"><input readonly autocomplete="username">'
     + '<input disabled autocomplete="username"><input id="user" autocomplete="username">'
     + '<input id="password" type="password" autocomplete="current-password"></form>'`);
   const shadow = await choice(spa);
@@ -865,7 +898,7 @@ path = ${JSON.stringify(blobPath)}
   const multiple = await newTab(browserAfterRestart, origin + '/fill');
   const postRestartPopup = await newTab(browserAfterRestart, popupUrl);
   await multiple.evaluate(`document.body.insertAdjacentHTML('beforeend',
-    '<form id="second"><input id="backup-user" autocomplete="username">'
+    '<form id="second" method="post"><input id="backup-user" autocomplete="username">'
     + '<input id="backup-password" type="password" autocomplete="current-password"></form>')`);
   await multiple.call('Page.bringToFront');
   const lookupAfterRestart = () => until(async () => {
@@ -904,7 +937,8 @@ path = ${JSON.stringify(blobPath)}
     slowUnlock: true, workerLossDuringUnlock: true, openDocumentAfterRevocation: true,
     autofill: true, strictCspAutofill: true, openShadowDom: true, usernameFirst: true,
     formReplacementRejected: true, documentReplacementRejected: true, replayRejected: true,
-    multipleFormsAndAccounts: true, staleFillRejected: true}));
+    multipleFormsAndAccounts: true, staleFillRejected: true,
+    maskedCardCodeRejected: true, getSubmissionRejected: true}));
 
   if (!options.includes('--vault-only')) {
     scenario = 'standalone content WASM CSP reproduction';

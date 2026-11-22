@@ -11,6 +11,7 @@
   const rootOf = element => Node.prototype.getRootNode.call(element);
   // Form controls can shadow named properties on their HTMLFormElement owner.
   const actionOf = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'action').get;
+  const methodOf = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'method').get;
   const shadowOf = Object.getOwnPropertyDescriptor(Element.prototype, 'shadowRoot').get;
   const parentOf = Object.getOwnPropertyDescriptor(Node.prototype, 'parentElement').get;
   const slotOf = Object.getOwnPropertyDescriptor(Element.prototype, 'assignedSlot').get;
@@ -54,7 +55,7 @@
     observer.observe(root, {
       subtree: true, childList: true, attributes: true,
       attributeFilter: ['type', 'name', 'id', 'autocomplete', 'aria-label', 'aria-labelledby',
-        'form', 'action', 'formaction', 'hidden', 'disabled', 'readonly', 'inert', 'href', 'for'],
+        'form', 'action', 'formaction', 'method', 'formmethod', 'hidden', 'disabled', 'readonly', 'inert', 'href', 'for'],
     });
   }
 
@@ -127,13 +128,20 @@
     const nodes = new Map();
     if (!collect(document, elements)) return {page, forms: [], nodes};
     const submitActions = new Map();
+    const getSubmitters = new Set();
     for (const button of elements.submitters) {
-      if (!button.form || !button.hasAttribute('formaction')) continue;
-      watched.set(button, button.form);
+      const owner = button.form;
+      if (!owner) continue;
+      watched.set(button, owner);
       if (button.matches(':disabled')) continue;
-      const destinations = submitActions.get(button.form) ?? new Set();
-      destinations.add(route(button.getAttribute('formaction') || location.href, document.baseURI));
-      submitActions.set(button.form, destinations);
+      if (button.hasAttribute('formmethod') && !['post', 'dialog'].includes(button.formMethod)) {
+        getSubmitters.add(owner);
+      }
+      if (button.hasAttribute('formaction')) {
+        const destinations = submitActions.get(owner) ?? new Set();
+        destinations.add(route(button.getAttribute('formaction') || location.href, document.baseURI));
+        submitActions.set(owner, destinations);
+      }
     }
     for (const input of elements.inputs) {
       const owner = input.form ?? input.getRootNode();
@@ -148,7 +156,9 @@
         form = {
           id: id(owner), stamp: versions.get(owner) ?? 0,
           label: (htmlForm ? (label(owner) || attribute(owner, 'name') || attribute(owner, 'id') || '') : '').slice(0, 128),
-          destinations: [...destinations], fields: [],
+          destinations: [...destinations],
+          submitsWithGet: htmlForm && (methodOf.call(owner) === 'get' || getSubmitters.has(owner)),
+          fields: [],
         };
         if (owner instanceof HTMLFormElement) watched.set(owner, owner);
         groups.set(owner, form);
@@ -156,7 +166,7 @@
       const labels = Array.from(input.labels ?? []).slice(0, 4).map(node => node.textContent.slice(0, 80));
       const field = {
         id: id(input), kind: input.type,
-        autocomplete: (input.getAttribute('autocomplete') ?? '').trim().slice(-32).toLowerCase(),
+        autocomplete: autocomplete(input),
         hint: [input.name, input.id, label(input), ...labels].map(text => text.slice(0, 32)).join(' ').slice(0, 128),
       };
       if (form.fields.length <= MAX_FIELDS) form.fields.push(field);
@@ -164,6 +174,16 @@
     }
     return {page, forms: [...groups.values()].filter(form =>
       form.fields.length <= MAX_FIELDS && form.destinations.length <= 16), nodes};
+  }
+
+  function autocomplete(input) {
+    const value = (attribute(input, 'autocomplete') ?? '').trim().toLowerCase();
+    if (value.length <= 32) return value;
+    // Keep complete trailing tokens. A truncated token must stay unsupported.
+    const trailing = value.slice(-32);
+    if (/[\t\n\f\r ]/.test(value.at(-33))) return trailing;
+    const boundary = trailing.search(/[\t\n\f\r ]/);
+    return boundary < 0 ? '?' : '?' + trailing.slice(boundary);
   }
 
   function setValue(input, value) {
@@ -184,7 +204,7 @@
   function fill(message) {
     const fresh = matchingForm(message.operation, message.fields.form, message.origin);
     operations.delete(message.operation);
-    if (!fresh) return false;
+    if (!fresh || (message.fields.password !== null && fresh.form.submitsWithGet)) return false;
     const {username, password} = message.login;
     const entries = [[message.fields.username, username], [message.fields.password, password]]
       .filter(([, value]) => value !== null);

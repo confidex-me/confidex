@@ -24,12 +24,13 @@ pub struct Snapshot {
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Form {
     pub id: u32,
     stamp: u32,
     label: String,
     destinations: Vec<String>,
+    submits_with_get: bool,
     fields: Vec<Field>,
 }
 
@@ -114,16 +115,21 @@ impl Form {
             return None;
         }
         let mut password = None;
-        let mut new_password = false;
+        let mut has_masked_field = false;
         let mut username = None;
         let mut score = 0;
         let mut ambiguous = false;
         for field in &self.fields {
             if field.kind == Kind::Password {
-                if field.token() == "new-password" || field.new_password_hint() {
-                    new_password = true;
-                } else if field.token() == "one-time-code" || password.replace(field.id).is_some() {
-                    return None;
+                has_masked_field = true;
+                match field.token() {
+                    "new-password" => return None,
+                    "current-password" | "" | "on" | "off" => {
+                        if field.new_password_hint() || password.replace(field.id).is_some() {
+                            return None;
+                        }
+                    }
+                    _ => (),
                 }
             } else {
                 let rank = field.username_rank();
@@ -136,8 +142,13 @@ impl Form {
                 }
             }
         }
-        // A sign-up or password-change form is outside the login flow.
-        if new_password || ambiguous || (password.is_none() && score < 2) {
+        // A username-first form must have no visible masked field.
+        if ambiguous
+            || match password {
+                Some(_) => self.submits_with_get,
+                None => has_masked_field || score < 2,
+            }
+        {
             return None;
         }
         Some(Choice {
@@ -158,11 +169,12 @@ impl Form {
 
 impl Field {
     fn token(&self) -> &str {
-        self.autocomplete
-            .split_ascii_whitespace()
-            .filter(|part| *part != "webauthn")
-            .next_back()
-            .unwrap_or("")
+        let mut tokens = self.autocomplete.split_ascii_whitespace();
+        match tokens.next_back() {
+            Some("webauthn") => tokens.next_back().unwrap_or("webauthn"),
+            Some(token) => token,
+            None => "",
+        }
     }
 
     fn new_password_hint(&self) -> bool {
@@ -215,5 +227,88 @@ impl Field {
         } else {
             0
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ORIGIN: &str = "https://example.test";
+
+    fn form(method_is_get: bool, fields: &[(Kind, &str)]) -> Form {
+        Form {
+            id: 1,
+            stamp: 0,
+            label: String::new(),
+            destinations: vec![ORIGIN.into()],
+            submits_with_get: method_is_get,
+            fields: fields
+                .iter()
+                .enumerate()
+                .map(|(index, (kind, autocomplete))| Field {
+                    id: index as u32 + 2,
+                    kind: *kind,
+                    autocomplete: (*autocomplete).into(),
+                    hint: String::new(),
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn masked_explicit_non_login_roles_are_never_password_candidates() {
+        for role in [
+            "cc-csc",
+            "section-checkout billing cc-csc",
+            "one-time-code",
+            "webauthn",
+            "unknown",
+        ] {
+            assert!(
+                form(false, &[(Kind::Password, role)])
+                    .choice(ORIGIN)
+                    .is_none()
+            );
+            assert!(
+                form(false, &[(Kind::Email, "username"), (Kind::Password, role)])
+                    .choice(ORIGIN)
+                    .is_none()
+            );
+        }
+        let mixed = form(
+            false,
+            &[
+                (Kind::Password, "cc-csc"),
+                (Kind::Password, "section-login current-password webauthn"),
+            ],
+        );
+        assert_eq!(mixed.choice(ORIGIN).unwrap().target.password, Some(3));
+        for role in ["", "on", "off"] {
+            assert_eq!(
+                form(false, &[(Kind::Password, role)])
+                    .choice(ORIGIN)
+                    .unwrap()
+                    .target
+                    .password,
+                Some(2)
+            );
+        }
+    }
+
+    #[test]
+    fn get_blocks_password_fill_but_preserves_a_username_only_first_step() {
+        let login = [
+            (Kind::Email, "username"),
+            (Kind::Password, "current-password"),
+        ];
+        assert!(form(true, &login).choice(ORIGIN).is_none());
+        assert_eq!(
+            form(false, &login).choice(ORIGIN).unwrap().target.password,
+            Some(3)
+        );
+        let first_step = form(true, &login[..1]).choice(ORIGIN).unwrap().target;
+        assert_eq!(first_step.username, Some(2));
+        assert_eq!(first_step.password, None);
     }
 }

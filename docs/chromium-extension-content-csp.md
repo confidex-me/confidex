@@ -36,11 +36,13 @@ using a disposable test manifest with its own web-accessible resources.
 
 A snapshot contains document-local IDs and form revisions, input types,
 autocomplete tokens, bounded label/name/id hints, and the resolved origins
-of the form and its submit overrides. Browser APIs supply the tab, document
+of the form and its submit overrides, along with whether any submit route
+uses GET. Browser APIs supply the tab, document
 and effective origin independently. The session returns only account
 previews and form choices to the popup. It consumes the selected
 operation once and checks the current record revision and HTTPS origin
-before preparing credentials. The background addresses the exact Chrome
+before preparing credentials. A login password requires an eligible
+password field and a form without a GET route. The background addresses the exact Chrome
 document ID and checks live session ownership and permission before
 delivery. The adapter checks the current address and form again before
 assigning values and dispatching input and change events.

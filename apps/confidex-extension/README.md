@@ -88,7 +88,9 @@ Confidex can preselect the same account in the same tab and origin.
 **Fill login** is required for both steps. Form or document changes can
 invalidate the selection and require a fresh scan. Registration, password
 changes, insecure or cross-origin form destinations, iframes and closed
-Shadow DOM are outside the supported fill flow.
+Shadow DOM are outside the supported fill flow. Password fill excludes
+masked fields with explicit non-login autocomplete roles and forms that
+can submit credentials using HTTP GET.
 
 The popup receives account previews and form choices. Each selection is bound to the live
 session, tab, document and form. The worker rejects replay, conflicting

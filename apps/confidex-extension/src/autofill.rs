@@ -285,7 +285,7 @@ mod tests {
             "version":1,
             "context":{"tabId":2,"frameId":0,"documentId":"a001","origin":"https://example.test"},
             "action":{"Find":{"operation":"aa","after":null,"snapshot":{"page":1,"forms":[{
-              "id":1,"stamp":0,"label":"Login","destinations":["https://example.test"],
+              "id":1,"stamp":0,"label":"Login","destinations":["https://example.test"],"submitsWithGet":false,
               "fields":[{"id":2,"kind":"password","autocomplete":"current-password","hint":""}]
             }]}}}
         }"#,
