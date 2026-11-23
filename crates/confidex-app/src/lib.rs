@@ -1405,6 +1405,17 @@ async fn append<S: Store>(
     options: Options<'_>,
     check: ParentCheck,
 ) -> Result<RevisionId, Error> {
+    append_if(store, vault, record, options, check, || true).await
+}
+
+async fn append_if<S: Store>(
+    store: &mut S,
+    vault: &lock::OpenedVault,
+    record: &Record,
+    options: Options<'_>,
+    check: ParentCheck,
+    live: impl Fn() -> bool,
+) -> Result<RevisionId, Error> {
     let Options {
         record_id,
         parents,
@@ -1457,7 +1468,7 @@ async fn append<S: Store>(
                 expected: None,
             });
         }
-        match sync::publish_local(
+        match sync::publish_local_if(
             store,
             vault.vault_id(),
             vec![confidex_storage::StoredObject {
@@ -1466,6 +1477,7 @@ async fn append<S: Store>(
                 tags: tags.clone(),
             }],
             changes,
+            &live,
         )
         .await
         {

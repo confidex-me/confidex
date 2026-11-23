@@ -643,3 +643,15 @@ extension-form-changed = Ukurasa, fomu au rekodi imebadilika. Onyesha upya orodh
 extension-form-choice = Fomu ya kuingia
 extension-session-open = Fungua kipindi
 extension-filled = Taarifa za kuingia zimejazwa.
+
+extension-save-offer = Uhifadhi taarifa hizi za kuingia?
+extension-update-offer = Chagua taarifa za kuingia za kusasisha
+extension-update-password = Sasisha nenosiri
+extension-save-dismiss = Ondoa
+extension-save-never = Usipendekeze kuhifadhi kwenye tovuti hii
+extension-site-disable = Zima Confidex kwenye tovuti hii
+extension-site-enable = Washa Confidex kwenye tovuti hii
+extension-saving-enable = Pendekeza kuhifadhi kwenye tovuti hii
+extension-site-disabled = Confidex imezimwa kwenye tovuti hii.
+extension-save-changed = Pendekezo limebadilika au limeisha muda. Angalia mapendekezo ya sasa.
+extension-save-duplicate = Taarifa hizi za kuingia zimehifadhiwa tayari.

@@ -1,6 +1,7 @@
 use crate::protocol::{
     Action, Credentials, MAX_RESPONSE, Reply, Request, Response, SyncStatus, VERSION,
 };
+use crate::save_ui::SavePanel;
 use confidex_app::{
     Error,
     browser_logins::{
@@ -117,6 +118,7 @@ impl WebHandle {
                         rows: Vec::new(),
                         next: None,
                         status: None,
+                        saves: SavePanel::default(),
                     };
                     app.request(&cc.egui_ctx, Action::Status);
                     Ok(Box::new(app))
@@ -388,6 +390,7 @@ struct App {
     issues: Issues,
     editor: Option<Editor>,
     status: Option<(&'static str, bool)>,
+    saves: SavePanel,
 }
 
 impl App {
@@ -789,6 +792,9 @@ impl App {
             Page::Opened(name) => {
                 ui.heading(name);
                 self.show_sync(ui);
+                if self.editor.is_none() {
+                    self.saves.show(ui, &self.locale, self.colors);
+                }
                 let mut selected = None;
                 ui.horizontal_wrapped(|ui| {
                     if ui_kit::button(
@@ -917,6 +923,7 @@ impl eframe::App for App {
             self.sync = SyncStatus::Disabled;
             self.issues = Issues::default();
             self.editor = None;
+            self.saves = SavePanel::default();
             let pending = self.pending.take().is_some();
             self.page = match std::mem::replace(&mut self.page, Page::Starting) {
                 Page::Opened(name) => Page::Locked(name),

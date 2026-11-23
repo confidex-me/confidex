@@ -22,7 +22,7 @@ pub struct Cursor {
     pub offset: usize,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Login {
     pub target: Selection,
     pub title: String,
@@ -37,7 +37,7 @@ impl Drop for Login {
     }
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Issues {
     pub ambiguous: bool,
     pub conflicts: bool,
@@ -48,6 +48,13 @@ pub struct Page {
     pub rows: Vec<Login>,
     pub next: Option<Cursor>,
     pub issues: Issues,
+}
+
+#[derive(Default)]
+pub struct CaptureMatches {
+    pub rows: Vec<Login>,
+    pub issues: Issues,
+    pub duplicate: bool,
 }
 
 #[derive(Default, Deserialize, Serialize, ZeroizeOnDrop)]
@@ -491,6 +498,92 @@ impl Engine {
         Ok(FillLogin { username, password })
     }
 
+    /// Compare full credentials in the vault. Only redacted previews leave this method.
+    /// Without a username (a password change), consider every account on this origin.
+    pub async fn match_browser_capture(
+        &self,
+        store: &mut impl Store,
+        origin: &str,
+        username: Option<&str>,
+        password: &str,
+        live: impl Fn() -> bool,
+    ) -> Result<CaptureMatches, Error> {
+        let vault = self.vault.as_ref().ok_or(Error::Locked)?;
+        let mut result = CaptureMatches::default();
+        let mut after = None;
+        loop {
+            if !live() {
+                return Err(Error::Input);
+            }
+            let heads = store
+                .branch_heads(vault.vault_id(), after.as_ref(), None)
+                .await?;
+            for head in &heads {
+                if !live() {
+                    return Err(Error::Input);
+                }
+                let Some(record) = read_record(store, vault, head.record, head.revision).await?
+                else {
+                    continue;
+                };
+                let (pairs, ambiguous) = pairs(&record);
+                result.issues.ambiguous |= ambiguous && has_separate_origin(&record, origin);
+                let fields = std::cell::LazyCell::new(|| fields::count(&record));
+                let mut current = None;
+                for pair in pairs {
+                    if !matches_origin(&record, &pair, origin) {
+                        continue;
+                    }
+                    let saved_password = text(&record.entries[pair.password], "password");
+                    let saved_username = text(&record.entries[pair.username], "username");
+                    if username.is_some() && saved_username != username {
+                        continue;
+                    }
+                    if current.is_none() {
+                        current = Some(
+                            match record_head(store, vault.vault_id(), head.record).await {
+                                Ok(Some(current)) => current == *head,
+                                Ok(None) => false,
+                                Err(CONFLICT) => {
+                                    result.issues.conflicts = true;
+                                    false
+                                }
+                                Err(error) => return Err(error),
+                            },
+                        );
+                    }
+                    if current == Some(false) {
+                        break;
+                    }
+                    if saved_password == Some(password) {
+                        if username.is_some() {
+                            result.duplicate = true;
+                            return Ok(result);
+                        }
+                        continue;
+                    }
+                    if result.rows.len() == PAGE_SIZE {
+                        result.issues.ambiguous = true;
+                        return Ok(result);
+                    }
+                    let mut row = preview(&record, head, &pair, *fields);
+                    // Up to ten offers can share one session reply. Bound the
+                    // display strings independently of the full comparisons.
+                    for value in [&mut row.title, &mut row.username] {
+                        let short = value.chars().filter(|c| !c.is_control()).take(60).collect();
+                        value.zeroize();
+                        *value = short;
+                    }
+                    result.rows.push(row);
+                }
+            }
+            if heads.len() < confidex_storage::PAGE_SIZE {
+                return Ok(result);
+            }
+            after = heads.into_iter().last();
+        }
+    }
+
     pub async fn browser_login_editor(
         &self,
         store: &mut impl Store,
@@ -508,9 +601,21 @@ impl Engine {
         login: &NewLogin,
         epoch: u64,
     ) -> Result<Head, Error> {
+        self.create_browser_login_if(store, record, login, epoch, || true)
+            .await
+    }
+
+    pub async fn create_browser_login_if(
+        &mut self,
+        store: &mut impl Store,
+        record: RecordId,
+        login: &NewLogin,
+        epoch: u64,
+        live: impl Fn() -> bool,
+    ) -> Result<Head, Error> {
         let vault = self.vault.as_ref().ok_or(Error::Locked)?;
         let content = new_content(login)?;
-        let revision = append(
+        let revision = append_if(
             store,
             vault,
             &content,
@@ -522,6 +627,7 @@ impl Engine {
                 kind: EventKind::Content,
             },
             ParentCheck::OnlyCurrent,
+            live,
         )
         .await?;
         self.search = None;
@@ -536,11 +642,23 @@ impl Engine {
         change: &Change,
         epoch: u64,
     ) -> Result<Head, Error> {
+        self.update_browser_login_if(store, target, change, epoch, || true)
+            .await
+    }
+
+    pub async fn update_browser_login_if(
+        &mut self,
+        store: &mut impl Store,
+        target: &Selection,
+        change: &Change,
+        epoch: u64,
+        live: impl Fn() -> bool,
+    ) -> Result<Head, Error> {
         let vault = self.vault.as_ref().ok_or(Error::Locked)?;
         let Head { record, revision } = target.head;
         let mut content = read_current_login(store, vault, &target.head).await?;
         update_content(&mut content, target.field, change)?;
-        let revision = append(
+        let revision = append_if(
             store,
             vault,
             &content,
@@ -552,6 +670,7 @@ impl Engine {
                 kind: EventKind::Content,
             },
             ParentCheck::OnlyCurrent,
+            live,
         )
         .await?;
         self.search = None;
@@ -561,8 +680,7 @@ impl Engine {
 }
 
 fn fill_values<'a>(record: &'a Record, pair: &Pair, origin: &str) -> Option<(&'a str, &'a str)> {
-    let url = text(&record.entries[pair.url], "url")?;
-    if login_origin(url).ok().as_deref() != Some(origin) {
+    if !matches_origin(record, pair, origin) {
         return None;
     }
     let password =
@@ -570,6 +688,13 @@ fn fill_values<'a>(record: &'a Record, pair: &Pair, origin: &str) -> Option<(&'a
     // A protected username is never copied into preview metadata or filled.
     let username = editable_text(&record.entries[pair.username], "username").unwrap_or("");
     Some((username, password))
+}
+
+fn matches_origin(record: &Record, pair: &Pair, origin: &str) -> bool {
+    text(&record.entries[pair.url], "url")
+        .and_then(|url| login_origin(url).ok())
+        .as_deref()
+        == Some(origin)
 }
 
 fn append_previews(
@@ -580,21 +705,8 @@ fn append_previews(
     origin: Option<&str>,
 ) -> Option<usize> {
     let (pairs, ambiguous) = pairs(record);
-    page.issues.ambiguous |= ambiguous
-        && origin.is_none_or(|origin| {
-            record.entries.iter().any(|entry| {
-                entry.type_name == "url/v1"
-                    && text(entry, "url")
-                        .and_then(|url| login_origin(url).ok())
-                        .as_deref()
-                        == Some(origin)
-            })
-        });
-    let title = record
-        .extra
-        .get(TITLE_KEY)
-        .and_then(Value::as_str)
-        .unwrap_or("");
+    page.issues.ambiguous |=
+        ambiguous && origin.is_none_or(|origin| has_separate_origin(record, origin));
     let fields = fields::count(record);
     for (index, pair) in pairs.enumerate().skip(offset) {
         if origin.is_some_and(|origin| fill_values(record, &pair, origin).is_none()) {
@@ -603,21 +715,42 @@ fn append_previews(
         if page.rows.len() == PAGE_SIZE {
             return Some(index);
         }
-        page.rows.push(Login {
-            target: Selection {
-                head: head.clone(),
-                field: pair.password,
-            },
-            fields,
-            title: title.chars().take(128).collect(),
-            username: unprotected_text(&record.entries[pair.username], "username")
-                .unwrap_or("")
-                .chars()
-                .take(128)
-                .collect(),
-        });
+        page.rows.push(preview(record, head, &pair, fields));
     }
     None
+}
+
+fn has_separate_origin(record: &Record, origin: &str) -> bool {
+    record.entries.iter().any(|entry| {
+        entry.type_name == "url/v1"
+            && text(entry, "url")
+                .and_then(|url| login_origin(url).ok())
+                .as_deref()
+                == Some(origin)
+    })
+}
+
+fn preview(record: &Record, head: &Head, pair: &Pair, fields: usize) -> Login {
+    Login {
+        target: Selection {
+            head: head.clone(),
+            field: pair.password,
+        },
+        fields,
+        title: record
+            .extra
+            .get(TITLE_KEY)
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .chars()
+            .take(128)
+            .collect(),
+        username: unprotected_text(&record.entries[pair.username], "username")
+            .unwrap_or("")
+            .chars()
+            .take(128)
+            .collect(),
+    }
 }
 
 #[cfg(test)]

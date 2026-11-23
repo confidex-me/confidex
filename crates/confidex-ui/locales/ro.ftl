@@ -644,3 +644,15 @@ extension-form-changed = Pagina, formularul sau înregistrarea s-a schimbat. Re�
 extension-form-choice = Formular de conectare
 extension-session-open = Deschide sesiunea
 extension-filled = Datele de conectare au fost completate.
+
+extension-save-offer = Salvezi aceste date de conectare?
+extension-update-offer = Alege datele de conectare de actualizat
+extension-update-password = Actualizează parola
+extension-save-dismiss = Respinge
+extension-save-never = Nu propune salvarea pe acest site
+extension-site-disable = Dezactivează Confidex pe acest site
+extension-site-enable = Activează Confidex pe acest site
+extension-saving-enable = Propune salvarea pe acest site
+extension-site-disabled = Confidex este dezactivat pe acest site.
+extension-save-changed = Propunerea s-a schimbat sau a expirat. Verifică propunerile actuale.
+extension-save-duplicate = Aceste date de conectare sunt deja salvate.

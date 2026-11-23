@@ -643,3 +643,15 @@ extension-form-changed = Η σελίδα, η φόρμα ή η καταχώρισ
 extension-form-choice = Φόρμα σύνδεσης
 extension-session-open = Άνοιγμα συνεδρίας
 extension-filled = Τα στοιχεία σύνδεσης συμπληρώθηκαν.
+
+extension-save-offer = Να αποθηκευτούν αυτά τα στοιχεία σύνδεσης;
+extension-update-offer = Επιλέξτε στοιχεία σύνδεσης για ενημέρωση
+extension-update-password = Ενημέρωση κωδικού πρόσβασης
+extension-save-dismiss = Παράβλεψη
+extension-save-never = Να μην προτείνεται αποθήκευση σε αυτόν τον ιστότοπο
+extension-site-disable = Απενεργοποίηση Confidex σε αυτόν τον ιστότοπο
+extension-site-enable = Ενεργοποίηση Confidex σε αυτόν τον ιστότοπο
+extension-saving-enable = Πρόταση αποθήκευσης σε αυτόν τον ιστότοπο
+extension-site-disabled = Το Confidex είναι απενεργοποιημένο σε αυτόν τον ιστότοπο.
+extension-save-changed = Η πρόταση άλλαξε ή έληξε. Δείτε τις τρέχουσες προτάσεις.
+extension-save-duplicate = Αυτά τα στοιχεία σύνδεσης έχουν ήδη αποθηκευτεί.

@@ -640,3 +640,15 @@ extension-form-changed = 页面、表单或记录已更改。请刷新列表后�
 extension-form-choice = 登录表单
 extension-session-open = 打开会话
 extension-filled = 已填充登录信息。
+
+extension-save-offer = 保存此登录信息？
+extension-update-offer = 选择要更新的登录信息
+extension-update-password = 更新密码
+extension-save-dismiss = 关闭
+extension-save-never = 不再为此网站提供保存建议
+extension-site-disable = 在此网站上停用 Confidex
+extension-site-enable = 在此网站上启用 Confidex
+extension-saving-enable = 在此网站上提供保存建议
+extension-site-disabled = 此网站已停用 Confidex。
+extension-save-changed = 保存建议已更改或过期。请查看当前建议。
+extension-save-duplicate = 此登录信息已保存。

@@ -99,6 +99,35 @@ checks the current form and address again immediately before insertion.
 See [Content WASM under a strict site CSP](../../docs/chromium-extension-content-csp.md)
 for the architecture decision and isolated-world WASM experiment.
 
+## Save submitted logins
+
+With HTTPS site access granted and the vault unlocked, submit a sign-in
+form and look for the Confidex toolbar badge. The toolbar popup shows the
+offer for the current tab. The session tab shows pending offers from all
+tabs. Review the origin and account, then choose **Save** or select an
+existing login and choose **Update password**. Confidex detects the
+submission, so verify that the credentials worked before saving.
+
+A matching origin, username and password produces no offer. Registration
+forms with a confirmation field require both password values to match.
+Password changes update the selected saved login and preserve its other
+fields. If that revision changes before confirmation, review the new
+selection and try again. A confirmed change is stored locally first, and
+the UI shows synchronization status separately.
+
+Confidex keeps offers in the unlocked worker for two minutes, up to one per
+tab and ten per session. An offer survives navigation in its source tab.
+Closing the tab, dismissing the offer, or locking the vault clears it.
+The worker also keeps a short-lived username for two-step sign-ins in the
+same tab and origin.
+
+Use **Never offer to save on this site** to retain autofill while suppressing
+save offers. **Disable Confidex on this site** turns off both. Re-enable
+either from the toolbar popup while visiting the site. The extension
+stores these exceptions locally as HTTPS origins, including domain and
+port. Captured credentials are held in memory until dismissed, expired,
+or confirmed into the encrypted vault.
+
 ## Browser checks
 
 Check visible startup errors for missing JavaScript and WASM assets with
@@ -129,6 +158,12 @@ persistent extension data. It restarts Chromium with the same temporary
 profile, unlocks offline again, and checks both directions of synchronization
 and conflict resolution with the main web runtime. It removes the temporary
 browser profile and server data and writes no traces or screenshots.
+
+Autosave coverage includes native submission and navigation under strict
+CSP, an offline save followed by autofill and web sync, duplicate
+suppression, registration confirmation, a password change in an open
+Shadow DOM SPA, stale revision rejection, two-step sign-in, and separate
+saving and site-access exceptions.
 
 Headless runs record prior consent in Chromium's test profile and then use the
 permission button to request actual access. To exercise the first-use native

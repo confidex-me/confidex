@@ -706,3 +706,15 @@ extension-form-changed = Страница, форма или запись изм
 extension-form-choice = Форма входа
 extension-session-open = Открыть сессию
 extension-filled = Данные для входа заполнены.
+
+extension-save-offer = Сохранить этот логин?
+extension-update-offer = Выберите логин для обновления
+extension-update-password = Обновить пароль
+extension-save-dismiss = Закрыть
+extension-save-never = Не предлагать сохранение для этого сайта
+extension-site-disable = Отключить Confidex на этом сайте
+extension-site-enable = Включить Confidex на этом сайте
+extension-saving-enable = Предлагать сохранение для этого сайта
+extension-site-disabled = Confidex отключён на этом сайте.
+extension-save-changed = Предложение изменилось или истекло. Проверьте текущие предложения.
+extension-save-duplicate = Этот логин уже сохранён.

@@ -24,3 +24,9 @@ mod autofill;
 
 #[cfg(all(feature = "ui", target_arch = "wasm32", target_os = "unknown"))]
 mod popup;
+
+#[cfg(any(test, feature = "session", feature = "ui"))]
+mod autosave;
+
+#[cfg(all(feature = "ui", target_arch = "wasm32", target_os = "unknown"))]
+mod save_ui;

@@ -65,6 +65,18 @@ pub struct Choice {
     pub label: String,
 }
 
+#[derive(Serialize)]
+pub struct CaptureFields {
+    pub form: u32,
+    pub username: Option<u32>,
+    pub password: Option<u32>,
+    pub confirmation: Option<u32>,
+    #[serde(skip)]
+    pub update_only: bool,
+    #[serde(skip)]
+    pub new_password: bool,
+}
+
 impl Snapshot {
     pub fn valid(&self) -> bool {
         let mut groups = HashSet::new();
@@ -106,6 +118,93 @@ impl Snapshot {
 }
 
 impl Form {
+    pub fn capture_fields(&self, origin: &str) -> Option<CaptureFields> {
+        if !self
+            .destinations
+            .iter()
+            .all(|destination| destination == origin)
+        {
+            return None;
+        }
+        let username = self.username().ok()?;
+        let (mut current, mut new, mut confirmation) = (None, None, None);
+        for field in self
+            .fields
+            .iter()
+            .filter(|field| field.kind == Kind::Password)
+        {
+            match field.token() {
+                "new-password" | "" | "on" | "off" if field.confirmation_hint() => {
+                    if confirmation.replace(field.id).is_some() {
+                        return None;
+                    }
+                }
+                "new-password" | "" | "on" | "off"
+                    if field.token() == "new-password" || field.new_password_hint() =>
+                {
+                    if new.is_none() {
+                        new = Some(field.id);
+                    } else if confirmation.replace(field.id).is_some() {
+                        return None;
+                    }
+                }
+                "current-password" | "" | "on" | "off" => {
+                    if current.replace(field).is_some() {
+                        return None;
+                    }
+                }
+                _ => return None,
+            }
+        }
+        // A generic password followed by a field explicitly labeled as confirmation
+        // represents a new password. An explicitly current password never does.
+        if new.is_none() && confirmation.is_some() {
+            let field = current.take()?;
+            if field.token() == "current-password" || field.current_password_hint() {
+                return None;
+            }
+            new = Some(field.id);
+        }
+        if new.is_some()
+            && current.is_some_and(|field| {
+                field.token() != "current-password" && !field.current_password_hint()
+            })
+        {
+            return None;
+        }
+        let password = new.or_else(|| current.map(|field| field.id));
+        if password.is_some() && self.submits_with_get
+            || password.is_none() && username.is_none_or(|field| field.username_rank() < 2)
+        {
+            return None;
+        }
+        Some(CaptureFields {
+            form: self.id,
+            username: username.map(|field| field.id),
+            password,
+            confirmation,
+            update_only: new.is_some() && (current.is_some() || username.is_none()),
+            new_password: new.is_some(),
+        })
+    }
+
+    fn username(&self) -> Result<Option<&Field>, ()> {
+        let (mut selected, mut rank, mut ambiguous) = (None, 0, false);
+        for field in self
+            .fields
+            .iter()
+            .filter(|field| field.kind != Kind::Password)
+        {
+            let score = field.username_rank();
+            if score > rank {
+                (selected, rank, ambiguous) = (Some(field), score, false);
+            } else if score > 0 && score == rank {
+                ambiguous = true;
+            }
+        }
+        if ambiguous { Err(()) } else { Ok(selected) }
+    }
+
     fn choice(&self, origin: &str) -> Option<Choice> {
         if !self
             .destinations
@@ -116,9 +215,6 @@ impl Form {
         }
         let mut password = None;
         let mut has_masked_field = false;
-        let mut username = None;
-        let mut score = 0;
-        let mut ambiguous = false;
         for field in &self.fields {
             if field.kind == Kind::Password {
                 has_masked_field = true;
@@ -131,30 +227,20 @@ impl Form {
                     }
                     _ => (),
                 }
-            } else {
-                let rank = field.username_rank();
-                if rank > score {
-                    username = Some(field.id);
-                    score = rank;
-                    ambiguous = false;
-                } else if rank > 0 && rank == score {
-                    ambiguous = true;
-                }
             }
         }
+        let username = self.username().ok()?;
         // A username-first form must have no visible masked field.
-        if ambiguous
-            || match password {
-                Some(_) => self.submits_with_get,
-                None => has_masked_field || score < 2,
-            }
-        {
+        if match password {
+            Some(_) => self.submits_with_get,
+            None => has_masked_field || username.is_none_or(|field| field.username_rank() < 2),
+        } {
             return None;
         }
         Some(Choice {
             target: Target {
                 form: self.id,
-                username,
+                username: username.map(|field| field.id),
                 password,
             },
             label: self
@@ -177,27 +263,41 @@ impl Field {
         }
     }
 
-    fn new_password_hint(&self) -> bool {
+    fn hint_contains(&self, patterns: &[&str]) -> bool {
         let hint: String = self
             .hint
             .chars()
             .filter(|c| c.is_alphanumeric())
             .flat_map(char::to_lowercase)
             .collect();
-        [
-            "newpass",
-            "confirmpass",
-            "passwordconfirm",
-            "repeatpass",
-            "passwordrepeat",
-            "passwordnew",
-            "verifypass",
-            "retypepass",
-            "новыйпароль",
-            "повторитепароль",
-        ]
-        .iter()
-        .any(|pattern| hint.contains(pattern))
+        patterns.iter().any(|pattern| hint.contains(pattern))
+    }
+
+    fn new_password_hint(&self) -> bool {
+        self.confirmation_hint() || self.hint_contains(&["newpass", "passwordnew", "новыйпароль"])
+    }
+
+    fn confirmation_hint(&self) -> bool {
+        self.hint
+            .split(|character: char| !character.is_alphanumeric())
+            .any(|word| {
+                ["confirm", "repeat", "retype", "подтвердите", "повторите"]
+                    .iter()
+                    .any(|hint| word.eq_ignore_ascii_case(hint))
+            })
+            || self.hint_contains(&[
+                "confirmpass",
+                "passwordconfirm",
+                "repeatpass",
+                "passwordrepeat",
+                "verifypass",
+                "retypepass",
+                "повторитепароль",
+            ])
+    }
+
+    fn current_password_hint(&self) -> bool {
+        self.hint_contains(&["oldpass", "currentpass", "старыйпароль", "текущийпароль"])
     }
 
     fn username_rank(&self) -> u8 {
@@ -310,5 +410,51 @@ mod tests {
         let first_step = form(true, &login[..1]).choice(ORIGIN).unwrap().target;
         assert_eq!(first_step.username, Some(2));
         assert_eq!(first_step.password, None);
+    }
+    #[test]
+    fn capture_identifies_registration_and_change_without_reading_the_old_password() {
+        let fields = [
+            (Kind::Email, "username"),
+            (Kind::Password, "current-password"),
+            (Kind::Password, "new-password"),
+            (Kind::Password, "new-password"),
+        ];
+        let change = form(false, &fields).capture_fields(ORIGIN).unwrap();
+        assert!(change.update_only);
+        assert_eq!(
+            (change.username, change.password, change.confirmation),
+            (Some(2), Some(4), Some(5))
+        );
+        let registration = form(false, &[fields[0], fields[2], fields[3]]);
+        let plan = registration.capture_fields(ORIGIN).unwrap();
+        assert!(!plan.update_only);
+        assert!(plan.new_password);
+        assert_eq!((plan.password, plan.confirmation), (Some(3), Some(4)));
+        assert!(
+            registration
+                .capture_fields("https://foreign.test")
+                .is_none()
+        );
+        assert!(form(true, &fields).capture_fields(ORIGIN).is_none());
+        assert!(
+            form(false, &[fields[0], fields[2], fields[2], fields[2]])
+                .capture_fields(ORIGIN)
+                .is_none()
+        );
+        assert!(
+            form(false, &[fields[1], fields[1]])
+                .capture_fields(ORIGIN)
+                .is_none()
+        );
+        assert!(
+            form(false, &[(Kind::Password, "one-time-code")])
+                .capture_fields(ORIGIN)
+                .is_none()
+        );
+        assert!(
+            form(false, &[fields[0], fields[0], fields[1]])
+                .capture_fields(ORIGIN)
+                .is_none()
+        );
     }
 }

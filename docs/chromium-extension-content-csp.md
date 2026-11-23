@@ -30,8 +30,8 @@ messaging under strict CSP both passed.
 Run form classification in the session worker's Rust/WASM. The isolated
 content adapter uses native DOM and Chrome APIs to collect bounded,
 value-free snapshots and to apply an authorized fill. It visits only the top
-document and open Shadow DOM. The adapter neither loads WASM on the website
-nor reads field values. The isolated-world WASM probe remains reproducible
+document and open Shadow DOM. WASM runs in the extension's session worker.
+The isolated-world WASM probe remains reproducible
 using a disposable test manifest with its own web-accessible resources.
 
 A snapshot contains document-local IDs and form revisions, input types,
@@ -50,3 +50,17 @@ assigning values and dispatching input and change events.
 This route uses isolated-world messaging under strict CSP. The acceptance
 check exercises a fill on the strict page. The optional standalone probe
 continues to reproduce the original WASM compilation limitation.
+
+## Autosave
+
+The session classifies the same value-free snapshots in Rust and returns
+the field IDs that may be read on submission. The content adapter first
+obtains authorization from the live session for this origin. On submit or
+a recognized SPA button click, it verifies the form still matches the
+authorized snapshot and reads only those field IDs. It sends the values
+before navigation destroys the document. Chromium supplies the sending
+document and origin, and the worker rechecks the permission, exclusion
+policy, lease and form metadata before retaining a candidate. The worker
+holds the candidate until it expires or receives a trusted extension UI
+decision. The page receives no vault credentials or match results from
+autosave.

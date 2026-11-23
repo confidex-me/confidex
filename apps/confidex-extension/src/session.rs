@@ -1,13 +1,20 @@
 use crate::{
     autofill::{Autofill, PopupReply, SiteAction, SiteReply, SiteRequest},
+    autosave::{Autosave, Candidate, OfferKind, SaveAction, SaveReply, SaveRequest, SitePolicy},
     lease::Lease,
-    protocol::{Action, FormReport, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response},
+    protocol::{
+        Action, FormReport, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response, SyncStatus,
+    },
     sync_schedule::SyncSchedule,
 };
-use confidex_app::{Command, DeviceKeys, Error, Output};
+use confidex_app::{
+    Command, DeviceKeys, Error, Output,
+    browser_logins::{CaptureMatches, Change, NewLogin},
+};
 use confidex_browser::{BrowserStore, Net, Runtime};
 use confidex_storage::{Store, VaultId, VaultInfo};
 use js_sys::Uint8Array;
+use std::{cell::Cell, rc::Rc};
 use wasm_bindgen::prelude::*;
 use zeroize::Zeroizing;
 
@@ -34,6 +41,8 @@ fn now() -> u64 {
 pub struct SessionLease {
     lease: Lease,
     autofill: Autofill,
+    autosave: Autosave,
+    reported_sync: Rc<Cell<SyncStatus>>,
 }
 
 #[wasm_bindgen]
@@ -43,6 +52,8 @@ impl SessionLease {
         Self {
             lease: Lease::default(),
             autofill: Autofill::default(),
+            autosave: Autosave::default(),
+            reported_sync: Rc::new(Cell::new(SyncStatus::Disabled)),
         }
     }
 
@@ -62,12 +73,52 @@ impl SessionLease {
         self.remaining() > 0 && (operation.is_empty() || self.autofill.live(now(), operation))
     }
 
-    pub fn site_reset(&self) {
-        self.autofill.clear();
-    }
-
     pub fn site_navigation(&self, tab: u32, origin: Option<String>) {
         self.autofill.navigate(tab, origin.as_deref());
+        self.autosave.navigate(tab, origin.as_deref());
+    }
+
+    pub fn site_closed(&self, tab: u32) {
+        self.autofill.navigate(tab, None);
+        self.autosave.close_tab(tab);
+    }
+
+    pub fn site_policy(&self, allowed: bool, exceptions: &str) -> bool {
+        if self.autosave.set_policy(allowed, exceptions) {
+            self.autofill.clear();
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn capture_plan(&self, context: &str, snapshot: &str) -> Option<String> {
+        serde_json::to_string(&self.autosave.plan(self.remaining(), context, snapshot)?).ok()
+    }
+
+    pub fn accept_capture(&self, context: &str, capture: &str) -> bool {
+        self.remaining() > 0 && self.autosave.capture(now(), context, capture).is_some()
+    }
+
+    pub fn capture_expiry(&self) -> i32 {
+        self.autosave.next_expiry(now())
+    }
+
+    pub fn save_badges(&self) -> String {
+        serde_json::to_string(&self.autosave.badges(now())).unwrap_or_else(|_| "[]".into())
+    }
+
+    pub fn list_saves(&self, tab: Option<u32>) -> Option<String> {
+        let reply = if self.remaining() > 0 {
+            SaveReply::Offers {
+                offers: self.autosave.offers(now(), tab),
+                sync: self.reported_sync.get(),
+            }
+        } else {
+            SaveReply::Locked
+        };
+        let reply = serde_json::to_string(&reply).ok()?;
+        (reply.len() <= MAX_RESPONSE).then_some(reply)
     }
 
     pub fn accept_form(&self, context: &str, report: &str) -> bool {
@@ -82,6 +133,8 @@ pub struct Session {
     lease: Lease,
     sync: SyncSchedule,
     autofill: Autofill,
+    autosave: Autosave,
+    reported_sync: Rc<Cell<SyncStatus>>,
     conflicts: bool,
 }
 
@@ -94,6 +147,8 @@ impl Session {
             server: None,
             lease: lease.lease.clone(),
             autofill: lease.autofill.clone(),
+            autosave: lease.autosave.clone(),
+            reported_sync: lease.reported_sync.clone(),
             sync: SyncSchedule::default(),
             conflicts: false,
         }
@@ -149,6 +204,46 @@ impl Session {
         encode(&result)
     }
 
+    pub async fn execute_save(&mut self, input: Uint8Array) -> Result<Uint8Array, JsValue> {
+        let reply = if input.length() as usize > MAX_REQUEST || !self.is_open() {
+            input.fill(0, 0, input.length());
+            SaveReply::Locked
+        } else {
+            let bytes = Zeroizing::new(input.to_vec());
+            input.fill(0, 0, input.length());
+            match serde_json::from_slice::<SaveRequest>(&bytes) {
+                Ok(request) if request.valid() => match self.run_save(request).await {
+                    Ok(reply) => reply,
+                    Err(Error::Input | Error::Storage(confidex_storage::Error::Conflict)) => {
+                        SaveReply::Changed
+                    }
+                    Err(Error::Locked) => SaveReply::Locked,
+                    Err(_) => SaveReply::Error,
+                },
+                _ => SaveReply::Error,
+            }
+        };
+        encode(&if self.is_open() {
+            reply
+        } else {
+            SaveReply::Locked
+        })
+    }
+
+    pub async fn review_capture(&mut self) -> bool {
+        let Some(candidate) = self.autosave.next(now()).filter(|_| self.is_open()) else {
+            return false;
+        };
+        let matches = self.match_capture(&candidate).await;
+        if self.capture_live(&candidate) {
+            self.autosave.review(
+                &candidate,
+                matches.ok().and_then(|matches| candidate.offer(matches)),
+            );
+        }
+        self.autosave.next(now()).is_some()
+    }
+
     pub async fn execute(&mut self, input: Uint8Array) -> Result<Uint8Array, JsValue> {
         let result = if input.length() as usize > MAX_REQUEST {
             input.fill(0, 0, input.length());
@@ -185,10 +280,106 @@ fn encode(result: &impl serde::Serialize) -> Result<Uint8Array, JsValue> {
 }
 
 impl Session {
+    fn capture_live(&self, candidate: &Rc<Candidate>) -> bool {
+        self.is_open() && self.autosave.present(now(), candidate)
+    }
+
+    async fn match_capture(&mut self, candidate: &Rc<Candidate>) -> Result<CaptureMatches, Error> {
+        let lease = &self.lease;
+        let autosave = &self.autosave;
+        self.runtime
+            .engine_mut()
+            .match_browser_capture(
+                &mut BrowserStore,
+                &candidate.origin,
+                candidate.username.as_deref(),
+                &candidate.password,
+                || {
+                    let now = now();
+                    lease.remaining(now) > 0 && autosave.present(now, candidate)
+                },
+            )
+            .await
+    }
+
+    async fn run_save(&mut self, request: SaveRequest) -> Result<SaveReply, Error> {
+        match request.action {
+            SaveAction::List => Err(Error::Input),
+            SaveAction::Dismiss { id } => {
+                if !self.autosave.dismiss(now(), request.tab, &id) {
+                    return Err(Error::Input);
+                }
+                Ok(SaveReply::Dismissed)
+            }
+            SaveAction::Confirm { id, target } => {
+                let (candidate, offer) = self
+                    .autosave
+                    .find(now(), request.tab, &id)
+                    .ok_or(Error::Input)?;
+                let selectable = |offer: &OfferKind| match (offer, &target) {
+                    (OfferKind::New { .. }, None) => true,
+                    (OfferKind::Update(rows), Some(target)) => {
+                        rows.iter().any(|row| &row.target == target)
+                    }
+                    _ => false,
+                };
+                if !selectable(&offer) {
+                    return Err(Error::Input);
+                }
+                self.lease.activity(now());
+                let matches = self.match_capture(&candidate).await?;
+                if !self.capture_live(&candidate) {
+                    return Err(Error::Input);
+                }
+                let duplicate = matches.duplicate;
+                let offer = candidate.offer(matches);
+                if !offer.as_ref().is_some_and(selectable) {
+                    self.autosave.review(&candidate, offer);
+                    return Ok(if duplicate {
+                        SaveReply::Duplicate
+                    } else {
+                        SaveReply::Changed
+                    });
+                }
+                let live = || {
+                    let now = now();
+                    self.lease.remaining(now) > 0 && self.autosave.present(now, &candidate)
+                };
+                let engine = self.runtime.engine_mut();
+                if let Some(target) = target {
+                    let mut change = Change::default();
+                    change.password = Some(candidate.password.clone());
+                    engine
+                        .update_browser_login_if(&mut BrowserStore, &target, &change, now(), live)
+                        .await?;
+                } else {
+                    let login = NewLogin {
+                        title: candidate.origin.trim_start_matches("https://").to_owned(),
+                        url: candidate.origin.clone(),
+                        username: candidate.username.clone().unwrap_or_default(),
+                        password: candidate.password.clone(),
+                        notes: String::new(),
+                        tags: vec![],
+                    };
+                    let record = confidex_app::new_record()?.record;
+                    engine
+                        .create_browser_login_if(&mut BrowserStore, record, &login, now(), live)
+                        .await?;
+                }
+                self.autosave.review(&candidate, None);
+                self.local_change();
+                Ok(SaveReply::Saved(self.sync.status()))
+            }
+        }
+    }
+
     async fn run_site(&mut self, request: SiteRequest) -> Result<SiteReply, Error> {
         let SiteRequest {
             context, action, ..
         } = request;
+        if self.autosave.policy(&context.origin) == SitePolicy::Disabled {
+            return Ok(SiteReply::Popup(PopupReply::Unavailable));
+        }
         match action {
             SiteAction::Find {
                 operation,
@@ -223,6 +414,10 @@ impl Session {
                 }
                 matches.issues.conflicts |= self.conflicts;
                 let origin = context.origin.clone();
+                let policy = self.autosave.policy(&origin);
+                if policy == SitePolicy::Disabled {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
+                }
                 let preferred =
                     self.autofill
                         .issue(now(), operation.clone(), context, snapshot, &matches);
@@ -233,6 +428,7 @@ impl Session {
                     matches,
                     sync: self.sync.status(),
                     preferred,
+                    policy,
                 }))
             }
             SiteAction::Fill {
@@ -258,6 +454,9 @@ impl Session {
                     .await?;
                 if !self.is_open() {
                     return Err(Error::Locked);
+                }
+                if self.autosave.policy(&context.origin) == SitePolicy::Disabled {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
                 }
                 if fields.password.is_none() {
                     self.autofill
@@ -405,7 +604,7 @@ impl Session {
                     .engine_mut()
                     .create_browser_login(&mut BrowserStore, record, &login, now())
                     .await?;
-                self.sync.local_change(now());
+                self.local_change();
                 Ok(Reply::Saved(head))
             }
             Action::UpdateLogin { target, change } if self.is_open() => {
@@ -414,7 +613,7 @@ impl Session {
                     .engine_mut()
                     .update_browser_login(&mut BrowserStore, &target, &change, now())
                     .await?;
-                self.sync.local_change(now());
+                self.local_change();
                 Ok(Reply::Saved(head))
             }
             _ => Err(Error::Locked),
@@ -430,6 +629,7 @@ impl Session {
         self.lease.open(now);
         if self.server.is_some() {
             self.sync.start(now);
+            self.reported_sync.set(self.sync.status());
         }
         Ok(Reply::Opened {
             name: info.name,
@@ -452,6 +652,12 @@ impl Session {
             Err(error) => Err(error),
         };
         self.sync.finish(now(), result);
+        self.reported_sync.set(self.sync.status());
         result == Ok(true)
+    }
+
+    fn local_change(&mut self) {
+        self.sync.local_change(now());
+        self.reported_sync.set(self.sync.status());
     }
 }

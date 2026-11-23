@@ -640,3 +640,15 @@ extension-form-changed = หน้า แบบฟอร์ม หรือร�
 extension-form-choice = แบบฟอร์มเข้าสู่ระบบ
 extension-session-open = เปิดเซสชัน
 extension-filled = กรอกข้อมูลเข้าสู่ระบบแล้ว
+
+extension-save-offer = บันทึกข้อมูลเข้าสู่ระบบนี้หรือไม่
+extension-update-offer = เลือกข้อมูลเข้าสู่ระบบที่จะอัปเดต
+extension-update-password = อัปเดตรหัสผ่าน
+extension-save-dismiss = ปิด
+extension-save-never = ไม่เสนอให้บันทึกในเว็บไซต์นี้
+extension-site-disable = ปิดใช้ Confidex ในเว็บไซต์นี้
+extension-site-enable = เปิดใช้ Confidex ในเว็บไซต์นี้
+extension-saving-enable = เสนอให้บันทึกในเว็บไซต์นี้
+extension-site-disabled = Confidex ถูกปิดใช้งานในเว็บไซต์นี้
+extension-save-changed = ข้อเสนอมีการเปลี่ยนแปลงหรือหมดอายุแล้ว โปรดตรวจสอบข้อเสนอปัจจุบัน
+extension-save-duplicate = บันทึกข้อมูลเข้าสู่ระบบนี้แล้ว

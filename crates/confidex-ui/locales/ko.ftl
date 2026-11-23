@@ -640,3 +640,15 @@ extension-form-changed = 페이지, 양식 또는 항목이 변경되었습니�
 extension-form-choice = 로그인 양식
 extension-session-open = 세션 열기
 extension-filled = 로그인 정보를 채웠습니다.
+
+extension-save-offer = 이 로그인 정보를 저장할까요?
+extension-update-offer = 업데이트할 로그인 정보를 선택하세요
+extension-update-password = 비밀번호 업데이트
+extension-save-dismiss = 닫기
+extension-save-never = 이 사이트에서 저장 제안 안 함
+extension-site-disable = 이 사이트에서 Confidex 사용 중지
+extension-site-enable = 이 사이트에서 Confidex 사용
+extension-saving-enable = 이 사이트에서 저장 제안
+extension-site-disabled = 이 사이트에서 Confidex가 꺼져 있습니다.
+extension-save-changed = 저장 제안이 변경되었거나 만료되었습니다. 현재 제안을 확인하세요.
+extension-save-duplicate = 이 로그인 정보는 이미 저장되어 있습니다.

@@ -643,3 +643,15 @@ extension-form-changed = Die Seite, das Formular oder der Eintrag hat sich geän
 extension-form-choice = Anmeldeformular
 extension-session-open = Sitzung öffnen
 extension-filled = Anmeldedaten ausgefüllt.
+
+extension-save-offer = Diese Anmeldedaten speichern?
+extension-update-offer = Anmeldung zum Aktualisieren auswählen
+extension-update-password = Passwort aktualisieren
+extension-save-dismiss = Schließen
+extension-save-never = Auf dieser Website nie Speichern anbieten
+extension-site-disable = Confidex auf dieser Website deaktivieren
+extension-site-enable = Confidex auf dieser Website aktivieren
+extension-saving-enable = Auf dieser Website Speichern anbieten
+extension-site-disabled = Confidex ist auf dieser Website deaktiviert.
+extension-save-changed = Das Angebot wurde geändert oder ist abgelaufen. Prüfen Sie die aktuellen Angebote.
+extension-save-duplicate = Diese Anmeldedaten sind bereits gespeichert.

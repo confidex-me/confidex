@@ -640,3 +640,15 @@ extension-form-changed = पेज, फॉर्म किंवा नोंद
 extension-form-choice = लॉगिन फॉर्म
 extension-session-open = सत्र उघडा
 extension-filled = लॉगिन तपशील भरले.
+
+extension-save-offer = ही लॉगिन माहिती जतन करायची का?
+extension-update-offer = अपडेट करण्यासाठी लॉगिन निवडा
+extension-update-password = पासवर्ड अपडेट करा
+extension-save-dismiss = बंद करा
+extension-save-never = या साइटवर जतन करण्याची सूचना देऊ नका
+extension-site-disable = या साइटवर Confidex बंद करा
+extension-site-enable = या साइटवर Confidex सुरू करा
+extension-saving-enable = या साइटवर जतन करण्याची सूचना द्या
+extension-site-disabled = या साइटवर Confidex बंद आहे.
+extension-save-changed = सूचना बदलली आहे किंवा तिची मुदत संपली आहे. सध्याच्या सूचना तपासा.
+extension-save-duplicate = ही लॉगिन माहिती आधीच जतन केली आहे.

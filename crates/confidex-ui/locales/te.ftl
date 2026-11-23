@@ -643,3 +643,15 @@ extension-form-changed = పేజీ, ఫారం లేదా నమోదు
 extension-form-choice = లాగిన్ ఫారం
 extension-session-open = సెషన్‌ను తెరవండి
 extension-filled = లాగిన్ వివరాలు పూరించబడ్డాయి.
+
+extension-save-offer = ఈ లాగిన్ వివరాలను సేవ్ చేయాలా?
+extension-update-offer = అప్‌డేట్ చేయాల్సిన లాగిన్‌ను ఎంచుకోండి
+extension-update-password = పాస్‌వర్డ్‌ను అప్‌డేట్ చేయండి
+extension-save-dismiss = మూసివేయండి
+extension-save-never = ఈ సైట్‌లో సేవ్ చేయమని సూచించవద్దు
+extension-site-disable = ఈ సైట్‌లో Confidex‌ను నిలిపివేయండి
+extension-site-enable = ఈ సైట్‌లో Confidex‌ను ప్రారంభించండి
+extension-saving-enable = ఈ సైట్‌లో సేవ్ చేయమని సూచించండి
+extension-site-disabled = ఈ సైట్‌లో Confidex నిలిపివేయబడింది.
+extension-save-changed = సూచన మారింది లేదా గడువు ముగిసింది. ప్రస్తుత సూచనలను చూడండి.
+extension-save-duplicate = ఈ లాగిన్ వివరాలు ఇప్పటికే సేవ్ అయ్యాయి.

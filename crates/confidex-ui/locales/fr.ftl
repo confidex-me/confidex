@@ -643,3 +643,15 @@ extension-form-changed = La page, le formulaire ou l’entrée a changé. Actual
 extension-form-choice = Formulaire de connexion
 extension-session-open = Ouvrir la session
 extension-filled = Identifiants remplis.
+
+extension-save-offer = Enregistrer ces identifiants ?
+extension-update-offer = Choisissez les identifiants à mettre à jour
+extension-update-password = Mettre à jour le mot de passe
+extension-save-dismiss = Ignorer
+extension-save-never = Ne jamais proposer l’enregistrement sur ce site
+extension-site-disable = Désactiver Confidex sur ce site
+extension-site-enable = Activer Confidex sur ce site
+extension-saving-enable = Proposer l’enregistrement sur ce site
+extension-site-disabled = Confidex est désactivé sur ce site.
+extension-save-changed = La proposition a changé ou a expiré. Consultez les propositions actuelles.
+extension-save-duplicate = Ces identifiants sont déjà enregistrés.

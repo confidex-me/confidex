@@ -1,6 +1,8 @@
 use crate::{
     autofill::{PopupAction, PopupReply, PopupRequest},
+    autosave::SitePolicy,
     protocol::{MAX_RESPONSE, SyncStatus},
+    save_ui::SavePanel,
 };
 use confidex_app::browser_logins::Page;
 use confidex_extension_content::Choice;
@@ -18,6 +20,21 @@ use zeroize::Zeroizing;
 extern "C" {
     #[wasm_bindgen(catch, js_name = popupCall)]
     async fn popup_call(input: String) -> Result<String, JsValue>;
+}
+
+pub(crate) async fn request_popup(action: PopupAction) -> PopupReply {
+    let request = PopupRequest { version: 1, action };
+    let reply = match serde_json::to_string(&request) {
+        Ok(request) => popup_call(request).await.ok().and_then(|text| {
+            let text = Zeroizing::new(text);
+            if text.len() > MAX_RESPONSE {
+                return None;
+            }
+            serde_json::from_str::<PopupReply>(&text).ok()
+        }),
+        Err(_) => None,
+    };
+    reply.unwrap_or(PopupReply::Error)
 }
 
 #[wasm_bindgen]
@@ -64,6 +81,7 @@ impl PopupHandle {
                         form: None,
                         account: None,
                         check_at: 0.,
+                        saves: SavePanel::default(),
                     };
                     popup.request(&cc.egui_ctx, PopupAction::Discover { after: None });
                     Ok(Box::new(popup))
@@ -86,6 +104,7 @@ struct Popup {
     form: Option<usize>,
     account: Option<usize>,
     check_at: f64,
+    saves: SavePanel,
 }
 
 impl Popup {
@@ -97,18 +116,7 @@ impl Popup {
         });
         let ctx = ctx.clone();
         wasm_bindgen_futures::spawn_local(async move {
-            let request = PopupRequest { version: 1, action };
-            let reply = match serde_json::to_string(&request) {
-                Ok(request) => popup_call(request).await.ok().and_then(|text| {
-                    let text = Zeroizing::new(text);
-                    if text.len() > MAX_RESPONSE {
-                        return None;
-                    }
-                    serde_json::from_str::<PopupReply>(&text).ok()
-                }),
-                Err(_) => None,
-            };
-            *reply_slot.borrow_mut() = Some(reply.unwrap_or(PopupReply::Error));
+            *reply_slot.borrow_mut() = Some(request_popup(action).await);
             ctx.request_repaint();
         });
     }
@@ -116,6 +124,7 @@ impl Popup {
     fn show(&mut self, ui: &mut egui::Ui) -> Option<PopupAction> {
         let busy = self.pending.as_ref().is_some_and(|request| !request.quiet);
         ui.heading("Confidex");
+        self.saves.show(ui, &self.locale, self.colors);
         if busy {
             ui_kit::spinner(ui, self.colors, 20., &self.locale.text("vault-working"));
         }
@@ -126,6 +135,7 @@ impl Popup {
                 forms,
                 matches,
                 sync,
+                policy,
                 ..
             } => {
                 ui.label(origin);
@@ -206,16 +216,36 @@ impl Popup {
                         });
                     }
                 }
+                if let Some(action) = ui
+                    .add_enabled_ui(!busy, |ui| self.site_settings(ui, origin, *policy))
+                    .inner
+                {
+                    return Some(action);
+                }
+            }
+            PopupReply::SiteDisabled { origin } => {
+                ui.label(origin);
+                ui.label(self.locale.text("extension-site-disabled"));
+                if let Some(action) = ui
+                    .add_enabled_ui(!busy, |ui| {
+                        self.site_settings(ui, origin, SitePolicy::Disabled)
+                    })
+                    .inner
+                {
+                    return Some(action);
+                }
             }
             state => {
                 let key = match state {
                     PopupReply::Locked | PopupReply::Live => "vault-error-locked",
                     PopupReply::Unavailable => "extension-site-no-access",
                     PopupReply::Changed => "extension-form-changed",
-                    PopupReply::Busy => "vault-working",
+                    PopupReply::Busy | PopupReply::PolicyChanged => "vault-working",
                     PopupReply::Error => "vault-error-storage",
                     PopupReply::Filled => "extension-filled",
-                    PopupReply::Site { .. } => unreachable!(),
+                    PopupReply::Save(_)
+                    | PopupReply::Site { .. }
+                    | PopupReply::SiteDisabled { .. } => unreachable!(),
                 };
                 if !busy {
                     ui.label(self.locale.text(key));
@@ -254,6 +284,37 @@ impl Popup {
             });
         });
         action
+    }
+
+    fn site_settings(
+        &self,
+        ui: &mut egui::Ui,
+        origin: &str,
+        current: SitePolicy,
+    ) -> Option<PopupAction> {
+        let (saving, toggle) = match current {
+            SitePolicy::Allow => (
+                Some(("extension-save-never", SitePolicy::NoSave)),
+                ("extension-site-disable", SitePolicy::Disabled),
+            ),
+            SitePolicy::NoSave => (
+                Some(("extension-saving-enable", SitePolicy::Allow)),
+                ("extension-site-disable", SitePolicy::Disabled),
+            ),
+            SitePolicy::Disabled => (None, ("extension-site-enable", SitePolicy::Allow)),
+        };
+        let mut change = None;
+        ui.horizontal_wrapped(|ui| {
+            for (label, policy) in saving.into_iter().chain([toggle]) {
+                if ui.button(self.locale.text(label)).clicked() {
+                    change = Some(PopupAction::SetPolicy {
+                        origin: origin.to_owned(),
+                        policy,
+                    });
+                }
+            }
+        });
+        change
     }
 }
 
@@ -319,6 +380,9 @@ impl eframe::App for Popup {
         if let Some(response) = response {
             self.pending = None;
             self.check_at = now + 1500.;
+            if matches!(response, PopupReply::PolicyChanged) {
+                self.request(ui.ctx(), PopupAction::Discover { after: None });
+            }
             if !matches!(response, PopupReply::Live) {
                 self.form = None;
                 self.account = None;

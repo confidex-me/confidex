@@ -15,6 +15,7 @@
   const shadowOf = Object.getOwnPropertyDescriptor(Element.prototype, 'shadowRoot').get;
   const parentOf = Object.getOwnPropertyDescriptor(Node.prototype, 'parentElement').get;
   const slotOf = Object.getOwnPropertyDescriptor(Element.prototype, 'assignedSlot').get;
+  const inputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
   const watched = new WeakMap();
   const ids = new WeakMap();
   const versions = new WeakMap();
@@ -23,6 +24,12 @@
   let nextId = 0;
   let page = 0;
   let url;
+  let capturePermit;
+  let captureEpoch = 0;
+  let captureTimer;
+  let planning = false;
+  let nextProbe = 0;
+  let replanning = false;
 
   function id(node) {
     if (!ids.has(node)) ids.set(node, ++nextId);
@@ -30,6 +37,7 @@
   }
 
   function invalidate(records) {
+    if (records.length && capturePermit) scheduleCapturePlan();
     let remaining = MAX_MUTATIONS;
     for (const record of records) {
       remaining -= 1 + record.removedNodes.length;
@@ -52,6 +60,7 @@
   function observe(root) {
     if (observed.has(root)) return;
     observed.add(root);
+    if (root !== document) root.addEventListener('submit', captureSubmit, true);
     observer.observe(root, {
       subtree: true, childList: true, attributes: true,
       attributeFilter: ['type', 'name', 'id', 'autocomplete', 'aria-label', 'aria-labelledby',
@@ -63,6 +72,10 @@
     page++;
     url = location.href;
     operations.clear();
+    if (capturePermit) {
+      capturePermit.forms.clear();
+      scheduleCapturePlan();
+    }
   }
 
   addEventListener('pageshow', event => { if (event.persisted) changedPage(); });
@@ -187,9 +200,138 @@
   }
 
   function setValue(input, value) {
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-    setter.call(input, value);
+    inputValue.set.call(input, value);
   }
+
+  function resetCapture() {
+    captureEpoch++;
+    capturePermit = undefined;
+    nextProbe = 0;
+    clearTimeout(captureTimer);
+    captureTimer = undefined;
+  }
+
+  function scheduleCapturePlan() {
+    if (captureTimer) return;
+    captureTimer = setTimeout(() => {
+      captureTimer = undefined;
+      void prepareCapture();
+    }, 100);
+  }
+
+  async function requestPlan(snapshot) {
+    return chrome.runtime.sendMessage({kind: 'CapturePlan', version: 1, snapshot}).catch(() => false);
+  }
+
+  async function prepareCapture() {
+    if (document.hidden || document.prerendering || globalThis.origin !== location.origin
+        || location.protocol !== 'https:') return;
+    if (planning) {
+      replanning = true;
+      return;
+    }
+    const started = Date.now();
+    if (capturePermit && !currentPermit(started)) capturePermit = undefined;
+    if (!capturePermit && started < nextProbe) return;
+    planning = true;
+    const epoch = captureEpoch;
+    try {
+      if (!capturePermit) {
+        nextProbe = started + 1000;
+        const permit = await requestPlan(null);
+        if (epoch !== captureEpoch || !permit?.owner || !permit.remaining) return;
+        capturePermit = {since: started, deadline: started + permit.remaining, owner: permit.owner,
+          revision: permit.revision, forms: new Map()};
+      }
+      const {page, forms} = inspect();
+      const snapshot = {page, forms};
+      const current = capturePermit;
+      if (JSON.stringify(snapshot) === current.snapshot) return;
+      const updated = await requestPlan(snapshot);
+      if (epoch !== captureEpoch || current !== capturePermit) return;
+      if (!updated?.owner || !updated.remaining) {
+        resetCapture();
+        return;
+      }
+      const planned = new Map();
+      for (const field of updated.fields) {
+        const form = forms.find(form => form.id === field.form);
+        if (form) planned.set(form.id, {metadata: JSON.stringify(form), field});
+      }
+      capturePermit = {since: started, deadline: started + updated.remaining, owner: updated.owner,
+        revision: updated.revision, page, forms: planned, snapshot: JSON.stringify(snapshot)};
+    } finally {
+      planning = false;
+      if (replanning) {
+        replanning = false;
+        scheduleCapturePlan();
+      }
+    }
+  }
+
+  function currentPermit(now) {
+    return capturePermit && capturePermit.since <= now && now < capturePermit.deadline;
+  }
+
+  function capture(owner) {
+    const permit = capturePermit;
+    if (!currentPermit(Date.now()) || !owner || document.prerendering) return;
+    const {page, forms, nodes} = inspect();
+    const formId = ids.get(owner);
+    const plan = permit.forms.get(formId);
+    const form = forms.find(form => form.id === formId);
+    if (!plan || page !== permit.page || !form || plan.metadata !== JSON.stringify(form)) {
+      scheduleCapturePlan();
+      return;
+    }
+    const values = {};
+    for (const [role, field] of Object.entries(plan.field)) {
+      if (role === 'form') continue;
+      const node = field === null ? null : nodes.get(field);
+      if (field !== null && (!node || !visible(node))) return;
+      const value = node ? inputValue.get.call(node) : null;
+      if (value !== null && value.length > 4096) return;
+      values[role] = value;
+    }
+    void chrome.runtime.sendMessage({kind: 'CaptureCandidate', version: 1,
+      owner: permit.owner, revision: permit.revision, snapshot: {page, forms: [form]}, values})
+      .catch(() => {});
+  }
+
+  function captureSubmit(event) {
+    if (event.isTrusted && event.target instanceof HTMLFormElement) capture(event.target);
+  }
+
+  function captureClick(event) {
+    if (!event.isTrusted || !capturePermit || event.button !== 0) return;
+    const button = event.composedPath().find(node => node instanceof HTMLButtonElement
+      || (node instanceof HTMLInputElement && ['button', 'submit', 'image'].includes(node.type))
+      || (node instanceof HTMLElement && attribute(node, 'role') === 'button'));
+    if (!button || button.matches(':disabled,[aria-disabled=true]') || !visible(button)) return;
+    const hint = [attribute(button, 'aria-label'), attribute(button, 'name'),
+      attribute(button, 'id'), attribute(button, 'value'), button.textContent]
+      .map(text => text?.slice(0, 128) ?? '').join(' ').toLowerCase();
+    if (!/\b(log\s?in|log\s?on|sign\s?in|sign\s?up|register|next|continue|change\s+password|reset\s+password|save\s+password)\b|войти|зарегистрироваться|далее|продолжить|пароль/.test(hint)) return;
+    const owner = button.form ?? button.closest('form') ?? rootOf(button);
+    if (owner instanceof HTMLFormElement && ['submit', 'image'].includes(button.type)
+        && !button.formNoValidate && !owner.hasAttribute('novalidate')
+        && Element.prototype.matches.call(owner, ':invalid')) return;
+    capture(owner);
+  }
+
+  document.addEventListener('submit', captureSubmit, true);
+  document.addEventListener('click', captureClick, true);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) void prepareCapture(); });
+  addEventListener('pageshow', () => { void prepareCapture(); });
+  for (const event of ['focusin', 'pointerdown']) {
+    document.addEventListener(event, event => {
+      if (event.isTrusted) void prepareCapture();
+    }, true);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { void prepareCapture(); }, {once: true});
+  }
+  void prepareCapture();
 
   function matchingForm(operation, formId, origin) {
     const snapshot = operations.get(operation);
@@ -224,6 +366,11 @@
     if (sender.id !== chrome.runtime.id || sender.tab
         || sender.url !== chrome.runtime.getURL('background.js') || message?.version !== 1) return;
     if (message.kind === 'ConfidexDocumentCheck') return void reply(true);
+    if (message.kind === 'ConfidexCaptureReset') {
+      resetCapture();
+      void prepareCapture();
+      return void reply(true);
+    }
     if (document.prerendering || message.origin !== location.origin
         || location.protocol !== 'https:') return void reply(false);
 

@@ -640,3 +640,15 @@ extension-form-changed = Halaman, formulir, atau entri telah berubah. Muat ulang
 extension-form-choice = Formulir masuk
 extension-session-open = Buka sesi
 extension-filled = Info masuk telah diisi.
+
+extension-save-offer = Simpan info masuk ini?
+extension-update-offer = Pilih info masuk yang akan diperbarui
+extension-update-password = Perbarui kata sandi
+extension-save-dismiss = Abaikan
+extension-save-never = Jangan tawarkan penyimpanan di situs ini
+extension-site-disable = Nonaktifkan Confidex di situs ini
+extension-site-enable = Aktifkan Confidex di situs ini
+extension-saving-enable = Tawarkan penyimpanan di situs ini
+extension-site-disabled = Confidex dinonaktifkan di situs ini.
+extension-save-changed = Penawaran berubah atau kedaluwarsa. Periksa penawaran saat ini.
+extension-save-duplicate = Info masuk ini sudah tersimpan.

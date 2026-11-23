@@ -643,3 +643,15 @@ extension-form-changed = A página, o formulário ou o registo mudou. Atualize a
 extension-form-choice = Formulário de início de sessão
 extension-session-open = Abrir sessão
 extension-filled = Dados de acesso preenchidos.
+
+extension-save-offer = Guardar estes dados de acesso?
+extension-update-offer = Escolha os dados de acesso a atualizar
+extension-update-password = Atualizar palavra-passe
+extension-save-dismiss = Dispensar
+extension-save-never = Nunca sugerir guardar neste site
+extension-site-disable = Desativar o Confidex neste site
+extension-site-enable = Ativar o Confidex neste site
+extension-saving-enable = Sugerir guardar neste site
+extension-site-disabled = O Confidex está desativado neste site.
+extension-save-changed = A sugestão mudou ou expirou. Consulte as sugestões atuais.
+extension-save-duplicate = Estes dados de acesso já estão guardados.

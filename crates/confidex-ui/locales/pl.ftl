@@ -645,3 +645,15 @@ extension-form-changed = Strona, formularz lub wpis uległy zmianie. Odśwież l
 extension-form-choice = Formularz logowania
 extension-session-open = Otwórz sesję
 extension-filled = Dane logowania zostały wypełnione.
+
+extension-save-offer = Zapisać te dane logowania?
+extension-update-offer = Wybierz dane logowania do zaktualizowania
+extension-update-password = Zaktualizuj hasło
+extension-save-dismiss = Odrzuć
+extension-save-never = Nie proponuj zapisywania w tej witrynie
+extension-site-disable = Wyłącz Confidex w tej witrynie
+extension-site-enable = Włącz Confidex w tej witrynie
+extension-saving-enable = Proponuj zapisywanie w tej witrynie
+extension-site-disabled = Confidex jest wyłączony w tej witrynie.
+extension-save-changed = Propozycja zmieniła się lub wygasła. Sprawdź bieżące propozycje.
+extension-save-duplicate = Te dane logowania są już zapisane.

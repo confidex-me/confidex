@@ -640,3 +640,15 @@ extension-form-changed = Trang, biểu mẫu hoặc mục đã thay đổi. Hãy
 extension-form-choice = Biểu mẫu đăng nhập
 extension-session-open = Mở phiên
 extension-filled = Đã điền thông tin đăng nhập.
+
+extension-save-offer = Lưu thông tin đăng nhập này?
+extension-update-offer = Chọn thông tin đăng nhập cần cập nhật
+extension-update-password = Cập nhật mật khẩu
+extension-save-dismiss = Bỏ qua
+extension-save-never = Không đề nghị lưu trên trang này
+extension-site-disable = Tắt Confidex trên trang này
+extension-site-enable = Bật Confidex trên trang này
+extension-saving-enable = Đề nghị lưu trên trang này
+extension-site-disabled = Confidex đã tắt trên trang này.
+extension-save-changed = Đề nghị đã thay đổi hoặc hết hạn. Hãy xem các đề nghị hiện tại.
+extension-save-duplicate = Thông tin đăng nhập này đã được lưu.

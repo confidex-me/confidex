@@ -645,3 +645,15 @@ extension-form-changed = Stránka, formulář nebo záznam se změnily. Obnovte 
 extension-form-choice = Přihlašovací formulář
 extension-session-open = Otevřít relaci
 extension-filled = Přihlašovací údaje byly vyplněny.
+
+extension-save-offer = Uložit tyto přihlašovací údaje?
+extension-update-offer = Vyberte přihlašovací údaje k aktualizaci
+extension-update-password = Aktualizovat heslo
+extension-save-dismiss = Zavřít
+extension-save-never = Nenabízet uložení na tomto webu
+extension-site-disable = Vypnout Confidex na tomto webu
+extension-site-enable = Zapnout Confidex na tomto webu
+extension-saving-enable = Nabízet uložení na tomto webu
+extension-site-disabled = Confidex je na tomto webu vypnutý.
+extension-save-changed = Nabídka se změnila nebo vypršela. Zkontrolujte aktuální nabídky.
+extension-save-duplicate = Tyto přihlašovací údaje jsou už uložené.

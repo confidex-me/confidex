@@ -643,3 +643,15 @@ extension-form-changed = Sidan, formuläret eller posten har ändrats. Uppdatera
 extension-form-choice = Inloggningsformulär
 extension-session-open = Öppna session
 extension-filled = Inloggningsuppgifterna har fyllts i.
+
+extension-save-offer = Vill du spara inloggningen?
+extension-update-offer = Välj en inloggning att uppdatera
+extension-update-password = Uppdatera lösenord
+extension-save-dismiss = Avvisa
+extension-save-never = Föreslå aldrig att spara på den här webbplatsen
+extension-site-disable = Inaktivera Confidex på den här webbplatsen
+extension-site-enable = Aktivera Confidex på den här webbplatsen
+extension-saving-enable = Föreslå att spara på den här webbplatsen
+extension-site-disabled = Confidex är inaktiverat på den här webbplatsen.
+extension-save-changed = Förslaget har ändrats eller gått ut. Granska de aktuella förslagen.
+extension-save-duplicate = Inloggningen är redan sparad.

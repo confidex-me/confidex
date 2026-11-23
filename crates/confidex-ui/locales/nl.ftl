@@ -643,3 +643,15 @@ extension-form-changed = De pagina, het formulier of het item is gewijzigd. Vern
 extension-form-choice = Inlogformulier
 extension-session-open = Sessie openen
 extension-filled = Inloggegevens ingevuld.
+
+extension-save-offer = Deze inloggegevens opslaan?
+extension-update-offer = Kies de inloggegevens om bij te werken
+extension-update-password = Wachtwoord bijwerken
+extension-save-dismiss = Negeren
+extension-save-never = Nooit vragen om op deze site op te slaan
+extension-site-disable = Confidex op deze site uitschakelen
+extension-site-enable = Confidex op deze site inschakelen
+extension-saving-enable = Vragen om op deze site op te slaan
+extension-site-disabled = Confidex is uitgeschakeld op deze site.
+extension-save-changed = De suggestie is gewijzigd of verlopen. Bekijk de huidige suggesties.
+extension-save-duplicate = Deze inloggegevens zijn al opgeslagen.

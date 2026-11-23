@@ -643,3 +643,15 @@ extension-form-changed = பக்கம், படிவம் அல்லத�
 extension-form-choice = உள்நுழைவுப் படிவம்
 extension-session-open = அமர்வைத் திற
 extension-filled = உள்நுழைவு விவரங்கள் நிரப்பப்பட்டன.
+
+extension-save-offer = இந்த உள்நுழைவு விவரங்களைச் சேமிக்கவா?
+extension-update-offer = புதுப்பிக்க வேண்டிய உள்நுழைவைத் தேர்ந்தெடுக்கவும்
+extension-update-password = கடவுச்சொல்லைப் புதுப்பி
+extension-save-dismiss = நிராகரி
+extension-save-never = இந்தத் தளத்தில் சேமிக்கப் பரிந்துரைக்க வேண்டாம்
+extension-site-disable = இந்தத் தளத்தில் Confidex-ஐ முடக்கு
+extension-site-enable = இந்தத் தளத்தில் Confidex-ஐ இயக்கு
+extension-saving-enable = இந்தத் தளத்தில் சேமிக்கப் பரிந்துரை
+extension-site-disabled = இந்தத் தளத்தில் Confidex முடக்கப்பட்டுள்ளது.
+extension-save-changed = பரிந்துரை மாறியுள்ளது அல்லது காலாவதியாகிவிட்டது. தற்போதைய பரிந்துரைகளைப் பார்க்கவும்.
+extension-save-duplicate = இந்த உள்நுழைவு விவரங்கள் ஏற்கெனவே சேமிக்கப்பட்டுள்ளன.

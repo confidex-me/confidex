@@ -2,7 +2,13 @@ use confidex_app::browser_logins::{Cursor, Page, Selection};
 use confidex_extension_content::Choice;
 use serde::{Deserialize, Serialize};
 
-use crate::protocol::SyncStatus;
+use crate::{
+    autosave::{SaveReply, SitePolicy},
+    protocol::SyncStatus,
+};
+
+#[cfg(feature = "ui")]
+use crate::autosave::SaveAction;
 
 #[cfg(feature = "ui")]
 #[derive(Serialize)]
@@ -26,6 +32,11 @@ pub enum PopupAction {
         operation: String,
     },
     OpenSession,
+    Save(SaveAction),
+    SetPolicy {
+        origin: String,
+        policy: SitePolicy,
+    },
 }
 
 #[derive(Deserialize, Serialize)]
@@ -38,6 +49,11 @@ pub enum PopupReply {
     Error,
     Filled,
     Live,
+    Save(SaveReply),
+    PolicyChanged,
+    SiteDisabled {
+        origin: String,
+    },
     Site {
         operation: String,
         origin: String,
@@ -45,6 +61,7 @@ pub enum PopupReply {
         matches: Page,
         sync: SyncStatus,
         preferred: Option<Selection>,
+        policy: SitePolicy,
     },
 }
 

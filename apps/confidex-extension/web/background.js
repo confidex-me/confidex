@@ -4,6 +4,56 @@ const sites = {origins: ['https://*/*']};
 const scriptId = 'confidex-site-channel';
 let opening;
 let registration = Promise.resolve();
+let settingPolicy = Promise.resolve();
+let paintingBadges = Promise.resolve();
+let badgeTabs = new Set();
+let badgeRevision = 0;
+const captureRoutes = new Map();
+
+void chrome.storage.local.setAccessLevel({accessLevel: 'TRUSTED_CONTEXTS'}).catch(() => {});
+
+async function sitePolicy(origin) {
+  const {siteExceptions} = await chrome.storage.local.get('siteExceptions');
+  return siteExceptions?.[origin] ?? 'Allow';
+}
+
+function setSitePolicy(origin, policy) {
+  const update = settingPolicy.then(async () => {
+    const {siteExceptions: exceptions = {}} = await chrome.storage.local.get('siteExceptions');
+    if (policy === 'Allow') delete exceptions[origin];
+    else {
+      if (!Object.hasOwn(exceptions, origin) && Object.keys(exceptions).length >= 512) return 'Error';
+      if (exceptions[origin] !== 'Disabled') exceptions[origin] = policy;
+    }
+    await chrome.storage.local.set({siteExceptions: exceptions});
+    return 'PolicyChanged';
+  });
+  settingPolicy = update.catch(() => {});
+  return update;
+}
+
+async function captureStateChanged() {
+  const tabs = await chrome.tabs.query({});
+  await Promise.allSettled(tabs.filter(tab => !tab.incognito).map(({id}) =>
+    chrome.tabs.sendMessage(id, {kind: 'ConfidexCaptureReset', version: 1}, {frameId: 0})));
+}
+
+function paintBadges(tabs) {
+  badgeRevision++;
+  badgeTabs = new Set(tabs);
+  paintingBadges = paintingBadges.then(async () => {
+    const tabs = await chrome.tabs.query({});
+    await Promise.allSettled(tabs.filter(tab => !tab.incognito).map(tab => paintBadge(tab.id)));
+  }).catch(() => {});
+}
+
+function paintBadge(tabId) {
+  return chrome.action.setBadgeText({tabId, text: badgeTabs.has(tabId) ? '1' : ''});
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.siteExceptions) void captureStateChanged().catch(() => {});
+});
 
 async function focusSession() {
   const [tab] = await chrome.tabs.query({url: sessionUrl});
@@ -33,10 +83,14 @@ function reconcileRegistration() {
   });
 }
 
-chrome.permissions.onAdded.addListener(reconcileRegistration);
+chrome.permissions.onAdded.addListener(() => {
+  reconcileRegistration();
+  void captureStateChanged().catch(() => {});
+});
 chrome.permissions.onRemoved.addListener(() => {
   reconcileRegistration();
-  void sessionMessage('ConfidexSiteReset').catch(() => {});
+  paintBadges([]);
+  void captureStateChanged().catch(() => {});
 });
 reconcileRegistration();
 
@@ -53,14 +107,23 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   return true;
 });
 
+function httpsOrigin(url) {
+  try {
+    const target = new URL(url);
+    if (target.protocol === 'https:' && !target.username && !target.password) return target.origin;
+  } catch {
+    // Some tab addresses are hidden or have no HTTPS origin.
+  }
+}
+
 function siteContext(sender) {
   if (sender.id !== chrome.runtime.id || sender.frameId !== 0
       || sender.documentLifecycle !== 'active' || sender.tab?.incognito !== false
       || typeof sender.url !== 'string' || !Number.isInteger(sender.tab.id) || sender.tab.id < 0
       || !/^[\da-f-]{1,64}$/i.test(sender.documentId ?? '')) return;
-  const url = new URL(sender.url);
-  if (url.protocol !== 'https:' || url.origin !== sender.origin) return;
-  return {tabId: sender.tab.id, frameId: sender.frameId, documentId: sender.documentId, origin: url.origin};
+  const origin = httpsOrigin(sender.url);
+  if (!origin || origin !== sender.origin) return;
+  return {tabId: sender.tab.id, frameId: sender.frameId, documentId: sender.documentId, origin};
 }
 
 async function resolveDocument(tabId) {
@@ -88,7 +151,7 @@ async function currentDocument({tabId, frameId, documentId, origin}) {
 }
 
 async function routeForm(context, report) {
-  if (!await currentDocument(context)) return false;
+  if (await sitePolicy(context.origin) === 'Disabled' || !await currentDocument(context)) return false;
   const live = await chrome.runtime.sendMessage({kind: 'ConfidexRoutedForm', version: 1, context, report});
   return live === true && await currentDocument(context);
 }
@@ -96,6 +159,73 @@ async function routeForm(context, report) {
 function sessionMessage(kind, data) {
   return chrome.runtime.sendMessage({kind, version: 1, ...data});
 }
+
+chrome.runtime.onMessage.addListener((message, sender, reply) => {
+  if (message?.kind !== 'CapturePlan' && message?.kind !== 'CaptureCandidate') return;
+  const context = siteContext(sender);
+  const plan = message.kind === 'CapturePlan';
+  if (!context || message.version !== 1 || Object.keys(message).length !== (plan ? 3 : 6)
+      || (!plan && (!operationId(message.owner) || !Number.isInteger(message.revision)
+        || typeof message.values !== 'object' || message.values === null))) {
+    reply(false);
+    return;
+  }
+  const snapshot = plan && message.snapshot === null ? {page: 1, forms: []} : message.snapshot;
+  if (!snapshot || JSON.stringify(snapshot).length > (plan ? 192 * 1024 : 32 * 1024)
+      || (!plan && JSON.stringify(message.values).length > 74 * 1024)) {
+    reply(false);
+    return;
+  }
+  // The active top-frame sender identifies the document at send time. A
+  // native submit can already have navigated by the time this route runs.
+  async function route() {
+    if (!await chrome.permissions.contains(sites) || await sitePolicy(context.origin) !== 'Allow') return false;
+    if (plan) return sessionMessage('ConfidexCapturePlan', {context, snapshot});
+    const tab = await chrome.tabs.get(context.tabId);
+    if (tab.incognito || captureRoutes.get(context.tabId) !== routes) return false;
+    const report = {version: 1, id: crypto.randomUUID(), revision: message.revision,
+      snapshot, values: message.values};
+    return await sessionMessage('ConfidexSiteCapture', {context, owner: message.owner, report}) === true;
+  }
+  const routes = plan ? null : captureRoutes.get(context.tabId) ?? {count: 0};
+  if (routes) {
+    if (routes.count >= 4) {
+      reply(false);
+      return;
+    }
+    routes.count++;
+    captureRoutes.set(context.tabId, routes);
+  }
+  route().then(reply, () => reply(false)).finally(() => {
+    if (routes && --routes.count === 0 && captureRoutes.get(context.tabId) === routes) {
+      captureRoutes.delete(context.tabId);
+    }
+  });
+  return true;
+});
+
+function isSessionPage(sender) {
+  return sender.id === chrome.runtime.id && sender.url === sessionUrl && sender.frameId === 0
+    && sender.tab?.incognito === false;
+}
+
+chrome.runtime.onMessage.addListener((message, sender, reply) => {
+  if (message?.version !== 1 || !isSessionPage(sender)) return;
+  if (message.kind === 'ConfidexCaptureState' && typeof message.open === 'boolean') {
+    if (!message.open) paintBadges([]);
+    void captureStateChanged().catch(() => {});
+    reply(true);
+  } else if (message.kind === 'ConfidexSaveBadges' && Array.isArray(message.tabs)
+    && message.tabs.length <= 10 && message.tabs.every(tab => Number.isInteger(tab) && tab >= 0)) {
+    paintBadges(message.tabs);
+    reply(true);
+  }
+});
+
+const initialBadgeRevision = badgeRevision;
+void sessionMessage('ConfidexReadBadges').catch(() => []).then(tabs => {
+  if (badgeRevision === initialBadgeRevision) paintBadges(Array.isArray(tabs) ? tabs : []);
+});
 
 function liveSession(operation = '', owner) {
   return sessionMessage('ConfidexSiteCheck', {operation, owner}).catch(() => false);
@@ -129,14 +259,47 @@ async function inspectDocument(context) {
   }
 }
 
-async function popupAction(action) {
+async function enableCaptureInTab(tabId) {
+  if (!await liveSession()) return;
+  const context = await resolveDocument(tabId);
+  if (!context || await sitePolicy(context.origin) !== 'Allow') return;
+  try {
+    await sendToDocument(context, 'ConfidexDocumentCheck');
+  } catch {
+    await chrome.scripting.executeScript({
+      target: {tabId, documentIds: [context.documentId]},
+      files: ['content-channel.js'], world: 'ISOLATED',
+    });
+  }
+}
+
+chrome.tabs.onActivated.addListener(({tabId}) => {
+  void enableCaptureInTab(tabId).catch(() => {});
+});
+
+async function popupAction(action, inSession) {
   if (action === 'OpenSession') {
     opening ??= focusSession().finally(() => { opening = undefined; });
     await opening;
     return 'Live';
   }
+  if (action?.SetPolicy) {
+    const {origin, policy} = action.SetPolicy;
+    if (!await chrome.permissions.contains(sites)) return 'Unavailable';
+    return setSitePolicy(origin, policy);
+  }
   const owner = await liveSession();
   if (!owner) return 'Locked';
+  if (action?.Save) {
+    const tab = inSession ? null : await activeTab();
+    if (tab === undefined) return {Save: 'Locked'};
+    if (action.Save === 'List') {
+      return {Save: await sessionMessage('ConfidexListSaves', {owner, tab}) ?? 'Locked'};
+    }
+    const result = await sessionMessage('ConfidexSaveCommand', {owner,
+      request: {version: 1, tab, action: action.Save}});
+    return {Save: result?.response ? JSON.parse(result.response) : result?.status ?? 'Locked'};
+  }
   if (action?.Check) {
     if (await liveSession(action.Check.operation, owner) && await chrome.permissions.contains(sites)) return 'Live';
     return await liveSession('', owner) ? 'Changed' : 'Locked';
@@ -146,6 +309,8 @@ async function popupAction(action) {
   if (tabId == null) return 'Unavailable';
   const context = await resolveDocument(tabId).catch(() => undefined);
   if (!context) return action?.Fill ? 'Changed' : 'Unavailable';
+  const policy = await sitePolicy(context.origin);
+  if (policy === 'Disabled') return {SiteDisabled: {origin: context.origin}};
 
   if (action?.Discover) {
     const operation = crypto.randomUUID();
@@ -155,6 +320,7 @@ async function popupAction(action) {
       Find: {operation, snapshot, after: action.Discover.after},
     });
     if (!await currentDocument(context).catch(() => false) || tabId !== await activeTab()) return 'Changed';
+    if (await sitePolicy(context.origin) === 'Disabled') return {SiteDisabled: {origin: context.origin}};
     return result.Popup ?? 'Error';
   }
   if (action?.Fill) {
@@ -168,6 +334,7 @@ async function popupAction(action) {
         || !await liveSession('', owner) || !await chrome.permissions.contains(sites)) return 'Changed';
 
     if (!await sendToDocument(context, 'ConfidexValidateFill', {operation, form}).catch(() => false)
+        || await sitePolicy(context.origin) === 'Disabled'
         || !await chrome.permissions.contains(sites)) return 'Changed';
     const {fields, login} = result.Fill;
     const filled = await sendToDocument(context, 'ConfidexFill', {operation, fields, login}).catch(() => false);
@@ -180,36 +347,46 @@ async function popupAction(action) {
   return 'Error';
 }
 
-function popupRequest(message) {
-  const id = value => typeof value === 'string' && /^[\da-f-]{1,64}$/i.test(value);
+function operationId(value) {
+  return typeof value === 'string' && /^[\da-f-]{1,64}$/i.test(value);
+}
+
+function popupRequest(message, inSession) {
   const action = message?.action;
   if (message?.version !== 1 || Object.keys(message).length !== 3) return false;
-  if (action === 'OpenSession') return true;
+  if (action === 'OpenSession') return !inSession;
   if (action === null || typeof action !== 'object' || Object.keys(action).length !== 1) return false;
-  if (action.Check) return id(action.Check.operation);
-  if (action.Fill) return id(action.Fill.operation) && Number.isInteger(action.Fill.form);
+  if (action.Save) {
+    const save = action.Save;
+    return save === 'List' || (typeof save === 'object' && Object.keys(save).length === 1
+      && operationId(save.Confirm?.id ?? save.Dismiss?.id));
+  }
+  if (action.SetPolicy) {
+    const {origin, policy} = action.SetPolicy;
+    return typeof origin === 'string' && origin.length <= 1024 && origin.startsWith('https://')
+      && httpsOrigin(origin) === origin
+      && (inSession ? policy === 'NoSave' : ['Allow', 'NoSave', 'Disabled'].includes(policy));
+  }
+  if (inSession) return false;
+  if (action.Check) return operationId(action.Check.operation);
+  if (action.Fill) return operationId(action.Fill.operation) && Number.isInteger(action.Fill.form);
   return Boolean(action.Discover);
 }
 
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   if (message?.kind !== 'ConfidexPopup') return;
-  if (sender.id !== chrome.runtime.id || sender.url !== popupUrl || sender.frameId > 0
-      || !popupRequest(message)) {
+  const inSession = isSessionPage(sender);
+  if (sender.id !== chrome.runtime.id || (!inSession && sender.url !== popupUrl) || sender.frameId > 0
+      || !popupRequest(message, inSession)) {
     reply('Error');
     return;
   }
-  popupAction(message.action).then(reply, () => reply('Error'));
+  popupAction(message.action, inSession).then(reply, () => reply('Error'));
   return true;
 });
 
 function navigation(tabId, url) {
-  let origin = null;
-  try {
-    const target = new URL(url);
-    if (target.protocol === 'https:') origin = target.origin;
-  } catch {
-    // Chrome omits the address for hosts this extension cannot access.
-  }
+  const origin = httpsOrigin(url) ?? null;
   void sessionMessage('ConfidexSiteNavigation', {tabId, origin}).catch(() => {});
 }
 
@@ -217,6 +394,15 @@ chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
   if (change.url || change.status === 'loading' || (change.status === 'complete' && !tab.url)) {
     navigation(tabId, change.url ?? tab.pendingUrl ?? tab.url);
   }
+  if (change.status === 'complete' && badgeTabs.has(tabId)) void paintBadge(tabId).catch(() => {});
 });
-chrome.tabs.onRemoved.addListener(tabId => navigation(tabId));
-chrome.tabs.onReplaced.addListener((_, removedTabId) => navigation(removedTabId));
+function closeSite(tabId) {
+  captureRoutes.delete(tabId);
+  badgeTabs.delete(tabId);
+  const revision = badgeRevision;
+  void sessionMessage('ConfidexSiteClosed', {tabId}).catch(() => false).then(handled => {
+    if (!handled && badgeTabs.size && revision === badgeRevision) paintBadges([]);
+  });
+}
+chrome.tabs.onRemoved.addListener(closeSite);
+chrome.tabs.onReplaced.addListener((_, removedTabId) => closeSite(removedTabId));

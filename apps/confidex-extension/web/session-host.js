@@ -11,6 +11,41 @@ let revision = 0;
 let syncRevision = 0;
 let workSequence = 0;
 let notify;
+let sitePolicy = {kind: 'SitePolicy', allowed: false, exceptions: '{}'};
+let policySequence = 0;
+const sitePermission = {origins: ['https://*/*']};
+
+function tellBackground(kind, data) {
+  void chrome.runtime.sendMessage({kind, version: 1, ...data}).catch(() => {});
+}
+
+function applyPolicy(allowed, exceptions) {
+  sitePolicy = {kind: 'SitePolicy', allowed, exceptions};
+  worker?.postMessage(sitePolicy);
+}
+
+function refreshPolicy() {
+  const sequence = ++policySequence;
+  Promise.all([chrome.permissions.contains(sitePermission), chrome.storage.local.get('siteExceptions')])
+    .then(([allowed, prefs]) => {
+      if (sequence === policySequence) applyPolicy(allowed, JSON.stringify(prefs.siteExceptions ?? {}));
+    }, () => {
+      if (sequence === policySequence) applyPolicy(false, '{}');
+    });
+}
+
+function revokePolicy() {
+  applyPolicy(false, sitePolicy.exceptions);
+  refreshPolicy();
+}
+
+function policyChanged(changes, area) {
+  if (area === 'local' && changes.siteExceptions) {
+    ++policySequence;
+    applyPolicy(sitePolicy.allowed, JSON.stringify(changes.siteExceptions.newValue ?? {}));
+    refreshPolicy();
+  }
+}
 
 function stop(output) {
   if (!worker) return;
@@ -22,6 +57,7 @@ function stop(output) {
   workingTimer = undefined;
   vaultLock = undefined;
   syncing = false;
+  tellBackground('ConfidexCaptureState', {open: false});
   revision++;
   const request = pending;
   pending = undefined;
@@ -41,6 +77,14 @@ function start() {
       clearTimeout(startupTimer);
       vaultLock = data.ready;
       workingTimer = setInterval(checkWorker, 5000);
+      return;
+    }
+    if (data?.captureOpen === true) {
+      tellBackground('ConfidexCaptureState', {open: true});
+      return;
+    }
+    if (Array.isArray(data?.saveBadges)) {
+      tellBackground('ConfidexSaveBadges', {tabs: data.saveBadges});
       return;
     }
     if (typeof data?.syncing === 'boolean') {
@@ -63,22 +107,27 @@ function start() {
   current.onerror = current.onmessageerror = () => {
     if (worker === current) stop();
   };
+  current.postMessage(sitePolicy);
 }
 
-async function probe(current, form, operation) {
+async function askWorker(current, message) {
   const {port1, port2} = new MessageChannel();
   let timer;
   try {
     return await new Promise((resolve, reject) => {
       timer = setTimeout(() => reject(new Error('Confidex session unavailable')), 3000);
-      port1.onmessage = ({data}) => resolve(data === true && current === worker);
-      current.postMessage({kind: 'Probe', form, operation}, [port2]);
+      port1.onmessage = ({data}) => resolve(current === worker ? data : false);
+      current.postMessage(message, [port2]);
     });
   } finally {
     clearTimeout(timer);
     port1.close();
     port2.close();
   }
+}
+
+async function probe(current, form, operation) {
+  return await askWorker(current, {kind: 'Probe', form, operation}) === true;
 }
 
 async function checkWorker() {
@@ -148,9 +197,24 @@ function receiveSite(message, sender, reply) {
   const current = worker;
   const generation = owner;
   switch (message.kind) {
-    case 'ConfidexSiteReset':
-      current?.postMessage({kind: 'SiteReset'});
-      reply(true);
+    case 'ConfidexReadBadges':
+      if (!current) {
+        reply([]);
+        return;
+      }
+      askWorker(current, {kind: 'ReadBadges'}).then(reply, () => reply([]));
+      return true;
+    case 'ConfidexListSaves':
+      if (!current || generation !== message.owner) {
+        reply('Locked');
+        return;
+      }
+      askWorker(current, {kind: 'ListSaves', tab: message.tab})
+        .then(result => reply(result || 'Locked'), () => reply('Locked'));
+      return true;
+    case 'ConfidexSiteClosed':
+      current?.postMessage({kind: 'SiteClosed', tabId: message.tabId});
+      reply(Boolean(current));
       return;
     case 'ConfidexSiteNavigation':
       current?.postMessage({kind: 'SiteNavigation', tabId: message.tabId, origin: message.origin});
@@ -164,7 +228,24 @@ function receiveSite(message, sender, reply) {
       probe(current, undefined, message.operation)
         .then(live => reply(live ? generation : false), () => reply(false));
       return true;
+    case 'ConfidexCapturePlan':
+    case 'ConfidexSiteCapture': {
+      const capture = message.kind === 'ConfidexSiteCapture';
+      if (!current || !sitePolicy.allowed || (capture && message.owner !== generation)) {
+        reply(false);
+        return;
+      }
+      const context = JSON.stringify(message.context);
+      const payload = capture
+        ? {report: JSON.stringify(message.report)}
+        : {snapshot: JSON.stringify(message.snapshot)};
+      askWorker(current, {kind: 'Capture', context, ...payload})
+        .then(result => reply(!capture && result ? {owner: generation, ...result} : result),
+          () => reply(false));
+      return true;
+    }
     case 'ConfidexSiteCommand':
+    case 'ConfidexSaveCommand': {
       if (!current || generation !== message.owner) {
         reply({status: 'Locked'});
         return;
@@ -174,14 +255,24 @@ function receiveSite(message, sender, reply) {
         return;
       }
       const bytes = new TextEncoder().encode(JSON.stringify(message.request));
-      exchange(bytes, true).then(output => {
+      exchange(bytes, message.kind === 'ConfidexSiteCommand' ? 'Site' : 'Save').then(output => {
         try {
-          reply(current === worker ? {response: new TextDecoder().decode(output)} : {status: 'Locked'});
+          if (current !== worker) {
+            reply({status: 'Locked'});
+            return;
+          }
+          const response = new TextDecoder().decode(output);
+          if (message.kind === 'ConfidexSaveCommand' && response.startsWith('{"Saved":')) {
+            syncRevision++;
+            notify?.();
+          }
+          reply({response});
         } finally {
           output.fill(0);
         }
       }, () => reply({status: 'Locked'}));
       return true;
+    }
   }
 }
 
@@ -191,6 +282,10 @@ export function observeSession(callback) {
   notify = callback;
   chrome.runtime.onMessage.addListener(receiveForm);
   chrome.runtime.onMessage.addListener(receiveSite);
+  chrome.permissions.onAdded.addListener(refreshPolicy);
+  chrome.permissions.onRemoved.addListener(revokePolicy);
+  chrome.storage.onChanged.addListener(policyChanged);
+  refreshPolicy();
   for (const event of activityEvents) addEventListener(event, userActivity, {capture: true, passive: true});
   document.addEventListener('visibilitychange', visibilityChanged);
   addEventListener('pagehide', disposeSession, {once: true});
@@ -202,6 +297,9 @@ export function disposeSession() {
   removeEventListener('pagehide', disposeSession);
   chrome.runtime.onMessage.removeListener(receiveForm);
   chrome.runtime.onMessage.removeListener(receiveSite);
+  chrome.permissions.onAdded.removeListener(refreshPolicy);
+  chrome.permissions.onRemoved.removeListener(revokePolicy);
+  chrome.storage.onChanged.removeListener(policyChanged);
   for (const event of activityEvents) removeEventListener(event, userActivity, true);
   document.removeEventListener('visibilitychange', visibilityChanged);
 }
@@ -218,7 +316,7 @@ export function syncStatusRevision() {
   return syncRevision;
 }
 
-export function exchange(input, site = false) {
+export function exchange(input, route) {
   return new Promise((resolve, reject) => {
     if (pending) {
       input.fill(0);
@@ -227,12 +325,12 @@ export function exchange(input, site = false) {
     }
     try {
       if (!worker) {
-        if (site) throw new Error('Confidex session closed');
+        if (route) throw new Error('Confidex session closed');
         start();
       }
       workSequence++;
       pending = {resolve, reject};
-      worker.postMessage(site ? {kind: 'Site', input} : input, [input.buffer]);
+      worker.postMessage(route ? {kind: route, input} : input, [input.buffer]);
     } catch (error) {
       input.fill(0);
       stop();

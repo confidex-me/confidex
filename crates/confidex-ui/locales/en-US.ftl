@@ -703,3 +703,15 @@ extension-form-changed = The page, form or login changed. Refresh to choose agai
 extension-form-choice = Login form
 extension-session-open = Open session
 extension-filled = Login filled.
+
+extension-save-offer = Save this login?
+extension-update-offer = Choose a login to update
+extension-update-password = Update password
+extension-save-dismiss = Dismiss
+extension-save-never = Never offer to save on this site
+extension-site-disable = Disable Confidex on this site
+extension-site-enable = Enable Confidex on this site
+extension-saving-enable = Offer to save on this site
+extension-site-disabled = Confidex is disabled on this site.
+extension-save-changed = The save offer changed or expired. Review the current offers.
+extension-save-duplicate = This login is already saved.

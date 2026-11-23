@@ -640,3 +640,15 @@ extension-form-changed = ページ、フォーム、または項目が変更さ�
 extension-form-choice = ログインフォーム
 extension-session-open = セッションを開く
 extension-filled = ログイン情報を入力しました。
+
+extension-save-offer = このログイン情報を保存しますか？
+extension-update-offer = 更新するログイン情報を選択してください
+extension-update-password = パスワードを更新
+extension-save-dismiss = 閉じる
+extension-save-never = このサイトでは保存を提案しない
+extension-site-disable = このサイトで Confidex を無効にする
+extension-site-enable = このサイトで Confidex を有効にする
+extension-saving-enable = このサイトで保存を提案する
+extension-site-disabled = このサイトでは Confidex が無効になっています。
+extension-save-changed = 保存の提案が変更されたか、有効期限が切れました。現在の提案を確認してください。
+extension-save-duplicate = このログイン情報は保存済みです。

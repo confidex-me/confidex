@@ -640,3 +640,15 @@ extension-form-changed = Sayfa, form veya kayıt değişti. Listeyi yenileyip ye
 extension-form-choice = Giriş formu
 extension-session-open = Oturumu aç
 extension-filled = Giriş bilgileri dolduruldu.
+
+extension-save-offer = Bu giriş bilgileri kaydedilsin mi?
+extension-update-offer = Güncellenecek giriş bilgilerini seçin
+extension-update-password = Parolayı güncelle
+extension-save-dismiss = Kapat
+extension-save-never = Bu sitede kaydetmeyi önerme
+extension-site-disable = Bu sitede Confidex’i devre dışı bırak
+extension-site-enable = Bu sitede Confidex’i etkinleştir
+extension-saving-enable = Bu sitede kaydetmeyi öner
+extension-site-disabled = Confidex bu sitede devre dışı.
+extension-save-changed = Öneri değişti veya süresi doldu. Güncel önerileri inceleyin.
+extension-save-duplicate = Bu giriş bilgileri zaten kayıtlı.

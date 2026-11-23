@@ -640,3 +640,15 @@ extension-form-changed = Halaman, borang atau rekod telah berubah. Muat semula s
 extension-form-choice = Borang log masuk
 extension-session-open = Buka sesi
 extension-filled = Maklumat log masuk telah diisi.
+
+extension-save-offer = Simpan butiran log masuk ini?
+extension-update-offer = Pilih butiran log masuk untuk dikemas kini
+extension-update-password = Kemas kini kata laluan
+extension-save-dismiss = Abaikan
+extension-save-never = Jangan tawarkan penyimpanan di laman ini
+extension-site-disable = Nyahaktifkan Confidex di laman ini
+extension-site-enable = Aktifkan Confidex di laman ini
+extension-saving-enable = Tawarkan penyimpanan di laman ini
+extension-site-disabled = Confidex dinyahaktifkan di laman ini.
+extension-save-changed = Tawaran telah berubah atau tamat tempoh. Semak tawaran semasa.
+extension-save-duplicate = Butiran log masuk ini sudah disimpan.

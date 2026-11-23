@@ -75,9 +75,14 @@ path = ${JSON.stringify(blobPath)}
       req.pipe(proxy);
       return;
     }
+    if (req.url === '/save-submit') {
+      req.resume();
+      res.writeHead(303, {Location: '/fill'}).end();
+      return;
+    }
     if (req.url.startsWith('/fill') || req.url === '/strict' || req.url === '/ordinary') {
       res.setHeader('Content-Type', 'text/html');
-      if (req.url === '/strict') {
+      if (req.url === '/strict' || req.url === '/fill-save') {
         res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'none'; object-src 'none'");
       }
       const frame = req.url === '/ordinary' ? '<iframe src="/seed"></iframe>' : '';
@@ -91,8 +96,18 @@ path = ${JSON.stringify(blobPath)}
           + '<button>Pay</button></form>',
         '/fill-empty': '<main></main>',
         '/fill-iframe': '<iframe src="/fill"></iframe>',
+        '/fill-save': '<form method="post" action="/save-submit"><input id="user" autocomplete="username">'
+          + '<input id="password" type="password" autocomplete="current-password"><button>Submit</button></form>',
+        '/fill-register': '<form method="post" action="/save-submit"><input id="user" autocomplete="username">'
+          + '<input id="password" type="password" autocomplete="new-password">'
+          + '<input id="confirmation" type="password" autocomplete="new-password"><button>Register</button></form>',
+        '/fill-save-first': '<form action="/fill-save-second"><input id="user" autocomplete="username">'
+          + '<button>Next</button></form>',
+        '/fill-save-second': '<form method="post" action="/save-submit">'
+          + '<input id="password" type="password" autocomplete="current-password"><button>Submit</button></form>',
       };
-      res.end('<!doctype html><title>Form fixture</title>' + (pages[req.url] ?? '<input type="password">') + frame);
+      const path = req.url.split('?')[0];
+      res.end('<!doctype html><title>Form fixture</title>' + (pages[path] ?? '<input type="password">') + frame);
       return;
     }
     if (req.url === '/seed') {
@@ -926,6 +941,181 @@ path = ${JSON.stringify(blobPath)}
   }}), 'Changed');
   assert(await multiple.evaluate("!document.querySelector('#password').value"));
 
+  const saveOrigin = origin.replace('127.0.0.1', 'localhost');
+  const newUser = 'autosave@example.test';
+  const newPassword = 'public-autosave-fixture';
+  const changedPassword = 'public-autosave-replacement-fixture';
+  const registrationPassword = 'public-autosave-registration-fixture';
+  const saveCall = (action, page = postRestartPopup) => until(async () => {
+    const response = await popupCall(page, {Save: action});
+    const save = response?.Save ?? response;
+    return save !== 'Busy' && save;
+  }, 'autosave command');
+  const readOffers = async (page) => {
+    const reply = await saveCall('List', page);
+    assert(reply?.Offers, 'Expected a live autosave offers response');
+    return reply.Offers.offers;
+  };
+  const offer = () => until(async () => (await readOffers())[0], 'autosave offer');
+  const navigate = (page, path) => until(() => page.evaluate(
+    `location.pathname === ${JSON.stringify(path)} && document.readyState === 'complete'`,
+  ).catch(() => false), `submission navigates to ${path}`);
+  const populate = (page, values, root = 'document') => page.evaluate(`Object.entries(${JSON.stringify(values)})
+    .forEach(([name, value]) => { ${root}.querySelector('#' + name).value = value; })`);
+  const submit = async (page, values, path = '/fill') => {
+    await page.call('Page.bringToFront');
+    await populate(page, values);
+    await click(page, 'input');
+    await delay(450);
+    await click(page, 'button');
+    await navigate(page, path);
+  };
+  const badge = url => recovered.evaluate(`(async () => {
+    const [tab] = await chrome.tabs.query({active: true, lastFocusedWindow: true, url: ${JSON.stringify(url)}});
+    return tab ? chrome.action.getBadgeText({tabId: tab.id}) : null;
+  })()`);
+  const policy = (origin, policy) => popupCall(postRestartPopup, {SetPolicy: {origin, policy}});
+  const noOffer = async () => {
+    await delay(450);
+    assert.deepEqual(await readOffers(), []);
+  };
+
+  scenario = 'offline autosave after native navigation under strict CSP';
+  networkBlocked = true;
+  await action(recovered, 'Sync');
+  await until(async () => (await status(recovered)).Ok?.Opened?.sync === 'Offline', 'autosave offline status');
+  const saveTab = await newTab(browserAfterRestart, saveOrigin + '/fill-save');
+  await submit(saveTab, {user: newUser, password: newPassword});
+  const pending = await offer();
+  assert.equal(pending.origin, saveOrigin);
+  assert.deepEqual(pending.kind, {New: {username: newUser}});
+  assert(!(await list(recovered)).rows.some(row => row.username === newUser), 'A page submission wrote to the vault');
+  assert(!JSON.stringify(pending).includes(newPassword), 'Popup received a captured password');
+  assert((await readOffers(recovered)).some(row => row.id === pending.id), 'Session tab did not see the same offer');
+  await until(async () => await badge(saveOrigin + '/fill') === '1', 'save badge after navigation');
+  const confirm = {Confirm: {id: pending.id, target: null}};
+  assert.deepEqual(await saveCall(confirm), {Saved: 'Offline'});
+  assert.equal(await saveCall(confirm), 'Changed', 'An already saved operation could be replayed');
+  await until(async () => await badge(saveOrigin + '/fill') === '', 'save badge cleared');
+  const fromCapture = (await list(recovered)).rows.find(row => row.username === newUser);
+  assert(fromCapture, 'The offline capture did not create a login');
+  assert((await action(recovered, 'Lock')).Ok?.Locked);
+  await status(recovered);
+  assert((await action(recovered, {Unlock: credentials})).Ok?.Opened);
+  const autofillSaved = () => lookupAfterRestart().then(({Site}) => {
+    const account = Site.matches.rows.findIndex(row => row.username === newUser);
+    return popupCall(postRestartPopup, fillPacket(Site, 0, account));
+  });
+  assert.equal(await autofillSaved(), 'Filled');
+  assert(await saveTab.evaluate(`document.querySelector('#password').value === ${JSON.stringify(newPassword)}`));
+  networkBlocked = false;
+  await syncExtension(recovered, action);
+  await syncWeb(web, origin);
+  const capturedInWeb = (await web({Open: {record: fromCapture.target.head.record}})).Ok.Draft;
+  assert.deepEqual(capturedInWeb.fields.map(field => field.type_name), ['username/v1', 'password/v1', 'url/v1', 'note/v1']);
+  assert(capturedInWeb.fields[1].values.password === newPassword, 'The captured password did not sync');
+  assert.equal(capturedInWeb.fields[2].values.url, saveOrigin);
+
+  scenario = 'autosave suppresses duplicates and validates registration confirmation';
+  const duplicate = await newTab(browserAfterRestart, saveOrigin + '/fill-save');
+  await submit(duplicate, {user: newUser, password: newPassword});
+  await noOffer();
+  assert.equal(await badge(saveOrigin + '/fill'), '');
+  const register = await newTab(browserAfterRestart, saveOrigin + '/fill-register');
+  await submit(register, {user: 'registration@example.test', password: registrationPassword, confirmation: 'different'});
+  await noOffer();
+  const rootTabs = () => browserAfterRestart('Target.getTargets', {filter: [{type: 'tab'}]}).then(reply => reply.targetInfos);
+  const existingTabs = new Set((await rootTabs()).map(tab => tab.targetId));
+  const validRegistration = await newTab(browserAfterRestart, saveOrigin + '/fill-register');
+  await submit(validRegistration, {user: 'registration@example.test', password: registrationPassword, confirmation: registrationPassword});
+  const registration = await offer();
+  assert.deepEqual(registration.kind, {New: {username: 'registration@example.test'}});
+  const activeRoot = (await rootTabs()).find(tab => !existingTabs.has(tab.targetId))?.targetId;
+  assert(activeRoot, 'Could not find the registration browser tab for the toolbar action');
+  await browserAfterRestart('Extensions.triggerAction', {id, targetId: activeRoot});
+  const savePopup = await until(async () => {
+    const {targetInfos} = await browserAfterRestart('Target.getTargets');
+    const target = targetInfos.find(target => target.url === popupUrl && target.targetId !== postRestartPopup.targetId);
+    return target && attach(browserAfterRestart, target.targetId);
+  }, 'autosave toolbar popup');
+  await until(() => savePopup.evaluate("!document.getElementById('startup') && document.activeElement?.id === 'popup'"),
+    'keyboard focus in autosave popup');
+  await delay(1700);
+  await press(savePopup, 'Tab', 9);
+  await press(savePopup, 'Enter', 13);
+  await until(async () => {
+    try {
+      return (await list(recovered)).rows.some(row => row.username === 'registration@example.test');
+    } catch (error) {
+      if (!error.message.includes('Confidex session request already pending')) throw error;
+      return false;
+    }
+  }, 'registration saved from the toolbar popup');
+  await press(savePopup, 'Escape', 27).catch(() => {});
+
+  scenario = 'autosave in open Shadow DOM SPA with password change and revision revalidation';
+  const changePage = await newTab(browserAfterRestart, saveOrigin + '/fill-empty');
+  await changePage.evaluate(`(() => {
+    const root = document.querySelector('main').attachShadow({mode: 'open'});
+    root.innerHTML = '<form method="post"><input type="password" id="old" autocomplete="current-password">'
+      + '<input type="password" id="password" autocomplete="new-password">'
+      + '<input type="password" id="confirmation" autocomplete="new-password">'
+      + '<button type="button">Change password</button></form>';
+    root.querySelector('button').onclick = () => { root.innerHTML = ''; history.pushState({}, '', '/fill-empty?changed'); };
+  })()`);
+  await populate(changePage, {old: newPassword, password: changedPassword, confirmation: changedPassword},
+    "document.querySelector('main').shadowRoot");
+  await changePage.evaluate("document.querySelector('main').shadowRoot.querySelector('#password').focus()");
+  await delay(350);
+  const {x, y} = await changePage.evaluate(`(() => {
+    const rect = document.querySelector('main').shadowRoot.querySelector('button').getBoundingClientRect();
+    return {x: rect.x + rect.width / 2, y: rect.y + rect.height / 2};
+  })()`);
+  for (const type of ['mousePressed', 'mouseReleased']) {
+    await changePage.call('Input.dispatchMouseEvent', {type, x, y, button: 'left', clickCount: 1});
+  }
+  const update = await offer();
+  assert.equal(update.kind.Update.length, 2);
+  const previous = update.kind.Update.find(row => row.username === newUser).target;
+  assert.deepEqual(previous, fromCapture.target);
+  assert.equal(await saveCall({Confirm: {id: update.id, target: null}}), 'Changed', 'A password change could create a login');
+  const revised = (await action(recovered, {UpdateLogin: {target: previous, change: {notes: 'Keep this note'}}})).Ok.Saved;
+  assert.equal(await saveCall({Confirm: {id: update.id, target: previous}}), 'Changed');
+  const updatedOffer = await offer();
+  assert.equal(updatedOffer.id, update.id);
+  const revisedTarget = updatedOffer.kind.Update.find(row => row.username === newUser).target;
+  assert.deepEqual(revisedTarget.head, revised);
+  assert((await saveCall({Confirm: {id: updatedOffer.id, target: revisedTarget}})).Saved);
+  await saveTab.call('Page.bringToFront');
+  assert.equal(await autofillSaved(), 'Filled');
+  assert(await saveTab.evaluate(`document.querySelector('#password').value === ${JSON.stringify(changedPassword)}`));
+
+  scenario = 'two-step autosave and exact origin exclusions';
+  const autosaveFirst = await newTab(browserAfterRestart, saveOrigin + '/fill-save-first');
+  await submit(autosaveFirst, {user: 'two-step@example.test'}, '/fill-save-second');
+  await submit(autosaveFirst, {password: newPassword});
+  const twoStep = await offer();
+  assert.deepEqual(twoStep.kind, {New: {username: 'two-step@example.test'}});
+  assert.equal(await policy(saveOrigin, 'NoSave'), 'PolicyChanged');
+  await until(async () => (await readOffers()).length === 0, 'site exception clears candidate');
+  assert.equal(await saveCall({Confirm: {id: twoStep.id, target: null}}), 'Changed');
+  assert.equal(await autofillSaved(), 'Filled', 'Saving exception also disabled filling');
+  const excluded = await newTab(browserAfterRestart, saveOrigin + '/fill-save');
+  await submit(excluded, {user: 'ignored@example.test', password: newPassword});
+  await noOffer();
+  assert.equal(await policy(saveOrigin, 'Disabled'), 'PolicyChanged');
+  assert.deepEqual(await lookupAfterRestart(), {SiteDisabled: {origin: saveOrigin}});
+  await multiple.call('Page.bringToFront');
+  assert.equal((await lookupAfterRestart()).Site.origin, origin, 'Exception leaked to a different origin');
+  await checkStorage(recovered, [newPassword, changedPassword, registrationPassword]);
+  assert.equal(await policy(saveOrigin, 'Allow'), 'PolicyChanged');
+  const closing = await newTab(browserAfterRestart, saveOrigin + '/fill-save');
+  await submit(closing, {user: 'closed-tab@example.test', password: registrationPassword});
+  const closedOffer = await offer();
+  await browserAfterRestart('Target.closeTarget', {targetId: closing.targetId});
+  await until(async () => !(await readOffers(recovered)).some(row => row.id === closedOffer.id),
+    'closed tab clears the captured login');
+
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
     offlineUnlock: true, newLoginThroughUi: true, editedLoginThroughUi: true, tagsSyncedBothWays: true,
     offlineWritesSurviveBrowserRestart: true, automaticSync: true,
@@ -938,7 +1128,10 @@ path = ${JSON.stringify(blobPath)}
     autofill: true, strictCspAutofill: true, openShadowDom: true, usernameFirst: true,
     formReplacementRejected: true, documentReplacementRejected: true, replayRejected: true,
     multipleFormsAndAccounts: true, staleFillRejected: true,
-    maskedCardCodeRejected: true, getSubmissionRejected: true}));
+    maskedCardCodeRejected: true, getSubmissionRejected: true, autosave: true,
+    offlineAutosave: true, autosaveAfterNavigation: true, autosaveDeduplication: true,
+    registrationConfirmation: true, autosaveThroughUi: true, staleCaptureUpdateRejected: true,
+    autosaveExclusions: true, closedTabDropsCapture: true}));
 
   if (!options.includes('--vault-only')) {
     scenario = 'standalone content WASM CSP reproduction';

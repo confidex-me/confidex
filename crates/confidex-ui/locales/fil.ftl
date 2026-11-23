@@ -640,3 +640,15 @@ extension-form-changed = Nagbago ang pahina, form, o tala. I-refresh ang listaha
 extension-form-choice = Form sa pag-sign in
 extension-session-open = Buksan ang session
 extension-filled = Napunan ang detalye sa pag-sign in.
+
+extension-save-offer = I-save ang mga detalye sa pag-sign in na ito?
+extension-update-offer = Piliin ang ia-update na mga detalye sa pag-sign in
+extension-update-password = I-update ang password
+extension-save-dismiss = I-dismiss
+extension-save-never = Huwag mag-alok na mag-save sa site na ito
+extension-site-disable = I-disable ang Confidex sa site na ito
+extension-site-enable = I-enable ang Confidex sa site na ito
+extension-saving-enable = Mag-alok na mag-save sa site na ito
+extension-site-disabled = Naka-disable ang Confidex sa site na ito.
+extension-save-changed = Nagbago o nag-expire na ang alok. Tingnan ang mga kasalukuyang alok.
+extension-save-duplicate = Naka-save na ang mga detalye sa pag-sign in na ito.

@@ -640,3 +640,15 @@ extension-form-changed = पेज, फ़ॉर्म या रिकॉर्
 extension-form-choice = लॉगिन फ़ॉर्म
 extension-session-open = सत्र खोलें
 extension-filled = लॉगिन विवरण भर दिया गया।
+
+extension-save-offer = यह लॉगिन जानकारी सहेजें?
+extension-update-offer = अपडेट करने के लिए लॉगिन चुनें
+extension-update-password = पासवर्ड अपडेट करें
+extension-save-dismiss = खारिज करें
+extension-save-never = इस साइट पर सहेजने का सुझाव न दें
+extension-site-disable = इस साइट पर Confidex बंद करें
+extension-site-enable = इस साइट पर Confidex चालू करें
+extension-saving-enable = इस साइट पर सहेजने का सुझाव दें
+extension-site-disabled = इस साइट पर Confidex बंद है।
+extension-save-changed = सुझाव बदल गया है या उसकी समय सीमा बीत गई है। मौजूदा सुझाव देखें।
+extension-save-duplicate = यह लॉगिन जानकारी पहले से सहेजी गई है।

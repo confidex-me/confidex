@@ -645,3 +645,15 @@ extension-form-changed = Сторінка, форма або запис змін
 extension-form-choice = Форма входу
 extension-session-open = Відкрити сеанс
 extension-filled = Дані для входу заповнено.
+
+extension-save-offer = Зберегти ці дані для входу?
+extension-update-offer = Виберіть запис для оновлення
+extension-update-password = Оновити пароль
+extension-save-dismiss = Закрити
+extension-save-never = Не пропонувати збереження для цього сайту
+extension-site-disable = Вимкнути Confidex на цьому сайті
+extension-site-enable = Увімкнути Confidex на цьому сайті
+extension-saving-enable = Пропонувати збереження для цього сайту
+extension-site-disabled = Confidex вимкнено на цьому сайті.
+extension-save-changed = Пропозиція змінилася або спливла. Перегляньте поточні пропозиції.
+extension-save-duplicate = Ці дані для входу вже збережено.

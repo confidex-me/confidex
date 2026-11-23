@@ -278,6 +278,16 @@ pub(super) async fn publish_local(
     objects: Vec<StoredObject>,
     heads: Vec<HeadChange>,
 ) -> Result<(), Error> {
+    publish_local_if(store, vault, objects, heads, || true).await
+}
+
+pub(super) async fn publish_local_if(
+    store: &mut impl Store,
+    vault: VaultId,
+    objects: Vec<StoredObject>,
+    heads: Vec<HeadChange>,
+    live: impl Fn() -> bool,
+) -> Result<(), Error> {
     let previous = store.sync_state(vault).await?;
     let current = match &previous {
         Some(bytes) => bytes.clone(),
@@ -290,6 +300,9 @@ pub(super) async fn publish_local(
         heads,
     };
     commit.validate()?;
+    if !live() {
+        return Err(Error::Input);
+    }
     store.publish_branches(vault, &commit).await?;
     Ok(())
 }
