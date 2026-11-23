@@ -106,8 +106,10 @@ With HTTPS site access granted and the vault unlocked, submit a sign-in
 form and look for the Confidex toolbar badge. The toolbar popup shows the
 offer for the current tab. The session tab shows pending offers from all
 tabs. Review the origin and account, then choose **Save** or select an
-existing login and choose **Update password**. Confidex detects the
-submission, so verify that the credentials worked before saving.
+existing login and choose **Update password**. Confidex detects native
+form submissions, including in open Shadow DOM. For SPA buttons, it
+recognizes actions such as **Sign in**, **Register**, and **Change password**.
+Verify that the credentials worked before saving.
 
 A matching origin, username and password produces no offer. Registration
 forms with a confirmation field require both password values to match.
@@ -163,8 +165,9 @@ browser profile and server data and writes no traces or screenshots.
 Autosave coverage includes native submission and navigation under strict
 CSP, an offline save followed by autofill and web sync, duplicate
 suppression, registration confirmation, a password change in an open
-Shadow DOM SPA, stale revision rejection, two-step sign-in, and separate
-saving and site-access exceptions.
+Shadow DOM SPA, native Shadow DOM submission by mouse and Enter,
+visibility toggles without capture, stale revision rejection, two-step
+sign-in, and separate saving and site-access exceptions.
 
 Headless runs record prior consent in Chromium's test profile and then use the
 permission button to request actual access. To exercise the first-use native

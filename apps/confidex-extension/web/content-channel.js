@@ -7,6 +7,14 @@
   const MAX_MUTATIONS = 4096;
   const MAX_FIELDS = 32;
   const KINDS = new Set(['text', 'email', 'tel', 'password']);
+  const BUTTON_TYPES = new Set(['button', 'submit', 'image', 'reset']);
+  const SPA_ACTIONS = new Set([
+    'log in', 'login', 'log on', 'logon', 'sign in', 'signin', 'sign up', 'signup',
+    'register', 'create account', 'create an account', 'change password', 'reset password', 'save password',
+    'войти', 'войти в аккаунт', 'вход', 'зарегистрироваться', 'регистрация', 'создать аккаунт',
+    'изменить пароль', 'сменить пароль', 'сбросить пароль', 'сохранить пароль',
+  ]);
+  const SPA_NEXT_STEP = new Set(['next', 'continue', 'далее', 'продолжить']);
   const attribute = (element, name) => Element.prototype.getAttribute.call(element, name);
   const rootOf = element => Node.prototype.getRootNode.call(element);
   // Form controls can shadow named properties on their HTMLFormElement owner.
@@ -60,6 +68,7 @@
   function observe(root) {
     if (observed.has(root)) return;
     observed.add(root);
+    // Listen at the root that owns the form, including non-composed submits.
     if (root !== document) root.addEventListener('submit', captureSubmit, true);
     observer.observe(root, {
       subtree: true, childList: true, attributes: true,
@@ -299,24 +308,31 @@
   }
 
   function captureSubmit(event) {
-    if (event.isTrusted && event.target instanceof HTMLFormElement) capture(event.target);
+    const form = event.target;
+    if (event.isTrusted && form instanceof HTMLFormElement && rootOf(form) === event.currentTarget) {
+      capture(form);
+    }
   }
 
   function captureClick(event) {
-    if (!event.isTrusted || !capturePermit || event.button !== 0) return;
-    const button = event.composedPath().find(node => node instanceof HTMLButtonElement
-      || (node instanceof HTMLInputElement && ['button', 'submit', 'image'].includes(node.type))
-      || (node instanceof HTMLElement && attribute(node, 'role') === 'button'));
-    if (!button || button.matches(':disabled,[aria-disabled=true]') || !visible(button)) return;
-    const hint = [attribute(button, 'aria-label'), attribute(button, 'name'),
-      attribute(button, 'id'), attribute(button, 'value'), button.textContent]
-      .map(text => text?.slice(0, 128) ?? '').join(' ').toLowerCase();
-    if (!/\b(log\s?in|log\s?on|sign\s?in|sign\s?up|register|next|continue|change\s+password|reset\s+password|save\s+password)\b|войти|зарегистрироваться|далее|продолжить|пароль/.test(hint)) return;
+    if (!event.isTrusted || !currentPermit(Date.now()) || event.button !== 0) return;
+    const path = event.composedPath();
+    const native = path.find(node => node instanceof HTMLButtonElement
+      || (node instanceof HTMLInputElement && BUTTON_TYPES.has(node.type)));
+    // Form submitters are handled by the submit listener after native validation.
+    if (native?.type === 'reset' || (native?.form && native.type !== 'button')) return;
+    const button = native ?? path.find(node => node instanceof HTMLElement && attribute(node, 'role') === 'button');
+    if (!button || button.matches(':disabled,[aria-disabled=true],[aria-pressed]') || !visible(button)) return;
+    const text = label(button) || (button instanceof HTMLInputElement ? attribute(button, 'value') : button.textContent);
+    if (!text || text.length > 128) return;
+    const action = text.toLowerCase().trim().replace(/[\s-]+/g, ' ');
     const owner = button.form ?? button.closest('form') ?? rootOf(button);
-    if (owner instanceof HTMLFormElement && ['submit', 'image'].includes(button.type)
-        && !button.formNoValidate && !owner.hasAttribute('novalidate')
-        && Element.prototype.matches.call(owner, ':invalid')) return;
-    capture(owner);
+    if (SPA_ACTIONS.has(action)) {
+      capture(owner);
+    } else if (SPA_NEXT_STEP.has(action)) {
+      const fields = capturePermit.forms.get(ids.get(owner))?.field;
+      if (fields?.username != null && fields.password === null) capture(owner);
+    }
   }
 
   document.addEventListener('submit', captureSubmit, true);

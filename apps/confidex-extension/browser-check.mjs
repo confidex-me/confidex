@@ -983,6 +983,101 @@ path = ${JSON.stringify(blobPath)}
     await delay(450);
     assert.deepEqual(await readOffers(), []);
   };
+  // Count messages before worker deduplication and keep fixture credentials out of diagnostics.
+  const captureTraffic = (install = false) => recovered.evaluate(`(async () => {
+    const [tab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
+    const [{result}] = await chrome.scripting.executeScript({
+      target: {tabId: tab.id}, world: 'ISOLATED', args: [${install}],
+      func: install => {
+        if (install) {
+          const traffic = globalThis.confidexTestCapture = {plans: 0, candidates: 0};
+          const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+          chrome.runtime.sendMessage = (message, ...rest) => {
+            if (message?.kind === 'CaptureCandidate') traffic.candidates++;
+            const reply = send(message, ...rest);
+            if (message?.kind === 'CapturePlan') {
+              void reply.then(plan => {
+                if (plan?.fields?.some(field => field.password !== null)) traffic.plans++;
+              }, () => {});
+            }
+            return reply;
+          };
+        }
+        return globalThis.confidexTestCapture;
+      },
+    });
+    return result;
+  })()`);
+  const loginFixture = '<form method="post"><input id="user" autocomplete="username">'
+    + '<input id="password" type="password" autocomplete="current-password">';
+
+  scenario = 'password visibility and cancelled native clicks do not capture credentials';
+  const toggle = await newTab(browserAfterRestart, saveOrigin + '/fill-empty');
+  await toggle.call('Page.bringToFront');
+  await captureTraffic(true);
+  await toggle.evaluate(`(() => {
+    document.querySelector('main').innerHTML = ${JSON.stringify(loginFixture
+      + '<button type="button" id="reveal-text">Показать пароль</button>'
+      + '<button type="button" id="reveal-aria" aria-label="Показать пароль">◉</button>'
+      + '<button type="submit" id="cancelled-submit">Войти</button></form>')};
+    const password = document.querySelector('#password');
+    for (const button of document.querySelectorAll('button[type=button]')) {
+      button.onclick = () => { password.type = password.type === 'password' ? 'text' : 'password'; };
+    }
+    document.querySelector('#cancelled-submit').onclick = event => event.preventDefault();
+  })()`);
+  await populate(toggle, {user: 'visibility@example.test', password: newPassword});
+  await click(toggle, '#password');
+  await until(async () => (await captureTraffic()).plans > 0, 'password visibility form capture plan');
+  await click(toggle, '#cancelled-submit');
+  await noOffer();
+  assert.equal((await captureTraffic()).candidates, 0, 'A cancelled submit click sent credentials');
+  await click(toggle, '#reveal-text');
+  assert.equal(await toggle.evaluate("document.querySelector('#password').type"), 'text');
+  await noOffer();
+  const afterReveal = await captureTraffic();
+  assert.equal(afterReveal.candidates, 0, 'A visibility toggle with visible text sent credentials');
+  await click(toggle, '#reveal-text');
+  await until(async () => (await captureTraffic()).plans > afterReveal.plans, 'capture plan after masking the password');
+  await click(toggle, '#reveal-aria');
+  assert.equal(await toggle.evaluate("document.querySelector('#password').type"), 'text');
+  await noOffer();
+  assert.equal((await captureTraffic()).candidates, 0, 'A visibility toggle with an accessible label sent credentials');
+
+  const shadowRoot = "document.querySelector('main').shadowRoot";
+  for (const [gesture, caption] of [['mouse', 'Submit'], ['enter', 'Отправить'], ['sign-in', 'Sign in']]) {
+    scenario = `native Shadow DOM submit with ${gesture} emits one capture`;
+    const page = await newTab(browserAfterRestart, saveOrigin + '/fill-empty');
+    await page.call('Page.bringToFront');
+    await captureTraffic(true);
+    await page.evaluate(`(() => {
+      const root = document.querySelector('main').attachShadow({mode: 'open'});
+      root.innerHTML = ${JSON.stringify(loginFixture + `<button>${caption}</button></form>`)};
+      window.submitEvents = [];
+      root.addEventListener('submit', event => {
+        window.submitEvents.push({trusted: event.isTrusted, form: event.target === root.querySelector('form')});
+        event.preventDefault();
+      });
+    })()`);
+    const username = `shadow-${gesture}@example.test`;
+    await populate(page, {user: username, password: newPassword}, shadowRoot);
+    await click(page, '#password', shadowRoot);
+    await until(async () => (await captureTraffic()).plans > 0, 'shadow form capture plan');
+    if (gesture === 'enter') {
+      const key = {key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13};
+      await page.call('Input.dispatchKeyEvent', {type: 'keyDown', text: '\r', unmodifiedText: '\r', ...key});
+      await page.call('Input.dispatchKeyEvent', {type: 'keyUp', ...key});
+    } else {
+      await click(page, 'button', shadowRoot);
+    }
+    assert.deepEqual(await page.evaluate('window.submitEvents'), [{trusted: true, form: true}]);
+    const captured = await offer();
+    assert.deepEqual(captured.kind, {New: {username}});
+    assert.equal((await readOffers()).length, 1);
+    assert.equal((await captureTraffic()).candidates, 1, 'A native submit sent more than one capture');
+    assert.equal(await saveCall({Dismiss: {id: captured.id}}), 'Dismissed');
+    await browserAfterRestart('Target.closeTarget', {targetId: page.targetId});
+  }
 
   scenario = 'offline autosave after native navigation under strict CSP';
   networkBlocked = true;
@@ -1147,7 +1242,8 @@ path = ${JSON.stringify(blobPath)}
     maskedCardCodeRejected: true, getSubmissionRejected: true, autosave: true,
     offlineAutosave: true, autosaveAfterNavigation: true, autosaveDeduplication: true,
     registrationConfirmation: true, autosaveThroughUi: true, staleCaptureUpdateRejected: true,
-    autosaveExclusions: true, closedTabDropsCapture: true, savedLoginsWithoutForm: true}));
+    autosaveExclusions: true, closedTabDropsCapture: true, savedLoginsWithoutForm: true,
+    visibilityToggleSkipped: true, shadowFormMouseAndEnter: true}));
 
   if (!options.includes('--vault-only')) {
     scenario = 'standalone content WASM CSP reproduction';
@@ -1309,10 +1405,10 @@ async function until(check, description, attempts = 100) {
   throw new Error(`Browser did not reach ${description}`);
 }
 
-async function click(page, selector) {
+async function click(page, selector, root = 'document') {
   await page.call('Page.bringToFront');
   const {x, y} = await page.evaluate(`(() => {
-    const rect = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();
+    const rect = ${root}.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();
     return {x: rect.x + rect.width / 2, y: rect.y + rect.height / 2};
   })()`);
   for (const type of ['mousePressed', 'mouseReleased']) {
