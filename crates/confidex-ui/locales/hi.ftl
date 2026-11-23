@@ -634,6 +634,7 @@ extension-sites-revoke = HTTPS साइटों की अनुमति ह�
 extension-sites-unavailable = साइटों की अनुमति नहीं बदली जा सकी।
 
 extension-fill = लॉगिन विवरण भरें
+extension-saved-logins = सहेजी गई लॉगिन जानकारी
 extension-no-form = कोई समर्थित लॉगिन फ़ॉर्म नहीं मिला।
 extension-site-no-access = HTTPS पेज खोलें और सत्र टैब में साइटों की अनुमति दें।
 extension-form-changed = पेज, फ़ॉर्म या रिकॉर्ड बदल गया है। सूची रीफ़्रेश करके फिर से चुनें।

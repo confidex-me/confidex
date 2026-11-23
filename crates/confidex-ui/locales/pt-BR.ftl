@@ -637,6 +637,7 @@ extension-sites-revoke = Remover acesso a sites HTTPS
 extension-sites-unavailable = Não foi possível alterar o acesso aos sites.
 
 extension-fill = Preencher dados de acesso
+extension-saved-logins = Dados de acesso salvos
 extension-no-form = Nenhum formulário de login compatível foi encontrado.
 extension-site-no-access = Abra uma página HTTPS e permita o acesso a sites na aba da sessão.
 extension-form-changed = A página, o formulário ou o registro mudou. Atualize a lista e escolha novamente.

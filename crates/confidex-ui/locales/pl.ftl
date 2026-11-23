@@ -639,6 +639,7 @@ extension-sites-revoke = Cofnij dostęp do stron HTTPS
 extension-sites-unavailable = Nie udało się zmienić dostępu do stron.
 
 extension-fill = Wypełnij dane logowania
+extension-saved-logins = Zapisane dane logowania
 extension-no-form = Nie znaleziono obsługiwanego formularza logowania.
 extension-site-no-access = Otwórz stronę HTTPS i zezwól na dostęp do witryn na karcie sesji.
 extension-form-changed = Strona, formularz lub wpis uległy zmianie. Odśwież listę i wybierz ponownie.

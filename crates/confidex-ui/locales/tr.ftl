@@ -634,6 +634,7 @@ extension-sites-revoke = HTTPS sitelerine erişimi kaldır
 extension-sites-unavailable = Site erişimi değiştirilemedi.
 
 extension-fill = Giriş bilgilerini doldur
+extension-saved-logins = Kayıtlı giriş bilgileri
 extension-no-form = Desteklenen bir giriş formu bulunamadı.
 extension-site-no-access = Bir HTTPS sayfası açın ve oturum sekmesinden sitelere erişime izin verin.
 extension-form-changed = Sayfa, form veya kayıt değişti. Listeyi yenileyip yeniden seçin.

@@ -638,6 +638,7 @@ extension-sites-revoke = Revocă accesul la site-uri HTTPS
 extension-sites-unavailable = Accesul la site-uri nu a putut fi modificat.
 
 extension-fill = Completează datele de conectare
+extension-saved-logins = Date de conectare salvate
 extension-no-form = Nu s-a găsit niciun formular de conectare compatibil.
 extension-site-no-access = Deschide o pagină HTTPS și permite accesul la site-uri în fila sesiunii.
 extension-form-changed = Pagina, formularul sau înregistrarea s-a schimbat. Reîncarcă lista și alege din nou.

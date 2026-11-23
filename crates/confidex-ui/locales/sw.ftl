@@ -637,6 +637,7 @@ extension-sites-revoke = Ondoa ruhusa ya kufikia tovuti za HTTPS
 extension-sites-unavailable = Haikuwezekana kubadilisha ruhusa ya kufikia tovuti.
 
 extension-fill = Jaza taarifa za kuingia
+extension-saved-logins = Taarifa za kuingia zilizohifadhiwa
 extension-no-form = Hakuna fomu ya kuingia inayotumika iliyopatikana.
 extension-site-no-access = Fungua ukurasa wa HTTPS na uruhusu ufikiaji wa tovuti kwenye kichupo cha kipindi.
 extension-form-changed = Ukurasa, fomu au rekodi imebadilika. Onyesha upya orodha na uchague tena.

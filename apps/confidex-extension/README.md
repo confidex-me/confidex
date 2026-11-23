@@ -75,10 +75,11 @@ including replies from isolated worlds already present when access was revoked.
 
 ## Autofill
 
-Open the toolbar popup on an HTTPS page. Confidex looks for suitable
-forms in the current top-level document and matches saved logins by exact
-HTTPS origin, including the port. Choose an account and, when listed,
-a specific form, then select **Fill login**. **Refresh** rescans the page.
+Open the toolbar popup on an HTTPS page. Confidex shows saved logins for the
+exact HTTPS origin, including the port, even on signed-in pages without a form.
+When the current top-level document contains a supported form, choose an
+account and, when listed, a specific form, then select **Fill login**.
+**Refresh** rescans the page.
 Confidex fills visible, editable fields in ordinary forms, dynamically
 rendered forms, and open Shadow DOM. The site still controls submission.
 

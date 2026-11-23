@@ -639,6 +639,7 @@ extension-sites-revoke = Відкликати доступ до HTTPS-сайті
 extension-sites-unavailable = Не вдалося змінити доступ до сайтів.
 
 extension-fill = Заповнити дані для входу
+extension-saved-logins = Збережені дані для входу
 extension-no-form = Підтримувану форму входу не знайдено.
 extension-site-no-access = Відкрийте сторінку HTTPS і надайте доступ до сайтів у вкладці сеансу.
 extension-form-changed = Сторінка, форма або запис змінилися. Оновіть список і виберіть ще раз.

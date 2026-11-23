@@ -697,6 +697,7 @@ extension-sites-revoke = Remove access to HTTPS sites
 extension-sites-unavailable = Could not change site access.
 
 extension-fill = Fill login
+extension-saved-logins = Saved logins
 extension-no-form = No supported login form found.
 extension-site-no-access = Open an HTTPS page and allow site access in the session tab.
 extension-form-changed = The page, form or login changed. Refresh to choose again.

@@ -634,6 +634,7 @@ extension-sites-revoke = 撤销访问 HTTPS 网站的权限
 extension-sites-unavailable = 无法更改网站访问权限。
 
 extension-fill = 填充登录信息
+extension-saved-logins = 已保存的登录信息
 extension-no-form = 未找到受支持的登录表单。
 extension-site-no-access = 打开 HTTPS 页面，并在会话标签页中允许访问网站。
 extension-form-changed = 页面、表单或记录已更改。请刷新列表后重新选择。

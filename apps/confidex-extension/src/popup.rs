@@ -83,7 +83,13 @@ impl PopupHandle {
                         check_at: 0.,
                         saves: SavePanel::default(),
                     };
-                    popup.request(&cc.egui_ctx, PopupAction::Discover { after: None });
+                    popup.request(
+                        &cc.egui_ctx,
+                        PopupAction::Discover {
+                            after: None,
+                            previous: None,
+                        },
+                    );
                     Ok(Box::new(popup))
                 }),
             )
@@ -111,7 +117,14 @@ impl Popup {
     fn request(&mut self, ctx: &egui::Context, action: PopupAction) {
         let reply_slot = Rc::new(RefCell::new(None));
         self.pending = Some(Pending {
-            quiet: matches!(action, PopupAction::Check { .. }),
+            quiet: matches!(
+                action,
+                PopupAction::Check { .. }
+                    | PopupAction::Discover {
+                        previous: Some(_),
+                        ..
+                    }
+            ),
             reply: reply_slot.clone(),
         });
         let ctx = ctx.clone();
@@ -160,20 +173,20 @@ impl Popup {
                     }
                     _ => {}
                 }
+                ui.add_enabled_ui(!busy, |ui| {
+                    show_choices(
+                        ui,
+                        &self.locale,
+                        self.colors,
+                        forms,
+                        matches,
+                        &mut self.form,
+                        &mut self.account,
+                    );
+                });
                 if forms.is_empty() {
-                    ui.label(self.locale.text("extension-no-form"));
+                    ui_kit::muted(ui, self.colors, self.locale.text("extension-no-form"));
                 } else {
-                    ui.add_enabled_ui(!busy, |ui| {
-                        show_choices(
-                            ui,
-                            &self.locale,
-                            self.colors,
-                            forms,
-                            matches,
-                            &mut self.form,
-                            &mut self.account,
-                        );
-                    });
                     let selection = self
                         .form
                         .zip(self.account)
@@ -206,15 +219,16 @@ impl Popup {
                     {
                         return Some(action);
                     }
-                    if let Some(after) = &matches.next
-                        && ui
-                            .add_enabled(!busy, egui::Button::new(self.locale.text("vault-more")))
-                            .clicked()
-                    {
-                        return Some(PopupAction::Discover {
-                            after: Some(after.clone()),
-                        });
-                    }
+                }
+                if let Some(after) = &matches.next
+                    && ui
+                        .add_enabled(!busy, egui::Button::new(self.locale.text("vault-more")))
+                        .clicked()
+                {
+                    return Some(PopupAction::Discover {
+                        after: Some(after.clone()),
+                        previous: None,
+                    });
                 }
                 if let Some(action) = ui
                     .add_enabled_ui(!busy, |ui| self.site_settings(ui, origin, *policy))
@@ -279,7 +293,10 @@ impl Popup {
                 )
                 .clicked()
                 {
-                    action = Some(PopupAction::Discover { after: None });
+                    action = Some(PopupAction::Discover {
+                        after: None,
+                        previous: None,
+                    });
                 }
             });
         });
@@ -331,6 +348,9 @@ fn show_choices(
         ui.label(locale.text("vault-no-results"));
         return;
     }
+    if forms.is_empty() {
+        ui.strong(locale.text("extension-saved-logins"));
+    }
     if forms.len() > 1 {
         let label = locale.text("extension-form-choice");
         ui.label(&label);
@@ -357,7 +377,9 @@ fn show_choices(
         } else {
             format!("{}\n{}", title, login.username)
         };
-        if ui
+        if forms.is_empty() {
+            ui.label(text);
+        } else if ui
             .add(
                 egui::Button::new(text)
                     .wrap()
@@ -378,12 +400,21 @@ impl eframe::App for Popup {
             .as_ref()
             .and_then(|p| p.reply.borrow_mut().take());
         if let Some(response) = response {
+            let quiet = self.pending.as_ref().is_some_and(|pending| pending.quiet);
             self.pending = None;
             self.check_at = now + 1500.;
             if matches!(response, PopupReply::PolicyChanged) {
-                self.request(ui.ctx(), PopupAction::Discover { after: None });
+                self.request(
+                    ui.ctx(),
+                    PopupAction::Discover {
+                        after: None,
+                        previous: None,
+                    },
+                );
             }
-            if !matches!(response, PopupReply::Live) {
+            if !matches!(response, PopupReply::Live)
+                && !(quiet && matches!(response, PopupReply::Busy))
+            {
                 self.form = None;
                 self.account = None;
                 if let PopupReply::Site {
@@ -424,7 +455,10 @@ impl eframe::App for Popup {
         {
             if now >= self.check_at {
                 action = Some(if forms.is_empty() {
-                    PopupAction::Discover { after: None }
+                    PopupAction::Discover {
+                        after: None,
+                        previous: Some(operation.clone()),
+                    }
                 } else {
                     PopupAction::Check {
                         operation: operation.clone(),

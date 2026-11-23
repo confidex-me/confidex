@@ -637,6 +637,7 @@ extension-sites-revoke = Ta bort åtkomst till HTTPS-webbplatser
 extension-sites-unavailable = Det gick inte att ändra webbplatsåtkomsten.
 
 extension-fill = Fyll i inloggningsuppgifter
+extension-saved-logins = Sparade inloggningar
 extension-no-form = Inget inloggningsformulär som stöds hittades.
 extension-site-no-access = Öppna en HTTPS-sida och tillåt åtkomst till webbplatser på sessionsfliken.
 extension-form-changed = Sidan, formuläret eller posten har ändrats. Uppdatera listan och välj igen.

@@ -385,32 +385,39 @@ impl Session {
                 operation,
                 snapshot,
                 mut after,
+                previous,
             } => {
                 let forms = snapshot.choices(&context.origin);
+                if forms.is_empty()
+                    && after.is_none()
+                    && previous
+                        .as_deref()
+                        .is_some_and(|id| self.autofill.waiting_for_form(now(), id, &context))
+                {
+                    return Ok(SiteReply::Popup(PopupReply::Live));
+                }
                 let mut matches = confidex_app::browser_logins::Page {
                     rows: vec![],
                     issues: Default::default(),
                     next: None,
                 };
-                if !forms.is_empty() {
-                    loop {
-                        let page = self
-                            .runtime
-                            .engine_mut()
-                            .find_browser_logins(&mut BrowserStore, after, &context.origin)
-                            .await?;
-                        if !self.is_open() {
-                            return Err(Error::Locked);
-                        }
-                        matches.issues.ambiguous |= page.issues.ambiguous;
-                        matches.issues.conflicts |= page.issues.conflicts;
-                        if !page.rows.is_empty() || page.next.is_none() {
-                            matches.rows = page.rows;
-                            matches.next = page.next;
-                            break;
-                        }
-                        after = page.next;
+                loop {
+                    let page = self
+                        .runtime
+                        .engine_mut()
+                        .find_browser_logins(&mut BrowserStore, after, &context.origin)
+                        .await?;
+                    if !self.is_open() {
+                        return Err(Error::Locked);
                     }
+                    matches.issues.ambiguous |= page.issues.ambiguous;
+                    matches.issues.conflicts |= page.issues.conflicts;
+                    if !page.rows.is_empty() || page.next.is_none() {
+                        matches.rows = page.rows;
+                        matches.next = page.next;
+                        break;
+                    }
+                    after = page.next;
                 }
                 matches.issues.conflicts |= self.conflicts;
                 let origin = context.origin.clone();
@@ -641,8 +648,12 @@ impl Session {
         let Some(server) = self.server.clone() else {
             return false;
         };
+        let before = (self.sync.status(), self.conflicts);
         let result = match self.command(Command::Sync { server }).await {
             Ok(Output::Synced(report)) => {
+                if report.downloaded > 0 {
+                    self.autofill.invalidate_waiting_for_form();
+                }
                 if !report.more {
                     self.conflicts = !report.conflicts.is_empty();
                 }
@@ -652,11 +663,15 @@ impl Session {
             Err(error) => Err(error),
         };
         self.sync.finish(now(), result);
+        if before != (self.sync.status(), self.conflicts) {
+            self.autofill.invalidate_waiting_for_form();
+        }
         self.reported_sync.set(self.sync.status());
         result == Ok(true)
     }
 
     fn local_change(&mut self) {
+        self.autofill.invalidate_waiting_for_form();
         self.sync.local_change(now());
         self.reported_sync.set(self.sync.status());
     }

@@ -317,7 +317,7 @@ async function popupAction(action, inSession) {
     const snapshot = await inspectDocument(context).catch(() => undefined);
     if (!snapshot || !await currentDocument(context).catch(() => false)) return 'Unavailable';
     const result = await siteCommand(owner, context, {
-      Find: {operation, snapshot, after: action.Discover.after},
+      Find: {operation, snapshot, after: action.Discover.after, previous: action.Discover.previous},
     });
     if (!await currentDocument(context).catch(() => false) || tabId !== await activeTab()) return 'Changed';
     if (await sitePolicy(context.origin) === 'Disabled') return {SiteDisabled: {origin: context.origin}};
@@ -370,7 +370,8 @@ function popupRequest(message, inSession) {
   if (inSession) return false;
   if (action.Check) return operationId(action.Check.operation);
   if (action.Fill) return operationId(action.Fill.operation) && Number.isInteger(action.Fill.form);
-  return Boolean(action.Discover);
+  return Boolean(action.Discover)
+    && (action.Discover.previous == null || operationId(action.Discover.previous));
 }
 
 chrome.runtime.onMessage.addListener((message, sender, reply) => {

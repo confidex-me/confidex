@@ -634,6 +634,7 @@ extension-sites-revoke = HTTPS साइटचा प्रवेश काढ�
 extension-sites-unavailable = साइटच्या प्रवेशाची परवानगी बदलता आली नाही.
 
 extension-fill = लॉगिन तपशील भरा
+extension-saved-logins = जतन केलेली लॉगिन माहिती
 extension-no-form = समर्थित लॉगिन फॉर्म सापडला नाही.
 extension-site-no-access = HTTPS पेज उघडा आणि सत्र टॅबमध्ये साइटला प्रवेश द्या.
 extension-form-changed = पेज, फॉर्म किंवा नोंद बदलली आहे. यादी रिफ्रेश करून पुन्हा निवडा.

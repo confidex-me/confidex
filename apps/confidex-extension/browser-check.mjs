@@ -410,14 +410,18 @@ path = ${JSON.stringify(blobPath)}
 
   scenario = 'SPA, Shadow DOM and stale form selections';
   const spa = await newTab(command, origin + '/fill-empty');
-  assert.equal((await choice(spa)).forms.length, 0);
+  const beforeForm = await choice(spa);
+  assert.equal(beforeForm.forms.length, 0);
   await spa.evaluate(`document.querySelector('main').innerHTML =
     '<div id="shadow"></div>'`);
   await spa.evaluate(`document.querySelector('#shadow').attachShadow({mode:'open'}).innerHTML =
     '<form method="post" aria-label="Sign in"><input hidden autocomplete="username"><input readonly autocomplete="username">'
     + '<input disabled autocomplete="username"><input id="user" autocomplete="username">'
     + '<input id="password" type="password" autocomplete="current-password"></form>'`);
-  const shadow = await choice(spa);
+  const shadow = await until(async () => {
+    const result = await popupCall(popupDriver, {Discover: {after: null, previous: beforeForm.operation}});
+    return result.Site;
+  }, 'a login form appears while the popup lists saved logins');
   assert.equal(shadow.forms[0].label, 'Sign in');
   assert.equal(await runFill(fillPacket(shadow)), 'Filled');
   assert(await isFilled(spa));
@@ -999,6 +1003,18 @@ path = ${JSON.stringify(blobPath)}
   await until(async () => await badge(saveOrigin + '/fill') === '', 'save badge cleared');
   const fromCapture = (await list(recovered)).rows.find(row => row.username === newUser);
   assert(fromCapture, 'The offline capture did not create a login');
+  await saveTab.call('Page.navigate', {url: saveOrigin + '/fill-empty'});
+  await navigate(saveTab, '/fill-empty');
+  const afterSignIn = (await lookupAfterRestart()).Site;
+  assert.deepEqual(afterSignIn.forms, []);
+  assert(afterSignIn.matches.rows.some(row => row.username === newUser), 'A signed-in page hid the saved login');
+  assert(!JSON.stringify(afterSignIn).includes(newPassword), 'Login previews exposed the saved password');
+  assert.equal(await popupCall(postRestartPopup, {Discover: {after: null, previous: afterSignIn.operation}}), 'Live');
+  assert.equal(await popupCall(postRestartPopup, {Fill: {
+    operation: afterSignIn.operation, form: 1, target: fromCapture.target,
+  }}), 'Changed');
+  await saveTab.call('Page.navigate', {url: saveOrigin + '/fill'});
+  await navigate(saveTab, '/fill');
   assert((await action(recovered, 'Lock')).Ok?.Locked);
   await status(recovered);
   assert((await action(recovered, {Unlock: credentials})).Ok?.Opened);
@@ -1131,7 +1147,7 @@ path = ${JSON.stringify(blobPath)}
     maskedCardCodeRejected: true, getSubmissionRejected: true, autosave: true,
     offlineAutosave: true, autosaveAfterNavigation: true, autosaveDeduplication: true,
     registrationConfirmation: true, autosaveThroughUi: true, staleCaptureUpdateRejected: true,
-    autosaveExclusions: true, closedTabDropsCapture: true}));
+    autosaveExclusions: true, closedTabDropsCapture: true, savedLoginsWithoutForm: true}));
 
   if (!options.includes('--vault-only')) {
     scenario = 'standalone content WASM CSP reproduction';

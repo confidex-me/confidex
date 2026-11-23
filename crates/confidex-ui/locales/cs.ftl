@@ -639,6 +639,7 @@ extension-sites-revoke = Odebrat přístup k webům HTTPS
 extension-sites-unavailable = Přístup k webům se nepodařilo změnit.
 
 extension-fill = Vyplnit přihlašovací údaje
+extension-saved-logins = Uložené přihlašovací údaje
 extension-no-form = Nebyl nalezen podporovaný přihlašovací formulář.
 extension-site-no-access = Otevřete stránku HTTPS a povolte přístup k webům na kartě relace.
 extension-form-changed = Stránka, formulář nebo záznam se změnily. Obnovte seznam a vyberte znovu.

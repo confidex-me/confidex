@@ -634,6 +634,7 @@ extension-sites-revoke = HTTPS সাইটের অ্যাক্সেস �
 extension-sites-unavailable = সাইটে অ্যাক্সেসের অনুমতি বদলানো যায়নি।
 
 extension-fill = লগইন তথ্য পূরণ করুন
+extension-saved-logins = সংরক্ষিত লগইন
 extension-no-form = সমর্থিত কোনো লগইন ফর্ম পাওয়া যায়নি।
 extension-site-no-access = একটি HTTPS পৃষ্ঠা খুলুন এবং সেশন ট্যাবে সাইট অ্যাক্সেসের অনুমতি দিন।
 extension-form-changed = পৃষ্ঠা, ফর্ম বা রেকর্ড বদলে গেছে। তালিকা রিফ্রেশ করে আবার নির্বাচন করুন।

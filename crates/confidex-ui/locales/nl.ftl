@@ -637,6 +637,7 @@ extension-sites-revoke = Toegang tot HTTPS-sites intrekken
 extension-sites-unavailable = De sitetoegang kon niet worden gewijzigd.
 
 extension-fill = Inloggegevens invullen
+extension-saved-logins = Opgeslagen inloggegevens
 extension-no-form = Geen ondersteund inlogformulier gevonden.
 extension-site-no-access = Open een HTTPS-pagina en sta toegang tot sites toe op het sessietabblad.
 extension-form-changed = De pagina, het formulier of het item is gewijzigd. Vernieuw de lijst en kies opnieuw.

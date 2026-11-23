@@ -43,10 +43,15 @@ function retire(output) {
   self.close();
 }
 
+function retireIfExpired() {
+  // A Lock command still needs to deliver its terminal reply.
+  if (lease?.remaining() === 0 && (!busy || !lease.was_locked())) retire();
+}
+
 function scheduleExpiry() {
   clearTimeout(expiry);
   const remaining = lease.remaining();
-  if (remaining === 0) retire();
+  if (remaining === 0) retireIfExpired();
   if (remaining > 0) expiry = setTimeout(scheduleExpiry, remaining);
   if (remaining > 0 && !unlocked) {
     unlocked = true;
@@ -158,7 +163,7 @@ self.onmessage = ({data, ports}) => {
       if (typeof data.operation === 'string') alive = lease?.site_live(data.operation) === true;
       port.postMessage(alive);
       port.close();
-      if (remaining === 0) retire();
+      retireIfExpired();
     } else if (data?.kind === 'SitePolicy') {
       capturePolicy = data;
       if (lease?.site_policy(data.allowed, data.exceptions)) refreshBadges();
@@ -176,7 +181,7 @@ self.onmessage = ({data, ports}) => {
       const offers = lease?.list_saves(data.tab ?? undefined);
       port.postMessage(offers ? JSON.parse(offers) : 'Locked');
       port.close();
-      if (lease?.remaining() === 0) retire();
+      retireIfExpired();
     } else if (data?.kind === 'Capture' && ports.length === 1) {
       const [port] = ports;
       let result = false;
@@ -193,7 +198,7 @@ self.onmessage = ({data, ports}) => {
       }
       port.postMessage(result);
       port.close();
-      if (!result && lease?.remaining() === 0) retire();
+      if (!result) retireIfExpired();
     }
     return;
   }

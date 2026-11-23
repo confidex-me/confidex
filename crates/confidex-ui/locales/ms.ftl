@@ -634,6 +634,7 @@ extension-sites-revoke = Tarik balik akses ke laman HTTPS
 extension-sites-unavailable = Akses laman tidak dapat diubah.
 
 extension-fill = Isi maklumat log masuk
+extension-saved-logins = Butiran log masuk yang disimpan
 extension-no-form = Tiada borang log masuk yang disokong ditemui.
 extension-site-no-access = Buka halaman HTTPS dan benarkan akses laman dalam tab sesi.
 extension-form-changed = Halaman, borang atau rekod telah berubah. Muat semula senarai dan pilih semula.

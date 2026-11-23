@@ -634,6 +634,7 @@ extension-sites-revoke = Thu hồi quyền truy cập các trang HTTPS
 extension-sites-unavailable = Không thể thay đổi quyền truy cập trang web.
 
 extension-fill = Điền thông tin đăng nhập
+extension-saved-logins = Thông tin đăng nhập đã lưu
 extension-no-form = Không tìm thấy biểu mẫu đăng nhập được hỗ trợ.
 extension-site-no-access = Mở trang HTTPS và cho phép truy cập trang web trong thẻ phiên.
 extension-form-changed = Trang, biểu mẫu hoặc mục đã thay đổi. Hãy làm mới danh sách và chọn lại.

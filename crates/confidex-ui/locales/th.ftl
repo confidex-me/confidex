@@ -634,6 +634,7 @@ extension-sites-revoke = ยกเลิกการเข้าถึงเว�
 extension-sites-unavailable = ไม่สามารถเปลี่ยนสิทธิ์การเข้าถึงเว็บไซต์ได้
 
 extension-fill = กรอกข้อมูลเข้าสู่ระบบ
+extension-saved-logins = ข้อมูลเข้าสู่ระบบที่บันทึกไว้
 extension-no-form = ไม่พบแบบฟอร์มเข้าสู่ระบบที่รองรับ
 extension-site-no-access = เปิดหน้า HTTPS แล้วอนุญาตการเข้าถึงเว็บไซต์ในแท็บเซสชัน
 extension-form-changed = หน้า แบบฟอร์ม หรือรายการมีการเปลี่ยนแปลง รีเฟรชรายการแล้วเลือกอีกครั้ง

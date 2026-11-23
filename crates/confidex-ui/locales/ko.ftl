@@ -634,6 +634,7 @@ extension-sites-revoke = HTTPS 사이트 접근 권한 삭제
 extension-sites-unavailable = 사이트 접근 권한을 변경할 수 없습니다.
 
 extension-fill = 로그인 정보 채우기
+extension-saved-logins = 저장된 로그인 정보
 extension-no-form = 지원되는 로그인 양식을 찾지 못했습니다.
 extension-site-no-access = HTTPS 페이지를 열고 세션 탭에서 사이트 액세스를 허용하세요.
 extension-form-changed = 페이지, 양식 또는 항목이 변경되었습니다. 목록을 새로 고친 뒤 다시 선택하세요.

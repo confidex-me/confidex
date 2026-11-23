@@ -634,6 +634,7 @@ extension-sites-revoke = Alisin ang access sa mga HTTPS site
 extension-sites-unavailable = Hindi mabago ang access sa mga site.
 
 extension-fill = Punan ang detalye sa pag-sign in
+extension-saved-logins = Mga naka-save na detalye sa pag-sign in
 extension-no-form = Walang nakitang suportadong form sa pag-sign in.
 extension-site-no-access = Magbukas ng HTTPS na pahina at payagan ang access sa mga site sa tab ng session.
 extension-form-changed = Nagbago ang pahina, form, o tala. I-refresh ang listahan at pumili muli.
