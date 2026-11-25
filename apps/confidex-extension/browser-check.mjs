@@ -151,6 +151,11 @@ path = ${JSON.stringify(blobPath)}
     ], {stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe']});
     return devTools(chrome);
   };
+  const closeBrowser = async command => {
+    const exited = once(chrome, 'exit');
+    await Promise.race([command('Browser.close'), exited]);
+    await exited;
+  };
   const command = launch();
   const browser = await command('Browser.getVersion');
   await command('Target.setDiscoverTargets', {discover: true});
@@ -889,9 +894,7 @@ path = ${JSON.stringify(blobPath)}
 
   // Shut down Chromium while the server is still unreachable. Reuse only the
   // temporary profile, just as a user would after a browser restart.
-  const exited = once(chrome, 'exit');
-  await Promise.race([command('Browser.close'), exited]);
-  await exited;
+  await closeBrowser(command);
   const browserAfterRestart = launch();
   assert.equal((await browserAfterRestart('Extensions.loadUnpacked', {path: resolve(extensionPath)})).id, id);
   const recovered = await newTab(browserAfterRestart, extensionUrl);
@@ -991,24 +994,26 @@ path = ${JSON.stringify(blobPath)}
     title: 'Another synthetic login', url: origin, username: 'second-account@example.test', password: updatedPassword,
   };
   assert((await action(recovered, {CreateLogin: {record: otherRecord, login: otherLogin}})).Ok?.Saved);
-  const restartedPermission = () => recovered.evaluate(`chrome.permissions.contains(${hostPermission})`);
-  if (!await restartedPermission()) {
+  const restoreSitePermission = async (browser, page) => {
+    const permitted = () => page.evaluate(`chrome.permissions.contains(${hostPermission})`);
+    if (await permitted()) return;
     // DevTools can reload the unpacked package with optional permissions reset.
-    const settings = await newTab(browserAfterRestart, 'chrome://extensions/',
+    const settings = await newTab(browser, 'chrome://extensions/',
       ['chrome://extensions/', 'edge://extensions/', 'brave://extensions/']);
     await settings.evaluate(`chrome.developerPrivate.addHostPermission(${JSON.stringify(id)}, 'https://*/*')`);
-    await browserAfterRestart('Target.closeTarget', {targetId: settings.targetId});
-    await recovered.call('Page.bringToFront');
-    await recovered.call('Page.reload');
-    await waitForUi(recovered);
+    await browser('Target.closeTarget', {targetId: settings.targetId});
+    await page.call('Page.bringToFront');
+    await page.call('Page.reload');
+    await waitForUi(page);
     await delay(500);
-    await recovered.evaluate("document.querySelector('#session').focus()");
-    await press(recovered, 'Tab', 9);
-    await press(recovered, 'Enter', 13);
-    await until(() => recovered.evaluate("!document.querySelector('#site-permissions').hidden"), 'grant access after browser restart');
-    await click(recovered, '#site-permissions-toggle');
-    await until(restartedPermission, 'site permission after unpacked reload');
-  }
+    await page.evaluate("document.querySelector('#session').focus()");
+    await press(page, 'Tab', 9);
+    await press(page, 'Enter', 13);
+    await until(() => page.evaluate("!document.querySelector('#site-permissions').hidden"), 'grant access after browser restart');
+    await click(page, '#site-permissions-toggle');
+    await until(permitted, 'site permission after unpacked reload');
+  };
+  await restoreSitePermission(browserAfterRestart, recovered);
   const multiple = await newTab(browserAfterRestart, origin + '/fill');
   const postRestartPopup = await newTab(browserAfterRestart, popupUrl);
   await multiple.evaluate(`document.body.insertAdjacentHTML('beforeend',
@@ -1260,15 +1265,10 @@ path = ${JSON.stringify(blobPath)}
   const register = await newTab(browserAfterRestart, saveOrigin + '/fill-register');
   await submit(register, {user: 'registration@example.test', password: registrationPassword, confirmation: 'different'});
   await noOffer();
-  const rootTabs = () => browserAfterRestart('Target.getTargets', {filter: [{type: 'tab'}]}).then(reply => reply.targetInfos);
-  const existingTabs = new Set((await rootTabs()).map(tab => tab.targetId));
   const validRegistration = await newTab(browserAfterRestart, saveOrigin + '/fill-register');
   await submit(validRegistration, {user: 'registration@example.test', password: registrationPassword, confirmation: registrationPassword});
   const registration = await offer();
   assert.deepEqual(registration.kind, {New: {username: 'registration@example.test'}});
-  const activeRoot = (await rootTabs()).find(tab => !existingTabs.has(tab.targetId))?.targetId;
-  assert(activeRoot, 'Could not find the registration browser tab for the toolbar action');
-  await browserAfterRestart('Extensions.triggerAction', {id, targetId: activeRoot});
   const savePopup = await until(async () => {
     const {targetInfos} = await browserAfterRestart('Target.getTargets');
     const target = targetInfos.find(target => target.url === popupUrl && target.targetId !== postRestartPopup.targetId && target.targetId !== recovered.targetId);
@@ -1354,6 +1354,54 @@ path = ${JSON.stringify(blobPath)}
   await until(async () => !(await readOffers(recovered)).some(row => row.id === closedOffer.id),
     'closed tab clears the captured login');
 
+  scenario = 'confirmed offline autosave survives a browser restart and synchronizes';
+  networkBlocked = true;
+  await action(recovered, 'Sync');
+  await until(async () => (await status(recovered)).Ok?.Opened?.sync === 'Offline', 'offline before autosave');
+  const durableUser = 'durable-autosave@example.test';
+  const durableTab = await newTab(browserAfterRestart, saveOrigin + '/fill-save');
+  await submit(durableTab, {user: durableUser, password: newPassword});
+  const durableOffer = await offer();
+  assert.deepEqual(durableOffer.kind, {New: {username: durableUser}});
+  assert.deepEqual(await saveCall({Confirm: {id: durableOffer.id, target: null}}), {Saved: 'Offline'});
+  const durableLogin = (await list(recovered)).rows.find(row => row.username === durableUser);
+  assert(durableLogin, 'The confirmed offline offer did not create a login');
+
+  await closeBrowser(browserAfterRestart);
+  const browserAfterAutosave = launch();
+  assert.equal((await browserAfterAutosave('Extensions.loadUnpacked', {path: resolve(extensionPath)})).id, id);
+  const restoredPopup = await newTab(browserAfterAutosave, popupUrl);
+  await waitForUi(restoredPopup);
+  assert((await status(restoredPopup)).Ok?.Locked, 'An offline save restored an unlocked session');
+  assert((await action(restoredPopup, {Unlock: credentials})).Ok?.Opened);
+  await until(async () => (await status(restoredPopup)).Ok?.Opened?.sync === 'Offline', 'offline unlock after autosave');
+  await restoreSitePermission(browserAfterAutosave, restoredPopup);
+  const fillAfterAutosave = await newTab(browserAfterAutosave, saveOrigin + '/fill');
+  await fillAfterAutosave.call('Page.bringToFront');
+  const savedSite = await until(async () => {
+    const {Site} = await popupCall(restoredPopup, {Discover: {after: null}}) ?? {};
+    return Site?.forms.length && Site;
+  }, 'login form after offline restart');
+  const savedAccount = savedSite.matches.rows.findIndex(row => row.username === durableUser);
+  assert(savedAccount >= 0, 'The confirmed login was missing after offline restart');
+  assert.deepEqual(savedSite.matches.rows[savedAccount].target, durableLogin.target);
+  assert.equal(await popupCall(restoredPopup, fillPacket(savedSite, 0, savedAccount)), 'Filled');
+  assert(await fillAfterAutosave.evaluate(`document.querySelector('#user').value === ${JSON.stringify(durableUser)}
+    && document.querySelector('#password').value === ${JSON.stringify(newPassword)}`), 'Offline autofill did not use the saved login');
+
+  networkBlocked = false;
+  await syncExtension(restoredPopup, action);
+  const restoredWebPage = await newTab(browserAfterAutosave, origin + '/seed');
+  await startWebWorker(restoredWebPage);
+  const restoredWeb = value => webCommand(restoredWebPage, value);
+  const {Catalog: restoredCatalog} = (await restoredWeb('Catalog')).Ok;
+  assert((await restoredWeb({Unlock: {vault: restoredCatalog[0].id, ...credentials, remember: false}})).Ok?.Opened);
+  await syncWeb(restoredWeb, origin);
+  const {Draft: syncedAutosave} = (await restoredWeb({Open: {record: durableLogin.target.head.record}})).Ok;
+  assert.deepEqual(syncedAutosave.revision, durableLogin.target.head.revision);
+  assert(syncedAutosave.fields.find(field => field.type_name === 'password/v1')?.values.password === newPassword,
+    'The confirmed offline login did not synchronize after browser restart');
+
   console.log(JSON.stringify({browser: browser.product, syncFromWeb: true, syncToWeb: true,
     offlineUnlock: true, newLoginThroughUi: true, editedLoginThroughUi: true, tagsSyncedBothWays: true,
     offlineWritesSurviveBrowserRestart: true, automaticSync: true,
@@ -1367,22 +1415,22 @@ path = ${JSON.stringify(blobPath)}
     formReplacementRejected: true, documentReplacementRejected: true, replayRejected: true,
     multipleFormsAndAccounts: true, staleFillRejected: true,
     maskedCardCodeRejected: true, getSubmissionRejected: true, autosave: true,
-    offlineAutosave: true, autosaveAfterNavigation: true, autosaveDeduplication: true,
+    offlineAutosave: true, offlineAutosaveSurvivesBrowserRestart: true, autosaveAfterNavigation: true, autosaveDeduplication: true,
     registrationConfirmation: true, autosaveThroughUi: true, staleCaptureUpdateRejected: true,
     autosaveExclusions: true, closedTabDropsCapture: true, savedLoginsWithoutForm: true,
     visibilityToggleSkipped: true, shadowFormMouseAndEnter: true}));
 
   if (!options.includes('--vault-only')) {
     scenario = 'standalone content WASM CSP reproduction';
-    const {id: probeId} = await browserAfterRestart('Extensions.loadUnpacked', {path: cspExtension});
-    const cspPage = await newTab(browserAfterRestart, `chrome-extension://${probeId}/popup.html`);
+    const {id: probeId} = await browserAfterAutosave('Extensions.loadUnpacked', {path: cspExtension});
+    const cspPage = await newTab(browserAfterAutosave, `chrome-extension://${probeId}/popup.html`);
     await cspPage.evaluate(`chrome.scripting.registerContentScripts([{
       id: 'content-smoke', matches: ['https://127.0.0.1/*'], world: 'ISOLATED',
       js: ['content-bootstrap.js'], runAt: 'document_start',
     }])`);
     const inspect = async path => {
       const url = origin + path;
-      const site = await newTab(browserAfterRestart, url);
+      const site = await newTab(browserAfterAutosave, url);
       assert.equal(await site.evaluate("typeof globalThis.confidexContent"), 'undefined');
       return cspPage.evaluate(`(async () => {
         const [tab] = await chrome.tabs.query({url: ${JSON.stringify(url)}});

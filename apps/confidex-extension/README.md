@@ -178,11 +178,13 @@ and conflict resolution with the main web runtime. It removes the temporary
 browser profile and server data and writes no traces or screenshots.
 
 Autosave coverage includes native submission and navigation under strict
-CSP, an offline save followed by autofill and web sync, duplicate
-suppression, registration confirmation, a password change in an open
-Shadow DOM SPA, native Shadow DOM submission by mouse and Enter,
-visibility toggles without capture, stale revision rejection, two-step
-sign-in, and separate saving and site-access exceptions.
+CSP, a confirmed offline save followed by a browser restart, offline unlock
+and autofill, and synchronization with the web client once the server is
+reachable. The check also covers duplicate suppression, registration
+confirmation, a password change in an open Shadow DOM SPA, native Shadow
+DOM submission by mouse and Enter, visibility toggles without capture,
+stale revision rejection, two-step sign-in, and separate saving and
+site-access exceptions.
 
 Headless runs record prior consent in Chromium's test profile and then use the
 permission button to request actual access. To exercise the first-use native
