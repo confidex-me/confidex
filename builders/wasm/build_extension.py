@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Build the unpacked Chromium extension with the pinned web tools."""
+"""Build the unpacked extension and a reproducible Chromium pilot ZIP."""
 import fcntl
 import json
 import re
 import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 
 from build import ROOT, build_wasm, wasm_tools
@@ -75,27 +76,46 @@ def validate_bundle(bundle):
                 raise ValueError(f'Missing extension import in {path.relative_to(bundle)}: {relative}')
 
 
+def package_bundle(bundle, output):
+    with zipfile.ZipFile(output, 'w') as archive:
+        for path in sorted(bundle.rglob('*'), key=Path.as_posix):
+            if path.is_file():
+                entry = zipfile.ZipInfo(path.relative_to(bundle).as_posix())
+                entry.create_system = 3
+                entry.external_attr = 0o100644 << 16
+                archive.writestr(entry, path.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+
+
 def main():
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
     bundle = dist / 'extension'
+    archive = dist / 'confidex-chromium.zip'
     # Serialize builders and keep the installed bundle available during compilation.
     with (dist / '.extension-build.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         with tempfile.TemporaryDirectory(prefix='.extension-build-', dir=dist) as temporary:
             stage = Path(temporary) / 'extension'
             previous = Path(temporary) / 'previous'
+            packaged = Path(temporary) / archive.name
             build_bundle(stage)
             validate_bundle(stage)
+            package_bundle(stage, packaged)
             if bundle.exists():
                 bundle.rename(previous)
+            installed = False
             try:
                 stage.rename(bundle)
+                installed = True
+                packaged.replace(archive)
             except OSError:
+                if installed:
+                    bundle.rename(stage)
                 if previous.exists():
                     previous.rename(bundle)
                 raise
     print(bundle)
+    print(archive)
 
 
 if __name__ == '__main__':

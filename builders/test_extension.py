@@ -2,6 +2,7 @@
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -61,6 +62,26 @@ class ExtensionTests(unittest.TestCase):
             extension.validate_bundle(installed)
             self.assertFalse((installed / 'old-file').exists())
             self.assertEqual(list((root / 'dist').glob('.extension-build-*')), [])
+            with zipfile.ZipFile(root / 'dist/confidex-chromium.zip') as archive:
+                expected = sorted(path.relative_to(installed).as_posix()
+                                  for path in installed.rglob('*') if path.is_file())
+                self.assertEqual(archive.namelist(), expected)
+                for name in expected:
+                    self.assertEqual(archive.read(name), (installed / name).read_bytes())
+
+    def test_zip_ignores_source_timestamps_and_permissions(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bundle = root / 'extension'
+            fixture(bundle)
+            original = root / 'original.zip'
+            rebuilt = root / 'rebuilt.zip'
+            extension.package_bundle(bundle, original)
+            manifest = bundle / 'manifest.json'
+            manifest.touch()
+            manifest.chmod(0o755)
+            extension.package_bundle(bundle, rebuilt)
+            self.assertEqual(original.read_bytes(), rebuilt.read_bytes())
 
     def test_failed_install_restores_previous_bundle(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -80,3 +101,20 @@ class ExtensionTests(unittest.TestCase):
                 with self.assertRaises(OSError):
                     extension.main()
             self.assertTrue((installed / 'old-file').exists())
+
+    def test_failed_zip_publish_restores_previous_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            installed = root / 'dist/extension'
+            fixture(installed)
+            (installed / 'old-file').touch()
+            archive = root / 'dist/confidex-chromium.zip'
+            archive.write_bytes(b'previous archive')
+
+            with patch.object(extension, 'ROOT', root), patch.object(extension, 'build_bundle', side_effect=fixture), \
+                    patch.object(Path, 'replace', side_effect=OSError('publish failed')):
+                with self.assertRaises(OSError):
+                    extension.main()
+
+            self.assertTrue((installed / 'old-file').exists())
+            self.assertEqual(archive.read_bytes(), b'previous archive')

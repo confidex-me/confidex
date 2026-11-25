@@ -6,7 +6,25 @@ saved logins and settings.
 It recognizes composite logins and separate Login template fields. Each page
 contains up to 128 previews with titles and usernames.
 
-## Build and load
+## Install the pilot
+
+Open a successful **Build** run in GitHub Actions and download the
+**chromium-extension** artifact. Extract the enclosed `confidex-chromium.zip`
+into a folder you can keep. Open `chrome://extensions`, `edge://extensions`
+or `brave://extensions`, enable **Developer mode**, select **Load unpacked**
+and choose the folder that contains `manifest.json`.
+
+Open the Confidex toolbar popup and connect an existing synchronized vault
+using its master password and secret key. The server defaults to
+`https://sync.confidex.me/` and accepts a custom Confidex HTTPS sync origin.
+Use **Fill login** to grant HTTPS site access before testing autofill and save
+offers. You can lock the vault from the popup when finished.
+
+To update, extract the new contents into the same installation folder and
+use **Reload** on the browser's extensions page. Synchronize pending changes
+before removing the extension. Removing it also removes its local vault cache.
+
+## Build from source
 
 Use the Rust, Node.js and WASM tool versions pinned by the main web build.
 
@@ -14,20 +32,19 @@ Use the Rust, Node.js and WASM tool versions pinned by the main web build.
 make extension
 ```
 
-Load `dist/extension` as an unpacked extension. Click the Confidex toolbar
-action to connect or unlock. The server defaults to
-`https://sync.confidex.me/` and accepts a custom Confidex HTTPS sync origin.
-
-The builder validates the package before replacing `dist/extension`. Reload
-the extension and reopen the session after rebuilding. Startup failures display
-an error and a reload button.
+Load `dist/extension` directly or extract `dist/confidex-chromium.zip` and
+load the extracted folder. The builder validates the bundle before replacing
+the outputs. The ZIP stores files in path order with fixed timestamps and
+permissions. Reload the extension after rebuilding. Startup failures display
+an error and a reload button in the popup.
 
 ## Session and site access
 
 Chromium 116 or later hosts the Dedicated Worker in an offscreen extension
-document so closing the popup preserves the session. The Dedicated Worker is the only Engine owner and
-uses the shared encrypted IndexedDB store on the extension origin. Each unlock
-requires the master password and secret key.
+document so closing the popup preserves the session. The Dedicated Worker
+is the only Engine owner and uses the shared encrypted IndexedDB store on
+the extension origin. Each unlock requires the master password and secret key.
+The popup selects the light or dark Confidex theme when it opens.
 
 The worker checks its 15-minute idle deadline before processing vault requests
 and returning results. Trusted pointer, keyboard and scroll events in the
@@ -116,8 +133,9 @@ for the architecture decision and isolated-world WASM experiment.
 
 With HTTPS site access granted and the vault unlocked, submit a sign-in
 form. When a new offer is ready in the active tab, Confidex opens the toolbar
-popup. The badge also gives access to the offer if the popup is dismissed. The saved logins view shows pending offers from all
-tabs. Review the origin and account, then choose **Save** or select an
+popup where the browser supports it. Use the badge to open an offer at any
+time. The saved logins view shows pending offers from all tabs. Review the
+origin and account, then choose **Save** or select an
 existing login and choose **Update password**. Confidex detects native
 form submissions, including in open Shadow DOM. For SPA buttons, it
 recognizes actions such as **Sign in**, **Register**, and **Change password**.
@@ -156,20 +174,21 @@ node apps/confidex-extension/browser-check.mjs \
   "/path/to/chrome" dist/extension dist/web target/debug/confidexsyncd --vault-only
 ```
 
-Use `--popup-only` for the toolbar connection form, saved login, settings, close/reopen, lock and unlock flow.
+Use `--popup-only` for the toolbar connection, reopen, lock and unlock flow,
+and the light and dark popup at 360 × 480 CSS pixels.
 
-The check creates a local HTTPS server and uses the packaged web client to create
+The check creates local HTTP and HTTPS fixtures and uses the packaged web client to create
 and sync a synthetic vault. It installs the unpacked extension in a temporary
 Chromium profile and checks permission grant and revocation, sender validation,
 keyboard navigation in the toolbar popup, autofill under
 strict CSP and dynamic open Shadow DOM, two-step sign-ins, account and
 form selection, input and change events without submission, blocked form
-and document replacement, stale revisions, replay rejection, routing after a background
+and document replacement, rejection on HTTP pages, stale revisions, replay rejection, routing after a background
 restart, worker loss, idle expiry, exclusive worker ownership, and reopening the popup.
 The revocation check sends a report from the original isolated world without
 reloading the page. The slow-unlock check blocks the worker across the previous
 probe timeout and verifies that unlock completes. A separate check closes the
-worker without a reply during unlock and verifies recovery in the same tab.
+worker without a reply during unlock and verifies recovery without a UI reload.
 The suite also checks incorrect credentials, offline creation and update,
 duplicate requests, stale revisions, and absence of fixture credentials in
 persistent extension data. It restarts Chromium with the same temporary
@@ -180,7 +199,8 @@ browser profile and server data and writes no traces or screenshots.
 Autosave coverage includes native submission and navigation under strict
 CSP, a confirmed offline save followed by a browser restart, offline unlock
 and autofill, and synchronization with the web client once the server is
-reachable. The check also covers duplicate suppression, registration
+reachable. A web client edit to that login then syncs back to the extension.
+The check also covers dismissal after a rejected sign-in, duplicate suppression, registration
 confirmation, a password change in an open Shadow DOM SPA, native Shadow
 DOM submission by mouse and Enter, visibility toggles without capture,
 stale revision rejection, two-step sign-in, and separate saving and
@@ -191,3 +211,6 @@ permission button to request actual access. To exercise the first-use native
 permission prompt, add `--interactive-permission` and accept the prompt in the
 temporary browser window. Omit `--vault-only` to also run the standalone WASM
 probe, which reproduces the separate strict-CSP issue.
+
+See the [pilot verification report](../../docs/chromium-extension-pilot.md)
+for tested browser versions, archive verification and coverage.

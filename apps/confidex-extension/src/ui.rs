@@ -99,7 +99,8 @@ impl WebHandle {
                     ui_kit::setup(&cc.egui_ctx);
                     cc.egui_ctx
                         .add_plugin(browser_input::TextInput::new(plugin_input_id));
-                    let dark = cc.egui_ctx.theme() == egui::Theme::Dark;
+                    let dark = eframe::web::system_theme().unwrap_or_else(|| cc.egui_ctx.theme())
+                        == egui::Theme::Dark;
                     let theme = theme::THEMES
                         .iter()
                         .find(|theme| theme.dark == dark)
