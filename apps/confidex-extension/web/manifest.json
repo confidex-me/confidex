@@ -3,7 +3,7 @@
   "name": "Confidex",
   "version": "0.1.0",
   "incognito": "not_allowed",
-  "minimum_chrome_version": "106",
+  "minimum_chrome_version": "116",
   "icons": {
     "16": "icons/16.png",
     "32": "icons/32.png",
@@ -12,7 +12,7 @@
   },
   "action": { "default_title": "Confidex", "default_popup": "popup.html" },
   "background": { "service_worker": "background.js" },
-  "permissions": ["scripting", "storage"],
+  "permissions": ["scripting", "storage", "offscreen"],
   "optional_host_permissions": ["https://*/*"],
   "content_security_policy": {
     "extension_pages": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self' https:"

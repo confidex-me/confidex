@@ -4,12 +4,12 @@ use crate::{
     protocol::{MAX_RESPONSE, SyncStatus},
     save_ui::SavePanel,
 };
-use confidex_app::browser_logins::Page;
+use confidex_app::browser_logins::{Page, Selection};
 use confidex_extension_content::Choice;
 use confidex_ui::{
     i18n::Localizer,
-    theme::{self, Palette},
-    ui_kit::{self, ButtonRole, Metrics},
+    theme::Palette,
+    ui_kit::{self, Metrics},
 };
 use eframe::egui;
 use std::{cell::RefCell, rc::Rc, time::Duration};
@@ -37,93 +37,50 @@ pub(crate) async fn request_popup(action: PopupAction) -> PopupReply {
     reply.unwrap_or(PopupReply::Error)
 }
 
-#[wasm_bindgen]
-pub struct PopupHandle(eframe::WebRunner);
-
-#[wasm_bindgen]
-impl PopupHandle {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
-        Self(eframe::WebRunner::new())
-    }
-
-    pub fn destroy(&self) {
-        self.0.destroy();
-    }
-
-    pub async fn start(&self, canvas: web_sys::HtmlCanvasElement) -> Result<(), JsValue> {
-        let fonts = ui_kit::fonts::load_browser().await?;
-        let languages = web_sys::window()
-            .map(|window| window.navigator().languages())
-            .unwrap_or_default()
-            .iter()
-            .filter_map(|item| item.as_string())
-            .collect::<Vec<_>>();
-        let locale = Localizer::from_preferences(languages)?;
-        self.0
-            .start(
-                canvas,
-                eframe::WebOptions::default(),
-                Box::new(move |cc| {
-                    cc.egui_ctx.set_fonts(fonts);
-                    ui_kit::setup(&cc.egui_ctx);
-                    let dark = cc.egui_ctx.theme() == egui::Theme::Dark;
-                    let theme = theme::THEMES
-                        .iter()
-                        .find(|theme| theme.dark == dark)
-                        .unwrap_or(&theme::THEMES[0]);
-                    theme.apply(&cc.egui_ctx);
-                    let mut popup = Popup {
-                        locale,
-                        colors: theme.colors,
-                        state: PopupReply::Locked,
-                        pending: None,
-                        form: None,
-                        account: None,
-                        check_at: 0.,
-                        saves: SavePanel::default(),
-                    };
-                    popup.request(
-                        &cc.egui_ctx,
-                        PopupAction::Discover {
-                            after: None,
-                            previous: None,
-                        },
-                    );
-                    Ok(Box::new(popup))
-                }),
-            )
-            .await
-    }
-}
-
 struct Pending {
     reply: Rc<RefCell<Option<PopupReply>>>,
     quiet: bool,
 }
 
-struct Popup {
-    locale: Localizer,
+pub(crate) struct Popup {
+    locale: Rc<Localizer>,
     colors: Palette,
     state: PopupReply,
     pending: Option<Pending>,
     form: Option<usize>,
-    account: Option<usize>,
     check_at: f64,
     saves: SavePanel,
 }
 
 impl Popup {
+    pub(crate) fn new(
+        ctx: &egui::Context,
+        locale: Rc<Localizer>,
+        colors: Palette,
+        initial: PopupAction,
+    ) -> Self {
+        let mut popup = Self {
+            locale,
+            colors,
+            state: PopupReply::Locked,
+            pending: None,
+            form: None,
+            check_at: 0.,
+            saves: SavePanel::default(),
+        };
+        popup.request(ctx, initial);
+        popup
+    }
+
     fn request(&mut self, ctx: &egui::Context, action: PopupAction) {
         let reply_slot = Rc::new(RefCell::new(None));
         self.pending = Some(Pending {
             quiet: matches!(
                 action,
-                PopupAction::Check { .. }
-                    | PopupAction::Discover {
-                        previous: Some(_),
-                        ..
-                    }
+                PopupAction::Discover {
+                    previous: Some(_),
+                    ..
+                }
             ),
             reply: reply_slot.clone(),
         });
@@ -136,7 +93,7 @@ impl Popup {
 
     fn show(&mut self, ui: &mut egui::Ui) -> Option<PopupAction> {
         let busy = self.pending.as_ref().is_some_and(|request| !request.quiet);
-        ui.heading("Confidex");
+
         self.saves.show(ui, &self.locale, self.colors);
         if busy {
             ui_kit::spinner(ui, self.colors, 20., &self.locale.text("vault-working"));
@@ -148,7 +105,6 @@ impl Popup {
                 forms,
                 matches,
                 sync,
-                policy,
                 ..
             } => {
                 ui.label(origin);
@@ -173,52 +129,27 @@ impl Popup {
                     }
                     _ => {}
                 }
-                ui.add_enabled_ui(!busy, |ui| {
-                    show_choices(
-                        ui,
-                        &self.locale,
-                        self.colors,
-                        forms,
-                        matches,
-                        &mut self.form,
-                        &mut self.account,
-                    );
-                });
+                let clicked = ui
+                    .add_enabled_ui(!busy, |ui| {
+                        show_choices(
+                            ui,
+                            &self.locale,
+                            self.colors,
+                            forms,
+                            matches,
+                            &mut self.form,
+                        )
+                    })
+                    .inner;
+                if let Some((form, target)) = clicked {
+                    return Some(PopupAction::Fill {
+                        operation: operation.clone(),
+                        form,
+                        target,
+                    });
+                }
                 if forms.is_empty() {
                     ui_kit::muted(ui, self.colors, self.locale.text("extension-no-form"));
-                } else {
-                    let selection = self
-                        .form
-                        .zip(self.account)
-                        .and_then(|(form, account)| {
-                            Some((forms.get(form)?, matches.rows.get(account)?))
-                        })
-                        .filter(|(form, login)| {
-                            form.target.password.is_some() || !login.username.is_empty()
-                        });
-                    if let Some(action) = ui
-                        .add_enabled_ui(!busy, |ui| {
-                            let clicked = ui_kit::button(
-                                ui,
-                                self.colors,
-                                &self.locale.text("extension-fill"),
-                                ButtonRole::Primary,
-                                ui.available_width(),
-                                selection.is_some(),
-                            )
-                            .clicked();
-                            selection
-                                .filter(|_| clicked)
-                                .map(|(form, login)| PopupAction::Fill {
-                                    operation: operation.clone(),
-                                    form: form.target.form,
-                                    target: login.target.clone(),
-                                })
-                        })
-                        .inner
-                    {
-                        return Some(action);
-                    }
                 }
                 if let Some(after) = &matches.next
                     && ui
@@ -230,34 +161,21 @@ impl Popup {
                         previous: None,
                     });
                 }
-                if let Some(action) = ui
-                    .add_enabled_ui(!busy, |ui| self.site_settings(ui, origin, *policy))
-                    .inner
-                {
-                    return Some(action);
-                }
             }
             PopupReply::SiteDisabled { origin } => {
                 ui.label(origin);
                 ui.label(self.locale.text("extension-site-disabled"));
-                if let Some(action) = ui
-                    .add_enabled_ui(!busy, |ui| {
-                        self.site_settings(ui, origin, SitePolicy::Disabled)
-                    })
-                    .inner
-                {
-                    return Some(action);
-                }
             }
             state => {
                 let key = match state {
                     PopupReply::Locked | PopupReply::Live => "vault-error-locked",
-                    PopupReply::Unavailable => "extension-site-no-access",
-                    PopupReply::Changed => "extension-form-changed",
+                    PopupReply::Unavailable => "extension-no-form",
+                    PopupReply::Changed => "vault-working",
                     PopupReply::Busy | PopupReply::PolicyChanged => "vault-working",
-                    PopupReply::Error => "vault-error-storage",
+                    PopupReply::Error => "extension-load-error",
                     PopupReply::Filled => "extension-filled",
-                    PopupReply::Save(_)
+                    PopupReply::CurrentSite { .. }
+                    | PopupReply::Save(_)
                     | PopupReply::Site { .. }
                     | PopupReply::SiteDisabled { .. } => unreachable!(),
                 };
@@ -266,41 +184,16 @@ impl Popup {
                 }
             }
         }
-        ui.add_space(Metrics::SM);
-        ui.separator();
-        let mut action = None;
-        ui.add_enabled_ui(!busy, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                if ui_kit::button(
-                    ui,
-                    self.colors,
-                    &self.locale.text("extension-session-open"),
-                    ButtonRole::Quiet,
-                    0.,
-                    true,
-                )
-                .clicked()
-                {
-                    action = Some(PopupAction::OpenSession);
-                }
-                if ui_kit::button(
-                    ui,
-                    self.colors,
-                    &self.locale.text("vault-refresh"),
-                    ButtonRole::Quiet,
-                    0.,
-                    true,
-                )
-                .clicked()
-                {
-                    action = Some(PopupAction::Discover {
-                        after: None,
-                        previous: None,
-                    });
-                }
+        if !busy
+            && matches!(self.state, PopupReply::Error)
+            && ui.button(self.locale.text("extension-retry")).clicked()
+        {
+            return Some(PopupAction::Discover {
+                after: None,
+                previous: None,
             });
-        });
-        action
+        }
+        None
     }
 
     fn site_settings(
@@ -310,10 +203,7 @@ impl Popup {
         current: SitePolicy,
     ) -> Option<PopupAction> {
         let (saving, toggle) = match current {
-            SitePolicy::Allow => (
-                Some(("extension-save-never", SitePolicy::NoSave)),
-                ("extension-site-disable", SitePolicy::Disabled),
-            ),
+            SitePolicy::Allow => (None, ("extension-site-disable", SitePolicy::Disabled)),
             SitePolicy::NoSave => (
                 Some(("extension-saving-enable", SitePolicy::Allow)),
                 ("extension-site-disable", SitePolicy::Disabled),
@@ -342,14 +232,10 @@ fn show_choices(
     forms: &[Choice],
     matches: &Page,
     form: &mut Option<usize>,
-    account: &mut Option<usize>,
-) {
+) -> Option<(u32, Selection)> {
     if matches.rows.is_empty() {
         ui.label(locale.text("vault-no-results"));
-        return;
-    }
-    if forms.is_empty() {
-        ui.strong(locale.text("extension-saved-logins"));
+        return None;
     }
     if forms.len() > 1 {
         let label = locale.text("extension-form-choice");
@@ -366,103 +252,124 @@ fn show_choices(
         }
         ui.separator();
     }
-    for (index, login) in matches.rows.iter().enumerate() {
+    ui.add_space(Metrics::SM);
+    ui.strong(locale.text("extension-saved-logins"));
+    let selected_form = form.and_then(|index| forms.get(index));
+    for login in &matches.rows {
         let title = if login.title.is_empty() {
             locale.text("vault-untitled")
         } else {
             login.title.clone()
         };
-        let text = if login.username.is_empty() {
-            title
-        } else {
-            format!("{}\n{}", title, login.username)
-        };
-        if forms.is_empty() {
-            ui.label(text);
-        } else if ui
-            .add(
-                egui::Button::new(text)
-                    .wrap()
-                    .selected(*account == Some(index)),
-            )
-            .clicked()
+        let eligible = selected_form
+            .filter(|choice| choice.target.password.is_some() || !login.username.is_empty());
+        let row = egui::Frame::new()
+            .fill(colors.surface)
+            .stroke(egui::Stroke::new(1., colors.border))
+            .corner_radius(Metrics::FIELD_RADIUS)
+            .show(ui, |ui| {
+                ui_kit::record_row(
+                    ui,
+                    colors,
+                    &title,
+                    &login.username,
+                    false,
+                    eligible.is_some(),
+                )
+            })
+            .inner;
+        if row.clicked()
+            && let Some(choice) = eligible
         {
-            *account = Some(index);
+            return Some((choice.target.form, login.target.clone()));
         }
     }
+    None
 }
 
-impl eframe::App for Popup {
-    fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
+impl Popup {
+    pub(crate) fn panel(&mut self, ui: &mut egui::Ui, settings: bool) {
         let now = js_sys::Date::now();
         let response = self
             .pending
             .as_ref()
             .and_then(|p| p.reply.borrow_mut().take());
-        if let Some(response) = response {
+        if let Some(mut response) = response {
             let quiet = self.pending.as_ref().is_some_and(|pending| pending.quiet);
             self.pending = None;
             self.check_at = now + 1500.;
             if matches!(response, PopupReply::PolicyChanged) {
-                self.request(
-                    ui.ctx(),
-                    PopupAction::Discover {
-                        after: None,
-                        previous: None,
-                    },
-                );
+                self.request(ui.ctx(), PopupAction::CurrentSite);
             }
             if !matches!(response, PopupReply::Live)
                 && !(quiet && matches!(response, PopupReply::Busy))
             {
                 self.form = None;
-                self.account = None;
                 if let PopupReply::Site {
                     forms,
                     matches,
                     preferred,
                     ..
-                } = &response
+                } = &mut response
+                    && let [choice] = forms.as_slice()
                 {
-                    if forms.len() == 1 {
-                        self.form = Some(0);
-                        let prefer = preferred
-                            .as_ref()
-                            .filter(|_| forms[0].target.username.is_none());
-                        self.account = if matches.rows.len() == 1 {
-                            Some(0)
-                        } else {
-                            prefer.and_then(|target| {
-                                matches.rows.iter().position(|row| &row.target == target)
-                            })
-                        };
+                    self.form = Some(0);
+                    if choice.target.username.is_none()
+                        && let Some(index) = matches
+                            .rows
+                            .iter()
+                            .position(|row| preferred.as_ref() == Some(&row.target))
+                    {
+                        matches.rows[..=index].rotate_right(1);
                     }
                 }
                 self.state = response;
             }
         }
-        let mut action = None;
-        egui::CentralPanel::default().show(ui, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                action = self.show(ui);
-            });
-        });
+        if settings {
+            if let PopupReply::CurrentSite { origin, policy } = &self.state {
+                ui.add_space(Metrics::MD);
+                ui.separator();
+                ui.heading(self.locale.text("extension-current-site"));
+                ui.label(origin);
+                if let Some(action) = ui
+                    .add_enabled_ui(self.pending.is_none(), |ui| {
+                        self.site_settings(ui, origin, *policy)
+                    })
+                    .inner
+                {
+                    self.request(ui.ctx(), action);
+                }
+            } else if matches!(self.state, PopupReply::Error) {
+                ui.label(self.locale.text("extension-load-error"));
+                if ui
+                    .add_enabled(
+                        self.pending.is_none(),
+                        egui::Button::new(self.locale.text("extension-retry")),
+                    )
+                    .clicked()
+                {
+                    self.request(ui.ctx(), PopupAction::CurrentSite);
+                }
+            }
+            return;
+        }
+        let mut action = self.show(ui);
         if self.pending.is_none()
             && action.is_none()
-            && let PopupReply::Site {
-                operation, forms, ..
-            } = &self.state
+            && matches!(
+                self.state,
+                PopupReply::Site { .. } | PopupReply::Changed | PopupReply::Busy
+            )
         {
             if now >= self.check_at {
-                action = Some(if forms.is_empty() {
-                    PopupAction::Discover {
-                        after: None,
-                        previous: Some(operation.clone()),
-                    }
-                } else {
-                    PopupAction::Check {
-                        operation: operation.clone(),
-                    }
+                let previous = match &self.state {
+                    PopupReply::Site { operation, .. } => Some(operation.clone()),
+                    _ => None,
+                };
+                action = Some(PopupAction::Discover {
+                    after: None,
+                    previous,
                 });
             } else {
                 ui.ctx()

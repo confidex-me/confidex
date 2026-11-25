@@ -15,14 +15,14 @@ def build_bundle(bundle):
     source = ROOT / 'apps/confidex-extension/web'
     bundle.mkdir(parents=True)
     for name in ('manifest.json', 'background.js', 'popup.html', 'popup.css', 'popup-boot.js',
-                 'extension-strings.js', 'session.html', 'session.css',
-                 'session-boot.js', 'session-worker.js', 'content-bootstrap.js',
+                 'extension-strings.js', 'vault-host.html', 'session.css',
+                 'vault-host.js', 'session-worker.js', 'content-bootstrap.js',
                  'content-channel.js', 'site-permissions.js'):
         shutil.copy2(source / name, bundle)
     messages = {}
     message_ids = (
-        'extension-startup-error', 'vault-working', 'vault-refresh',
-        'extension-sites-grant', 'extension-sites-revoke', 'extension-sites-unavailable',
+        'extension-startup-error', 'vault-working', 'vault-refresh', 'vault-more', 'extension-fill', 'vault-untitled',
+        'extension-sites-grant', 'extension-sites-unavailable',
     )
     message_pattern = r'^({}) = (.+)$'.format('|'.join(message_ids))
     for path in sorted((ROOT / 'crates/confidex-ui/locales').glob('*.ftl')):
@@ -57,7 +57,7 @@ def build_bundle(bundle):
 
 def validate_bundle(bundle):
     for name in ('manifest.json', 'popup.html', 'popup.css', 'popup-boot.js',
-                 'extension-strings.js', 'session.html', 'session.css', 'session-boot.js',
+                 'extension-strings.js', 'vault-host.html', 'session.css', 'vault-host.js',
                  'session-messages.json', 'session-worker.js', 'background.js',
                  'content-bootstrap.js', 'content-channel.js', 'site-permissions.js',
                  'engine/engine.js', 'ui/ui.js', 'content/content.js'):

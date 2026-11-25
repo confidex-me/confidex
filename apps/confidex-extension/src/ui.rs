@@ -1,7 +1,7 @@
 use crate::protocol::{
     Action, Credentials, MAX_RESPONSE, Reply, Request, Response, SyncStatus, VERSION,
 };
-use crate::save_ui::SavePanel;
+use crate::{autofill::PopupAction, popup::Popup};
 use confidex_app::{
     Error,
     browser_logins::{
@@ -43,6 +43,16 @@ extern "C" {
 
     #[wasm_bindgen(js_name = syncStatusRevision)]
     fn sync_status_revision() -> u32;
+    #[wasm_bindgen(js_name = showPermissions)]
+    fn show_permissions(visible: bool);
+    #[wasm_bindgen(js_name = placePermissionButton)]
+    fn place_permission_button(x: f32, y: f32, width: f32, accent: &str, foreground: &str);
+    #[wasm_bindgen(js_name = hasSiteAccess)]
+    fn has_site_access() -> bool;
+    #[wasm_bindgen(js_name = autoFillSetting)]
+    fn auto_fill_setting() -> i32;
+    #[wasm_bindgen(js_name = setAutoFillSetting)]
+    fn set_auto_fill_setting(enabled: bool);
 }
 
 #[wasm_bindgen]
@@ -75,7 +85,7 @@ impl WebHandle {
             .iter()
             .filter_map(|item| item.as_string())
             .collect::<Vec<_>>();
-        let locale = Localizer::from_preferences(languages)?;
+        let locale = Rc::new(Localizer::from_preferences(languages)?);
         let input_id = format!("{}-text-input", canvas.id());
         let plugin_input_id = input_id.clone();
         let repaint = Rc::new(RefCell::new(None));
@@ -118,7 +128,10 @@ impl WebHandle {
                         rows: Vec::new(),
                         next: None,
                         status: None,
-                        saves: SavePanel::default(),
+                        vault_saves: crate::save_ui::SavePanel::all_tabs(),
+                        tab: Tab::Site,
+                        site: None,
+                        search: String::new(),
                     };
                     app.request(&cc.egui_ctx, Action::Status);
                     Ok(Box::new(app))
@@ -374,8 +387,15 @@ fn changed_text(current: &str, original: Option<&str>) -> Option<String> {
     differs(current, original).then(|| current.to_owned())
 }
 
+#[derive(PartialEq, Copy, Clone)]
+enum Tab {
+    Site,
+    Vault,
+    Settings,
+}
+
 struct App {
-    locale: Localizer,
+    locale: Rc<Localizer>,
     colors: Palette,
     name: String,
     credentials: Credentials,
@@ -390,7 +410,10 @@ struct App {
     issues: Issues,
     editor: Option<Editor>,
     status: Option<(&'static str, bool)>,
-    saves: SavePanel,
+    vault_saves: crate::save_ui::SavePanel,
+    tab: Tab,
+    site: Option<Popup>,
+    search: String,
 }
 
 impl App {
@@ -444,6 +467,11 @@ impl App {
                 self.editor = None;
             }
             Ok(Reply::Opened { name, sync }) => {
+                self.tab = if has_site_access() {
+                    Tab::Site
+                } else {
+                    Tab::Vault
+                };
                 self.page = Page::Opened(name);
                 self.sync = sync;
                 self.request(ctx, Action::Logins { after: None });
@@ -706,12 +734,13 @@ impl App {
         } else {
             "vault-unlock"
         };
+        ui.add_space(Metrics::MD);
         let pressed = ui_kit::button(
             ui,
             self.colors,
             &self.locale.text(action),
             ButtonRole::Primary,
-            0.,
+            ui.available_width(),
             ready,
         )
         .clicked();
@@ -728,7 +757,7 @@ impl App {
             ui.heading(self.locale.text("vault-window-title"));
         });
         ui.add_space(Metrics::SM);
-        ui_kit::muted(ui, self.colors, self.locale.text("extension-session-hint"));
+        ui.separator();
         ui.add_space(Metrics::LG);
         if let Some((message, error)) = self.status {
             let color = if error {
@@ -771,6 +800,9 @@ impl App {
                 if let Page::Locked(name) = &self.page {
                     ui.heading(name);
                 }
+                if matches!(self.page, Page::Disconnected) {
+                    ui.heading(self.locale.text("sync-import"));
+                }
                 if self.show_credentials(ui) {
                     let credentials = Credentials {
                         password: std::mem::take(&mut self.credentials.password),
@@ -790,79 +822,154 @@ impl App {
                 }
             }
             Page::Opened(name) => {
-                ui.heading(name);
-                self.show_sync(ui);
-                if self.editor.is_none() {
-                    self.saves.show(ui, &self.locale, self.colors);
+                if self.tab == Tab::Site {
+                    if !has_site_access() {
+                        ui.heading(self.locale.text("extension-fill"));
+                        ui.add_space(Metrics::MD);
+                        let (rect, _) = ui.allocate_exact_size(
+                            egui::vec2(ui.available_width(), 40.),
+                            egui::Sense::hover(),
+                        );
+                        place_permission_button(
+                            rect.left(),
+                            rect.top(),
+                            rect.width(),
+                            &self.colors.accent.to_hex(),
+                            &self.colors.on_accent.to_hex(),
+                        );
+                        show_permissions(ui.clip_rect().contains_rect(rect));
+                        self.site = None;
+                        return;
+                    }
+                    self.site
+                        .get_or_insert_with(|| {
+                            Popup::new(
+                                ui.ctx(),
+                                self.locale.clone(),
+                                self.colors,
+                                PopupAction::Discover {
+                                    after: None,
+                                    previous: None,
+                                },
+                            )
+                        })
+                        .panel(ui, false);
+                    return;
                 }
-                let mut selected = None;
-                ui.horizontal_wrapped(|ui| {
-                    if ui_kit::button(
-                        ui,
-                        self.colors,
-                        &self.locale.text("vault-lock"),
-                        ButtonRole::Secondary,
-                        0.,
-                        true,
-                    )
-                    .clicked()
-                    {
-                        cancel_session();
-                        self.rows.clear();
-                        self.next = None;
-                        self.editor = None;
-                    }
-                    if ui_kit::button(
-                        ui,
-                        self.colors,
-                        &self.locale.text("sync-now"),
-                        ButtonRole::Secondary,
-                        0.,
-                        self.sync != SyncStatus::Disabled,
-                    )
-                    .clicked()
-                    {
-                        selected = Some(Action::Sync);
-                    }
-                    if ui_kit::button(
-                        ui,
-                        self.colors,
-                        &self.locale.text("extension-new-login"),
-                        ButtonRole::Quiet,
-                        0.,
-                        self.editor.is_none(),
-                    )
-                    .clicked()
-                    {
-                        self.status = None;
-                        match new_record() {
-                            Ok(draft) => {
-                                self.editor = Some(Editor {
-                                    record: draft.record,
-                                    original: None,
-                                    form: NewLogin::default(),
-                                    focus_title: true,
-                                    tag_editor: tags::Editor::default(),
-                                    review: None,
-                                })
-                            }
-                            Err(error) => self.status = Some((error_label(error), true)),
+                if self.tab == Tab::Settings {
+                    ui.heading(name);
+                    self.show_sync(ui);
+                    ui.add_space(Metrics::MD);
+                    ui.horizontal_wrapped(|ui| {
+                        if ui_kit::button(
+                            ui,
+                            self.colors,
+                            &self.locale.text("vault-lock"),
+                            ButtonRole::Secondary,
+                            0.,
+                            true,
+                        )
+                        .clicked()
+                        {
+                            cancel_session();
                         }
+                        if ui_kit::button(
+                            ui,
+                            self.colors,
+                            &self.locale.text("sync-now"),
+                            ButtonRole::Secondary,
+                            0.,
+                            self.sync != SyncStatus::Disabled,
+                        )
+                        .clicked()
+                        {
+                            self.request(ui.ctx(), Action::Sync);
+                        }
+                    });
+                    ui.add_space(Metrics::MD);
+                    let setting = auto_fill_setting();
+                    let mut enabled = setting == 1;
+                    if ui
+                        .add_enabled(
+                            setting >= 0,
+                            egui::Checkbox::new(
+                                &mut enabled,
+                                self.locale.text("extension-auto-fill-on-open"),
+                            ),
+                        )
+                        .changed()
+                    {
+                        set_auto_fill_setting(enabled);
                     }
-                });
-                ui.separator();
-                if self.editor.is_some() {
-                    self.show_editor(ui);
-                    if let Some(action) = selected {
-                        self.request(ui.ctx(), action);
+                    if has_site_access() {
+                        self.site
+                            .get_or_insert_with(|| {
+                                Popup::new(
+                                    ui.ctx(),
+                                    self.locale.clone(),
+                                    self.colors,
+                                    PopupAction::CurrentSite,
+                                )
+                            })
+                            .panel(ui, true);
                     }
                     return;
                 }
-                if self.rows.is_empty() {
+                if self.editor.is_some() {
+                    self.show_editor(ui);
+                    return;
+                }
+                ui.horizontal(|ui| {
+                    ui.heading(self.locale.text("extension-saved-logins"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui_kit::icon_button(
+                            ui,
+                            self.colors,
+                            &self.locale.text("extension-new-login"),
+                            Icon::Plus,
+                            true,
+                        )
+                        .clicked()
+                        {
+                            self.status = None;
+                            match new_record() {
+                                Ok(draft) => {
+                                    self.editor = Some(Editor {
+                                        record: draft.record,
+                                        original: None,
+                                        form: NewLogin::default(),
+                                        focus_title: true,
+                                        tag_editor: tags::Editor::default(),
+                                        review: None,
+                                    })
+                                }
+                                Err(error) => self.status = Some((error_label(error), true)),
+                            }
+                        }
+                    });
+                });
+                ui.add_space(Metrics::SM);
+                let mut selected = None;
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.search)
+                        .hint_text(self.locale.text("vault-search"))
+                        .desired_width(f32::INFINITY),
+                );
+                self.vault_saves.show(ui, &self.locale, self.colors);
+                let query = self.search.trim().to_lowercase();
+                let mut visible = self
+                    .rows
+                    .iter()
+                    .filter(|row| {
+                        row.title.to_lowercase().contains(&query)
+                            || row.username.to_lowercase().contains(&query)
+                    })
+                    .peekable();
+                if visible.peek().is_none() {
                     ui_kit::muted(ui, self.colors, self.locale.text("vault-no-results"));
                 }
                 let edit = self.locale.text("vault-edit");
-                for login in &self.rows {
+                for login in visible {
                     let title = if login.title.is_empty() {
                         self.locale.text("vault-untitled")
                     } else {
@@ -923,11 +1030,17 @@ impl eframe::App for App {
             self.sync = SyncStatus::Disabled;
             self.issues = Issues::default();
             self.editor = None;
-            self.saves = SavePanel::default();
+            self.vault_saves = crate::save_ui::SavePanel::all_tabs();
+            self.site = None;
+            self.tab = Tab::Site;
+            self.search.clear();
             let pending = self.pending.take().is_some();
             self.page = match std::mem::replace(&mut self.page, Page::Starting) {
                 Page::Opened(name) => Page::Locked(name),
-                Page::Disconnected if pending => Page::Starting,
+                Page::Disconnected if pending => {
+                    self.request(ctx, Action::Status);
+                    Page::Starting
+                }
                 page => page,
             };
         }
@@ -949,11 +1062,69 @@ impl eframe::App for App {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
+        if matches!(self.page, Page::Opened(_)) {
+            egui::Panel::bottom("popup-navigation").show(ui, |ui| {
+                ui.columns(3, |columns| {
+                    for (column, (tab, label, icon)) in columns.iter_mut().zip([
+                        (Tab::Site, "extension-fill", Icon::Globe),
+                        (Tab::Vault, "vault-all-items", Icon::Vault),
+                        (Tab::Settings, "vault-settings", Icon::Settings),
+                    ]) {
+                        let label = self.locale.text(label);
+                        let selected = self.tab == tab;
+                        let (rect, response) = column.allocate_exact_size(
+                            egui::vec2(column.available_width(), 58.),
+                            egui::Sense::click(),
+                        );
+                        response.widget_info(|| {
+                            egui::WidgetInfo::selected(egui::Role::Button, true, selected, &label)
+                        });
+                        let color = if selected {
+                            self.colors.accent
+                        } else {
+                            self.colors.text_muted
+                        };
+                        if selected || response.hovered() || response.has_focus() {
+                            column.painter().rect_filled(
+                                rect,
+                                Metrics::FIELD_RADIUS,
+                                self.colors.control,
+                            );
+                        }
+                        let icon_rect = egui::Rect::from_center_size(
+                            rect.center_top() + egui::vec2(0., 16.),
+                            egui::Vec2::splat(20.),
+                        );
+                        icon.paint(column, icon_rect, color);
+                        column.painter().text(
+                            rect.center_bottom() - egui::vec2(0., 10.),
+                            egui::Align2::CENTER_BOTTOM,
+                            &label,
+                            egui::TextStyle::Small.resolve(column.style()),
+                            color,
+                        );
+                        if response.on_hover_text(label).clicked() {
+                            if self.tab != tab {
+                                self.tab = tab;
+                                self.site = None;
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        if !matches!(self.page, Page::Opened(_))
+            || self.tab != Tab::Site
+            || self.pending.is_some()
+            || has_site_access()
+        {
+            show_permissions(false);
+        }
         egui::CentralPanel::default().show(ui, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.add_space(Metrics::XXL);
-                    let width = ui.available_width().min(480.);
+                    ui.add_space(Metrics::SM);
+                    let width = (ui.available_width() - 20.).max(1.).min(480.);
                     ui.allocate_ui_with_layout(
                         egui::vec2(width, 0.),
                         egui::Layout::top_down(egui::Align::Min),
@@ -966,6 +1137,7 @@ impl eframe::App for App {
 }
 
 fn field(ui: &mut egui::Ui, label: String, value: &mut String, secret: bool) -> egui::Response {
+    ui.add_space(Metrics::SM);
     let label = ui.label(label);
     ui_kit::field(ui, value, secret, false, true).labelled_by(label.id)
 }

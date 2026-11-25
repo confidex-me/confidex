@@ -386,13 +386,26 @@ impl Session {
                 snapshot,
                 mut after,
                 previous,
+                recent,
+                inline_field,
+                automatic,
             } => {
                 let forms = snapshot.choices(&context.origin);
-                if forms.is_empty()
-                    && after.is_none()
-                    && previous
-                        .as_deref()
-                        .is_some_and(|id| self.autofill.waiting_for_form(now(), id, &context))
+                if automatic && forms.len() != 1 {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
+                }
+                if inline_field.is_some_and(|field| {
+                    !forms.iter().any(|choice| {
+                        choice.target.username == Some(field)
+                            || choice.target.password == Some(field)
+                    })
+                }) {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
+                }
+                if after.is_none()
+                    && previous.as_deref().is_some_and(|id| {
+                        self.autofill.same_snapshot(now(), id, &context, &snapshot)
+                    })
                 {
                     return Ok(SiteReply::Popup(PopupReply::Live));
                 }
@@ -412,12 +425,34 @@ impl Session {
                     }
                     matches.issues.ambiguous |= page.issues.ambiguous;
                     matches.issues.conflicts |= page.issues.conflicts;
-                    if !page.rows.is_empty() || page.next.is_none() {
-                        matches.rows = page.rows;
+                    matches.rows.extend(page.rows);
+                    // A storage cursor can lead to unrelated sites. Check for a second
+                    // actual match before deciding whether to show a single-click icon.
+                    let enough = if automatic || inline_field.is_some() {
+                        matches.rows.len() > 1
+                    } else {
+                        !matches.rows.is_empty()
+                    };
+                    if enough || page.next.is_none() {
                         matches.next = page.next;
                         break;
                     }
                     after = page.next;
+                }
+                if let Some((record, field)) = recent {
+                    if let Some(index) = matches.rows.iter().position(|row| {
+                        row.target.head.record == record && row.target.field == field
+                    }) {
+                        matches.rows[..=index].rotate_right(1);
+                    } else if matches.next.is_some()
+                        && let Some(row) = self
+                            .runtime
+                            .engine_mut()
+                            .recent_browser_login(&mut BrowserStore, record, field, &context.origin)
+                            .await?
+                    {
+                        matches.rows.insert(0, row);
+                    }
                 }
                 matches.issues.conflicts |= self.conflicts;
                 let origin = context.origin.clone();

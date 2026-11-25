@@ -12,8 +12,8 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {releaseAssets} from '../confidex/web/assets.mjs';
 
 const [chromePath, extensionPath, webPath, daemonPath, ...options] = process.argv.slice(2);
-assert(daemonPath, 'Usage: node browser-check.mjs CHROME EXTENSION WEB SYNC_DAEMON [--vault-only] [--interactive-permission]');
-assert(options.every(option => ['--vault-only', '--interactive-permission'].includes(option)), 'Unknown check option');
+assert(daemonPath, 'Usage: node browser-check.mjs CHROME EXTENSION WEB SYNC_DAEMON [--popup-only] [--vault-only] [--interactive-permission]');
+assert(options.every(option => ['--vault-only', '--popup-only', '--interactive-permission'].includes(option)), 'Unknown check option');
 const interactive = options.includes('--interactive-permission');
 const directory = await mkdtemp(join(tmpdir(), 'confidex-extension-'));
 let chrome, daemon, server;
@@ -25,7 +25,7 @@ const sessionProtocol = 3;
 const offlinePassword = 'public-extension-offline-fixture';
 const updatedPassword = 'public-extension-updated-fixture';
 
-try {
+async function acceptance() {
   const certFile = join(directory, 'cert.pem');
   const keyFile = join(directory, 'key.pem');
   execFileSync('openssl', [
@@ -179,7 +179,7 @@ path = ${JSON.stringify(blobPath)}
   await syncWeb(initialWeb, origin);
 
   scenario = 'toolbar popup and session';
-  const extensionUrl = `chrome-extension://${id}/session.html`;
+  const extensionUrl = `chrome-extension://${id}/popup.html`;
   const seedTab = (await tabTargets()).find(target => !previousTargets.has(target.targetId));
   assert(seedTab, 'No top-level tab target for the toolbar action');
   const popupUrl = `chrome-extension://${id}/popup.html`;
@@ -194,36 +194,37 @@ path = ${JSON.stringify(blobPath)}
     ${JSON.stringify({kind: 'ConfidexPopup', version: 1, action})})`);
   await until(() => popup.evaluate("!document.getElementById('startup')"), 'egui popup startup');
   assert.equal(await popupCall(popup, {Discover: {after: null}}), 'Locked');
-  await until(() => popup.evaluate("document.activeElement?.id === 'popup'"), 'keyboard focus in popup');
-  await press(popup, 'Tab', 9);
-  // Opening the session closes the toolbar popup while Chrome dispatches the key.
-  await popup.call('Input.dispatchKeyEvent', {type: 'rawKeyDown', key: 'Enter', code: 'Enter',
-    windowsVirtualKeyCode: 13});
-  const tab = await until(async () => {
-    const {targetInfos} = await command('Target.getTargets');
-    return targetInfos.find(target => target.type === 'page' && target.url === extensionUrl);
-  }, 'popup opens the session tab');
-  const session = await attach(command, tab.targetId);
+  await until(() => popup.evaluate("document.activeElement?.id === 'session'"), 'keyboard focus in popup');
+  await until(async () => {
+    await press(popup, 'Tab', 9);
+    return popup.evaluate("document.activeElement?.id === 'session-text-input'");
+  }, 'vault name directly in toolbar popup');
+  await popup.call('Input.insertText', {text: 'First vault'});
+  assert.equal(await popup.evaluate("chrome.tabs.query({}).then(tabs => tabs.filter(t => t.url?.startsWith(chrome.runtime.getURL(''))).length)"), 0, 'Opening popup created an extension tab');
+  const session = options.includes('--popup-only') ? popup : await newTab(command, extensionUrl);
   await waitForUi(session);
-  await until(() => session.evaluate("navigator.locks.query().then(s => s.held.some(lock => lock.name === 'confidex-session'))"), 'session ownership');
-  // Use a trusted extension page to keep the same popup entry point open when
-  // DevTools changes tabs to simulate a document replacement.
-  const popupDriver = await newTab(command, popupUrl);
-  assert.equal(await popupCall(popupDriver, 'OpenSession'), 'Live');
-  assert.equal((await command('Target.getTargets')).targetInfos
-    .filter(target => target.type === 'page' && target.url === extensionUrl).length, 1);
+  const popupDriver = session;
 
   scenario = 'connect and synchronize fixtures';
   const host = (await readdir(join(extensionPath, 'ui', 'snippets'), {recursive: true}))
     .find(name => name.endsWith('/web/session-host.js'));
   assert(host, 'Packaged session host is missing');
-  const action = (page, action) => page.evaluate(`(async () => {
+  const sendAction = (page, action) => page.evaluate(`(async () => {
     const {exchange} = await import(${JSON.stringify('./ui/snippets/' + host)});
     const packet = new TextEncoder().encode(JSON.stringify({version: ${sessionProtocol}, action: ${JSON.stringify(action)}}));
     const response = await exchange(packet);
     try { return JSON.parse(new TextDecoder().decode(response)); }
     finally { response.fill(0); }
   })()`);
+  const action = (page, value) => until(async () => {
+    try {
+      return await sendAction(page, value);
+    } catch (error) {
+      // The UI may be refreshing its previews. Retry only a packet rejected before dispatch.
+      if (!error.message.includes('Confidex session request already pending')) throw error;
+      return false;
+    }
+  }, 'available popup command channel');
   const status = page => until(async () => {
     try {
       return await action(page, 'Status');
@@ -237,9 +238,18 @@ path = ${JSON.stringify(blobPath)}
   assert.deepEqual(await action(session, {Connect: {
     name: 'Synthetic extension vault', server: origin + '/', credentials: {...credentials, password: 'incorrect'},
   }}), {Err: 'Auth'});
-  assert((await action(session, {Connect: {
-    name: 'Synthetic extension vault', server: origin + '/', credentials,
-  }})).Ok?.Opened, 'Test vault did not connect');
+  if (options.includes('--popup-only')) {
+    await press(session, 'Tab', 9);
+    await replaceFocusedText(session, origin + '/');
+    await tabAndType(session, credentials.key, 'secret key');
+    await tabAndType(session, credentials.password, 'password');
+    await press(session, 'Enter', 13);
+    await until(async () => (await status(session)).Ok?.Opened, 'connect from toolbar form');
+  } else {
+    assert((await action(session, {Connect: {
+      name: 'Synthetic extension vault', server: origin + '/', credentials,
+    }})).Ok?.Opened, 'Test vault did not connect');
+  }
   const list = page => action(page, {Logins: {after: null}}).then(reply => {
     assert(reply.Ok?.Logins, 'Expected login previews');
     return reply.Ok.Logins.page;
@@ -259,6 +269,32 @@ path = ${JSON.stringify(blobPath)}
   };
   await expectWebLogin(session);
 
+  if (options.includes('--popup-only')) {
+    await command('Target.closeTarget', {targetId: session.targetId});
+    await command('Extensions.triggerAction', {id, targetId: seedTab.targetId});
+    const reopened = await until(async () => {
+      const target = (await command('Target.getTargets')).targetInfos.find(t => t.url === popupUrl);
+      return target && attach(command, target.targetId);
+    }, 'reopen toolbar popup');
+    await waitForUi(reopened);
+    await expectWebLogin(reopened);
+    // Site access is requested in the first footer destination.
+    await reopened.evaluate("document.querySelector('#session').focus()");
+    await press(reopened, 'Tab', 9);
+    await press(reopened, 'Enter', 13);
+    await until(() => reopened.evaluate("!document.querySelector('#site-permissions').hidden"), 'grant access from Fill login');
+    assert((await action(reopened, 'Lock')).Ok?.Locked);
+    assert((await status(reopened)).Ok?.Locked);
+    await until(() => reopened.evaluate("document.querySelector('#site-permissions').hidden"), 'locked view');
+    await reopened.evaluate("document.querySelector('#session').focus()");
+    await tabAndType(reopened, credentials.key, 'returning vault secret key');
+    await tabAndType(reopened, credentials.password, 'returning vault password');
+    await press(reopened, 'Enter', 13);
+    await until(async () => (await status(reopened)).Ok?.Opened, 'unlock from toolbar form');
+    console.log(JSON.stringify({browser: browser.product, toolbarLoginForm: true, popupReopen: true, manualLock: true}));
+    return;
+  }
+
   scenario = 'grant access and validate content senders';
   const hostPermission = "{origins: ['https://*/*']}";
   const permission = () => session.evaluate(`chrome.permissions.contains(${hostPermission})`);
@@ -267,6 +303,13 @@ path = ${JSON.stringify(blobPath)}
   }).then(scripts => scripts.length === 1)`);
   assert.equal(await permission(), false);
   assert.equal(await registered(), false);
+  // Open the view on the unlocked vault and select Fill login.
+  await session.call('Page.reload');
+  await waitForUi(session);
+  await delay(500);
+  await session.evaluate("document.querySelector('#session').focus()");
+  await press(session, 'Tab', 9);
+  await press(session, 'Enter', 13);
   await until(() => session.evaluate("!document.querySelector('#site-permissions').hidden"), 'permission control');
   await session.evaluate("document.querySelector('#site-permissions-toggle').click()");
   assert.equal(await permission(), false, 'A synthetic click requested site access');
@@ -350,6 +393,31 @@ path = ${JSON.stringify(blobPath)}
       && (root.querySelector('#password, input[type=password]')?.value === ${JSON.stringify(loginPassword)}) === ${pass};
   })()`);
 
+  const inlinePage = await newTab(command, origin + '/fill');
+  await click(inlinePage, '#user');
+  await inlineIcon(inlinePage);
+  assert(await expectEmpty(inlinePage));
+  await press(inlinePage, 'Escape', 27);
+  assert(!await inlineIconPosition(inlinePage));
+  await click(inlinePage, '#password');
+  await inlineIcon(inlinePage, '#password');
+  await inlinePage.call('Input.insertText', {text:'manual'});
+  assert(!await inlineIconPosition(inlinePage, '#password'));
+  await click(inlinePage, '#user');
+  const icon = await inlineIcon(inlinePage);
+  for (const type of ['mousePressed','mouseReleased']) {
+    await inlinePage.call('Input.dispatchMouseEvent', {type, ...icon, button:'left', clickCount:1});
+  }
+  await until(() => isFilled(inlinePage), 'single account inline fill');
+  await command('Target.closeTarget', {targetId:inlinePage.targetId});
+
+  await session.evaluate("chrome.storage.local.set({autoFillOnOpen:true})");
+  const automatic = await newTab(command, origin + '/fill');
+  await automatic.call('Page.bringToFront');
+  await until(() => isFilled(automatic), 'automatic fill of a unique account');
+  await session.evaluate("chrome.storage.local.set({autoFillOnOpen:false})");
+  await command('Target.closeTarget', {targetId:automatic.targetId});
+
   const normal = await newTab(command, origin + '/fill');
   await normal.evaluate(`(() => {
     window.filledEvents = [];
@@ -367,8 +435,23 @@ path = ${JSON.stringify(blobPath)}
     kind: 'ConfidexPopup', version: 1, action: normalPacket,
   }))[0].result, 'Error');
   assert(await expectEmpty(normal));
-  assert.equal(await runFill(normalPacket), 'Filled');
-  assert(await isFilled(normal));
+  await session.evaluate('chrome.action.openPopup()');
+  const picker = await until(async () => {
+    const target = (await command('Target.getTargets')).targetInfos.find(t => t.url === popupUrl && t.targetId !== session.targetId);
+    return target && attach(command, target.targetId);
+  }, 'toolbar account picker');
+  await waitForUi(picker);
+  await delay(600);
+  // A site can change the form while the picker stays open.
+  await normal.evaluate("document.querySelector('form').setAttribute('aria-label', 'Updated sign in')");
+  await delay(2200);
+  // Three navigation destinations precede the first account row.
+  for (let stop = 0; stop < 4; stop++) await press(picker, 'Tab', 9);
+  assert(await expectEmpty(normal), 'Focusing an account filled the form');
+  await picker.call('Input.dispatchKeyEvent', {type: 'rawKeyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13});
+  await picker.call('Input.dispatchKeyEvent', {type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13}).catch(() => {});
+  await until(() => isFilled(normal), 'activating an account row fills the form');
+  await until(async () => !(await command('Target.getTargets')).targetInfos.some(t => t.targetId === picker.targetId), 'successful fill closes the popup');
   assert.deepEqual(await normal.evaluate('window.filledEvents'),
     ['input:user', 'change:user', 'input:password', 'change:password']);
   assert.equal(await runFill(normalPacket), 'Changed', 'A fill operation could be replayed');
@@ -512,25 +595,20 @@ path = ${JSON.stringify(blobPath)}
   );
   assert.equal(await reportFromExistingDocument(), true);
   const revokedChoice = fillPacket(await choice(replacement));
-  await click(session, '#site-permissions-toggle');
+  assert(await session.evaluate("document.querySelector('#site-permissions').hidden"));
+  assert(await session.evaluate(`chrome.permissions.remove(${hostPermission})`));
   await until(async () => !await permission() && !await registered(), 'site permission and registration removed');
   assert.equal(await reportFromExistingDocument(), false, 'Revoked access still allowed reports from an open document');
   await replacement.call('Page.bringToFront');
   assert.equal(await runFill(revokedChoice), 'Changed');
   assert(await expectEmpty(replacement));
   await expectWebLogin(session);
+  await session.call('Page.bringToFront');
+  await until(() => session.evaluate("!document.querySelector('#site-permissions').hidden"), 'grant available after revocation');
   await click(session, '#site-permissions-toggle');
   await until(permission, 'site permission restored');
   await until(registered, 'content channel re-registered');
 
-  const duplicateId = await session.evaluate(`(async () => {
-    const current = await chrome.tabs.getCurrent();
-    const duplicate = await chrome.tabs.duplicate(current.id);
-    return duplicate.id;
-  })()`);
-  assert(Number.isInteger(duplicateId), 'Chrome did not duplicate the Confidex tab');
-  await until(() => session.evaluate(`chrome.tabs.get(${duplicateId}).then(() => false, () => true)`),
-    'duplicate Confidex tab closes');
   const rivalWorkerRejected = await session.evaluate(`(async () => {
     const worker = new Worker(chrome.runtime.getURL('session-worker.js'), {type: 'module'});
     try {
@@ -554,7 +632,9 @@ path = ${JSON.stringify(blobPath)}
     if (targetInfo.url === workerUrl) workers.set(sessionId, targetInfo.targetId);
   });
   command.on('Target.detachedFromTarget', ({sessionId}) => workers.delete(sessionId));
-  await session.call('Target.setAutoAttach', {
+  const hostTarget = (await command('Target.getTargets')).targetInfos.find(target => target.url.endsWith('/vault-host.html'));
+  const offscreen = await attach(command, hostTarget.targetId);
+  await offscreen.call('Target.setAutoAttach', {
     autoAttach: true, waitForDebuggerOnStart: false, flatten: true, filter: [{type: 'worker'}],
   });
   const currentWorker = () => until(() => {
@@ -639,15 +719,17 @@ path = ${JSON.stringify(blobPath)}
   await session.call('Page.reload');
   await until(() => session.evaluate(`performance.timeOrigin !== ${timeOrigin}`), 'session reload');
   await waitForUi(session);
-  assert.equal((await status(session)).Ok?.Locked?.name, 'Synthetic extension vault');
-  assert.equal(await reportFrom(ordinaryUrl), false, 'Reload restored the open session');
-  assert((await action(session, {Unlock: credentials})).Ok?.Opened, 'Could not unlock the reloaded session');
+  assert.equal((await status(session)).Ok?.Opened?.name, 'Synthetic extension vault');
   await command('Target.closeTarget', {targetId: session.targetId});
-  assert.equal(await reportFrom(ordinaryUrl), false, 'A closed session allowed routing');
+  assert.equal(await reportFrom(ordinaryUrl), true, 'Closing popup stopped routing');
   const reopened = await newTab(command, extensionUrl);
   await reopened.call('Emulation.setDeviceMetricsOverride', {
     width: 1000, height: 1050, deviceScaleFactor: 1, mobile: false,
   });
+  await waitForUi(reopened);
+  assert((await status(reopened)).Ok?.Opened);
+  assert((await action(reopened, 'Lock')).Ok?.Locked);
+  await reopened.call('Page.reload');
   await waitForUi(reopened);
   assert.equal((await status(reopened)).Ok?.Locked?.name, 'Synthetic extension vault');
   assert.deepEqual(await action(reopened, {Logins: {after: null}}), {Err: 'Locked'});
@@ -659,9 +741,14 @@ path = ${JSON.stringify(blobPath)}
   await press(reopened, 'Enter', 13);
   await until(async () => (await status(reopened)).Ok?.Opened?.sync === 'Offline', 'offline UI unlock');
 
-  // Keyboard order in the session toolbar is Lock, Sync now, New login.
+  // The long editor keyboard fixture keeps every field visible in its tab driver.
+  await reopened.evaluate("Object.assign(document.body.style, {height: '100vh', width: '100vw'})");
+  // Select the vault in the footer, then open the new login editor.
   await reopened.evaluate("document.querySelector('#session').focus()");
-  for (let button = 0; button < 3; button++) await press(reopened, 'Tab', 9);
+  for (let button = 0; button < 2; button++) await press(reopened, 'Tab', 9);
+  await press(reopened, 'Enter', 13);
+  await press(reopened, 'Tab', 9);
+  await press(reopened, 'Tab', 9);
   await press(reopened, 'Enter', 13);
   const noteLines = ['Offline note from the extension', 'Second line'];
   const tags = ['admin', 'work'];
@@ -704,11 +791,11 @@ path = ${JSON.stringify(blobPath)}
     title: login.title, username: login.username, url: 'https://example.test', notes: login.notes, tags,
   });
 
-  // The session toolbar contributes three tab stops before the login actions.
+  // Footer navigation, New login and the search field precede the rows.
   const editRow = async title => {
     const rowIndex = (await list(reopened)).rows.findIndex(row => row.title === title);
     assert(rowIndex >= 0);
-    await activateFromMargin(reopened, rowIndex + 4);
+    await activateFromMargin(reopened, rowIndex + 6);
     await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'edit title focus');
   };
   await editRow(login.title);
@@ -767,10 +854,10 @@ path = ${JSON.stringify(blobPath)}
   assert.deepEqual((await waitForLogin(currentTitle)).target.head, concurrent);
 
   const reapplyDraft = async () => {
-    // Lock, Sync now, Compare versions, then Reapply my edits.
-    await activateFromMargin(reopened, 3);
-    await status(reopened);
+    // The three footer destinations precede the conflict review actions.
     await activateFromMargin(reopened, 4);
+    await status(reopened);
+    await activateFromMargin(reopened, 5);
     await until(() => reopened.evaluate("document.activeElement.id === 'session-text-input'"), 'rebased draft focus');
   };
   const saveRebasedDraft = async () => {
@@ -911,6 +998,14 @@ path = ${JSON.stringify(blobPath)}
       ['chrome://extensions/', 'edge://extensions/', 'brave://extensions/']);
     await settings.evaluate(`chrome.developerPrivate.addHostPermission(${JSON.stringify(id)}, 'https://*/*')`);
     await browserAfterRestart('Target.closeTarget', {targetId: settings.targetId});
+    await recovered.call('Page.bringToFront');
+    await recovered.call('Page.reload');
+    await waitForUi(recovered);
+    await delay(500);
+    await recovered.evaluate("document.querySelector('#session').focus()");
+    await press(recovered, 'Tab', 9);
+    await press(recovered, 'Enter', 13);
+    await until(() => recovered.evaluate("!document.querySelector('#site-permissions').hidden"), 'grant access after browser restart');
     await click(recovered, '#site-permissions-toggle');
     await until(restartedPermission, 'site permission after unpacked reload');
   }
@@ -924,6 +1019,18 @@ path = ${JSON.stringify(blobPath)}
     const result = await popupCall(postRestartPopup, {Discover: {after: null}});
     return result !== 'Busy' && result;
   }, 'post-restart autofill discovery');
+  const recentStorageKey = await recovered.evaluate(`crypto.subtle.digest('SHA-256', new TextEncoder().encode(${JSON.stringify(origin)}))
+    .then(buffer => 'recentLogin.' + Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, '0')).join(''))`);
+  await recovered.evaluate(`chrome.storage.local.remove(${JSON.stringify(recentStorageKey)})`);
+  await recovered.evaluate("chrome.storage.local.set({autoFillOnOpen:true})");
+  const undecided = await newTab(browserAfterRestart, origin + '/fill');
+  await undecided.call('Page.bringToFront');
+  await click(undecided, '#user');
+  await inlineIcon(undecided);
+  assert(await expectEmpty(undecided), 'Multiple accounts without history require a choice');
+  await recovered.evaluate("chrome.storage.local.set({autoFillOnOpen:false})");
+  await browserAfterRestart('Target.closeTarget', {targetId:undecided.targetId});
+  await multiple.call('Page.bringToFront');
   const postRestart = await lookupAfterRestart();
   const completeSite = postRestart.Site;
   assert(completeSite, `Autofill did not reconnect after browser restart (${postRestart})`);
@@ -937,6 +1044,22 @@ path = ${JSON.stringify(blobPath)}
     && document.querySelector('#backup-password').value === ${JSON.stringify(updatedPassword)}
     && !document.querySelector('#password').value && !document.querySelector('#user').value`));
 
+  await recovered.evaluate("chrome.storage.local.set({autoFillOnOpen:true})");
+  const remembered = await newTab(browserAfterRestart, origin + '/fill');
+  await remembered.call('Page.bringToFront');
+  await until(() => remembered.evaluate(`document.querySelector('#user').value === ${JSON.stringify(otherLogin.username)}
+    && document.querySelector('#password').value === ${JSON.stringify(updatedPassword)}`), 'automatic fill of last chosen account');
+  await recovered.evaluate("chrome.storage.local.set({autoFillOnOpen:false})");
+  await browserAfterRestart('Target.closeTarget', {targetId:remembered.targetId});
+  await multiple.call('Page.bringToFront');
+  await click(multiple, '#user');
+  await inlineIcon(multiple);
+  assert(await multiple.evaluate("!document.querySelector('#user').value"));
+  await press(multiple, 'ArrowDown', 40);
+  await press(multiple, 'Enter', 13);
+  await until(() => multiple.evaluate(`document.querySelector('#user').value === ${JSON.stringify(otherLogin.username)}`),
+    'last chosen account is first in inline menu');
+  await multiple.evaluate("document.querySelector('#login').reset()");
   const latest = (await lookupAfterRestart()).Site;
   const target = latest.matches.rows.find(row => row.title === otherLogin.title).target;
   assert((await action(recovered, {UpdateLogin: {target, change: {password: offlinePassword}}})).Ok?.Saved);
@@ -951,7 +1074,7 @@ path = ${JSON.stringify(blobPath)}
   const changedPassword = 'public-autosave-replacement-fixture';
   const registrationPassword = 'public-autosave-registration-fixture';
   const saveCall = (action, page = postRestartPopup) => until(async () => {
-    const response = await popupCall(page, {Save: action});
+    const response = await popupCall(page, {[page === recovered ? 'VaultSave' : 'Save']: action});
     const save = response?.Save ?? response;
     return save !== 'Busy' && save;
   }, 'autosave command');
@@ -1092,6 +1215,8 @@ path = ${JSON.stringify(blobPath)}
   assert(!JSON.stringify(pending).includes(newPassword), 'Popup received a captured password');
   assert((await readOffers(recovered)).some(row => row.id === pending.id), 'Session tab did not see the same offer');
   await until(async () => await badge(saveOrigin + '/fill') === '1', 'save badge after navigation');
+  await until(() => recovered.evaluate("chrome.runtime.getContexts({contextTypes:['POPUP']}).then(rows => rows.length > 0)"),
+    'toolbar save popup opens after submission');
   const confirm = {Confirm: {id: pending.id, target: null}};
   assert.deepEqual(await saveCall(confirm), {Saved: 'Offline'});
   assert.equal(await saveCall(confirm), 'Changed', 'An already saved operation could be replayed');
@@ -1146,13 +1271,13 @@ path = ${JSON.stringify(blobPath)}
   await browserAfterRestart('Extensions.triggerAction', {id, targetId: activeRoot});
   const savePopup = await until(async () => {
     const {targetInfos} = await browserAfterRestart('Target.getTargets');
-    const target = targetInfos.find(target => target.url === popupUrl && target.targetId !== postRestartPopup.targetId);
+    const target = targetInfos.find(target => target.url === popupUrl && target.targetId !== postRestartPopup.targetId && target.targetId !== recovered.targetId);
     return target && attach(browserAfterRestart, target.targetId);
   }, 'autosave toolbar popup');
-  await until(() => savePopup.evaluate("!document.getElementById('startup') && document.activeElement?.id === 'popup'"),
+  await until(() => savePopup.evaluate("!document.getElementById('startup') && document.activeElement?.id === 'session'"),
     'keyboard focus in autosave popup');
   await delay(1700);
-  await press(savePopup, 'Tab', 9);
+  for (let stop = 0; stop < 4; stop++) await press(savePopup, 'Tab', 9);
   await press(savePopup, 'Enter', 13);
   await until(async () => {
     try {
@@ -1208,6 +1333,7 @@ path = ${JSON.stringify(blobPath)}
   const twoStep = await offer();
   assert.deepEqual(twoStep.kind, {New: {username: 'two-step@example.test'}});
   assert.equal(await policy(saveOrigin, 'NoSave'), 'PolicyChanged');
+  assert.deepEqual(await popupCall(postRestartPopup, 'CurrentSite'), {CurrentSite: {origin: saveOrigin, policy: 'NoSave'}});
   await until(async () => (await readOffers()).length === 0, 'site exception clears candidate');
   assert.equal(await saveCall({Confirm: {id: twoStep.id, target: null}}), 'Changed');
   assert.equal(await autofillSaved(), 'Filled', 'Saving exception also disabled filling');
@@ -1215,6 +1341,7 @@ path = ${JSON.stringify(blobPath)}
   await submit(excluded, {user: 'ignored@example.test', password: newPassword});
   await noOffer();
   assert.equal(await policy(saveOrigin, 'Disabled'), 'PolicyChanged');
+  assert.deepEqual(await popupCall(postRestartPopup, 'CurrentSite'), {CurrentSite: {origin: saveOrigin, policy: 'Disabled'}});
   assert.deepEqual(await lookupAfterRestart(), {SiteDisabled: {origin: saveOrigin}});
   await multiple.call('Page.bringToFront');
   assert.equal((await lookupAfterRestart()).Site.origin, origin, 'Exception leaked to a different origin');
@@ -1232,7 +1359,7 @@ path = ${JSON.stringify(blobPath)}
     offlineWritesSurviveBrowserRestart: true, automaticSync: true,
     duplicateCreateRejected: true, staleUpdateRejected: true, draftRecoveredAfterConflict: true,
     conflictPreservedAndResolved: true,
-    duplicateTabClosed: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
+    popupClosePreservesSession: true, rivalWorkerRejected, plaintextInBrowserStorage: false,
     optionalSitePermission: true, senderValidation: true, strictCspRouting: true, keyboardPopup: true,
     backgroundRestart: true, idleExpiry: true, workerLoss: true,
     slowUnlock: true, workerLossDuringUnlock: true, openDocumentAfterRevocation: true,
@@ -1248,7 +1375,7 @@ path = ${JSON.stringify(blobPath)}
   if (!options.includes('--vault-only')) {
     scenario = 'standalone content WASM CSP reproduction';
     const {id: probeId} = await browserAfterRestart('Extensions.loadUnpacked', {path: cspExtension});
-    const cspPage = await newTab(browserAfterRestart, `chrome-extension://${probeId}/session.html`);
+    const cspPage = await newTab(browserAfterRestart, `chrome-extension://${probeId}/popup.html`);
     await cspPage.evaluate(`chrome.scripting.registerContentScripts([{
       id: 'content-smoke', matches: ['https://127.0.0.1/*'], world: 'ISOLATED',
       js: ['content-bootstrap.js'], runAt: 'document_start',
@@ -1278,6 +1405,10 @@ path = ${JSON.stringify(blobPath)}
     assert.equal(ordinary?.detected, true, 'Content WASM did not work on the control page');
     assert.equal(strict?.detected, true, 'Content WASM did not work under strict site CSP');
   }
+}
+
+try {
+  await acceptance();
 } catch (error) {
   throw new Error(`Browser check failed during ${scenario}`, {cause: error});
 } finally {
@@ -1414,6 +1545,18 @@ async function click(page, selector, root = 'document') {
   for (const type of ['mousePressed', 'mouseReleased']) {
     await page.call('Input.dispatchMouseEvent', {type, x, y, button: 'left', clickCount: 1});
   }
+}
+
+async function inlineIconPosition(page, selector = '#user') {
+  return page.evaluate(`(() => {
+    const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();
+    const x = r.right - 12, y = r.top + r.height / 2;
+    const host = document.elementFromPoint(x, y);
+    return host?.parentElement === document.documentElement && host.tagName === 'DIV' ? {x,y} : null;
+  })()`);
+}
+function inlineIcon(page, selector) {
+  return until(() => inlineIconPosition(page, selector), 'inline account icon');
 }
 
 async function activateFromMargin(page, tabStops) {

@@ -6,7 +6,7 @@ import {runBrowser} from '../../tools/browser-run.mjs';
 const [browser, directory] = process.argv.slice(2);
 assert(browser && directory, 'Usage: node startup-check.mjs BROWSER EXTENSION_DIRECTORY');
 const files = await releaseAssets(directory);
-files['/'] = files['/session.html'];
+files['/'] = files['/popup.html'];
 
 for (const missing of ['/ui/ui.js', '/ui/ui_bg.wasm']) {
   const incomplete = {...files};

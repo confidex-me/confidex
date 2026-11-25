@@ -395,6 +395,29 @@ impl Engine {
         self.browser_login_page(store, cursor, Some(&origin)).await
     }
 
+    /// Resolve a remembered field against the current revision and exact origin.
+    pub async fn recent_browser_login(
+        &self,
+        store: &mut impl Store,
+        record: RecordId,
+        field: usize,
+        origin: &str,
+    ) -> Result<Option<Login>, Error> {
+        let vault = self.vault.as_ref().ok_or(Error::Locked)?;
+        let head = match record_head(store, vault.vault_id(), record).await {
+            Ok(Some(head)) => head,
+            Ok(None) | Err(CONFLICT) => return Ok(None),
+            Err(error) => return Err(error),
+        };
+        let Some(content) = read_record(store, vault, record, head.revision).await? else {
+            return Ok(None);
+        };
+        let (mut candidates, _) = pairs(&content);
+        Ok(candidates
+            .find(|pair| pair.password == field && fill_values(&content, pair, origin).is_some())
+            .map(|pair| preview(&content, &head, &pair, fields::count(&content))))
+    }
+
     async fn browser_login_page(
         &self,
         store: &mut impl Store,

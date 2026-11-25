@@ -1,7 +1,6 @@
 const sites = {origins: ['https://*/*']};
 
 export async function setupSitePermissions(text) {
-  const controls = document.getElementById('site-permissions');
   const button = document.getElementById('site-permissions-toggle');
   const status = document.getElementById('site-permissions-status');
   let granted = false;
@@ -13,18 +12,20 @@ export async function setupSitePermissions(text) {
     const allowed = await chrome.permissions.contains(sites);
     if (id !== refreshId) return;
     granted = allowed;
-    button.textContent = text[granted ? 'extension-sites-revoke' : 'extension-sites-grant'];
+    button.dataset.granted = String(allowed);
+    button.textContent = text['extension-sites-grant'];
+    if (granted) button.parentElement.hidden = true;
+    dispatchEvent(new Event('confidex-permission-change'));
     button.disabled = Boolean(pending);
-    controls.hidden = false;
   }
 
   button.addEventListener('click', async event => {
-    if (!event.isTrusted || pending) return;
+    if (!event.isTrusted || pending || granted) return;
     status.textContent = '';
     button.disabled = true;
     try {
       // Call directly in the trusted DOM event so Chromium can show its prompt.
-      pending = granted ? chrome.permissions.remove(sites) : chrome.permissions.request(sites);
+      pending = chrome.permissions.request(sites);
       if (!await pending) status.textContent = text['extension-sites-unavailable'];
     } catch {
       status.textContent = text['extension-sites-unavailable'];

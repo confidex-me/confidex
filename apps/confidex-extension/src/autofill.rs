@@ -20,6 +20,7 @@ pub struct PopupRequest {
 #[cfg(feature = "ui")]
 #[derive(Serialize)]
 pub enum PopupAction {
+    CurrentSite,
     Discover {
         after: Option<Cursor>,
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -30,11 +31,8 @@ pub enum PopupAction {
         form: u32,
         target: Selection,
     },
-    Check {
-        operation: String,
-    },
-    OpenSession,
     Save(SaveAction),
+    VaultSave(SaveAction),
     SetPolicy {
         origin: String,
         policy: SitePolicy,
@@ -53,6 +51,10 @@ pub enum PopupReply {
     Live,
     Save(SaveReply),
     PolicyChanged,
+    CurrentSite {
+        origin: String,
+        policy: SitePolicy,
+    },
     SiteDisabled {
         origin: String,
     },
@@ -103,6 +105,10 @@ mod worker {
             snapshot: Snapshot,
             after: Option<Cursor>,
             previous: Option<String>,
+            recent: Option<(confidex_storage::RecordId, usize)>,
+            inline_field: Option<u32>,
+            #[serde(default)]
+            automatic: bool,
         },
         Fill {
             operation: String,
@@ -194,12 +200,18 @@ mod worker {
             }
         }
 
-        pub fn waiting_for_form(&self, now: u64, id: &str, context: &SenderContext) -> bool {
+        pub fn same_snapshot(
+            &self,
+            now: u64,
+            id: &str,
+            context: &SenderContext,
+            snapshot: &Snapshot,
+        ) -> bool {
             self.0.borrow().operation.as_ref().is_some_and(|op| {
                 op.id == id
                     && fresh(now, op.start, OPERATION_MS)
                     && &op.context == context
-                    && op.snapshot.choices(&context.origin).is_empty()
+                    && &op.snapshot == snapshot
             })
         }
 
@@ -346,6 +358,7 @@ mod tests {
             snapshot,
             after,
             previous,
+            ..
         } = request.action
         else {
             unreachable!();
@@ -420,21 +433,31 @@ mod tests {
     fn login_previews_while_waiting_for_a_form_follow_the_live_document() {
         let state = Autofill::default();
         let (mut context, mut snapshot, _) = issue(&state, 1);
-        assert!(!state.waiting_for_form(2, "aa", &context));
+        assert!(state.same_snapshot(2, "aa", &context, &snapshot));
         snapshot.forms.clear();
+        assert!(!state.same_snapshot(2, "aa", &context, &snapshot));
         let page = Page {
             rows: vec![],
             next: None,
             issues: Issues::default(),
         };
-        state.issue(2, "bb".into(), context.clone(), snapshot, &page);
-        assert!(state.waiting_for_form(3, "bb", &context));
+        state.issue(
+            2,
+            "bb".into(),
+            context.clone(),
+            Snapshot {
+                page: snapshot.page,
+                forms: vec![],
+            },
+            &page,
+        );
+        assert!(state.same_snapshot(3, "bb", &context, &snapshot));
         context.document_id = "a002".into();
-        assert!(!state.waiting_for_form(3, "bb", &context));
+        assert!(!state.same_snapshot(3, "bb", &context, &snapshot));
         context.document_id = "a001".into();
-        assert!(!state.waiting_for_form(90_002, "bb", &context));
+        assert!(!state.same_snapshot(90_002, "bb", &context, &snapshot));
         state.invalidate_waiting_for_form();
-        assert!(!state.waiting_for_form(3, "bb", &context));
+        assert!(!state.same_snapshot(3, "bb", &context, &snapshot));
     }
 
     #[test]

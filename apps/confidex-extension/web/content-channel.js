@@ -34,6 +34,62 @@
   let url;
   let capturePermit;
   let captureEpoch = 0;
+  let inline;
+  let inlineSelection;
+  let autoEnabled = false;
+  let autoUsed = false;
+  let autoTimer, autoSnapshot;
+  let autoRequest;
+  let settingRevision = 0;
+
+  async function refreshAutoSetting() {
+    const revision = ++settingRevision;
+    autoEnabled = false;
+    const enabled = await chrome.runtime.sendMessage({kind: 'AutoFillSetting', version: 1}).catch(() => false);
+    if (revision !== settingRevision) return;
+    autoEnabled = enabled === true;
+    autoSnapshot = undefined;
+    if (autoEnabled) {
+      observe(document);
+      scheduleAuto();
+    }
+  }
+
+  function scheduleAuto() {
+    if (!autoEnabled || autoUsed || autoTimer || document.hidden || !document.hasFocus()) return;
+    autoTimer = setTimeout(() => {
+      autoTimer = undefined;
+      if (!inline && !inlineSelection) void tryAutoFill();
+    }, 120);
+  }
+
+  function tryAutoFill() {
+    if (autoRequest) return autoRequest;
+    if (!canAutoFill()) return;
+    const {page, forms} = inspect();
+    if (!forms.length) { autoSnapshot = undefined; return; }
+    const signature = JSON.stringify({page, forms});
+    if (signature === autoSnapshot) return;
+    autoSnapshot = signature;
+    autoRequest = chrome.runtime.sendMessage({kind: 'AutoFillOnOpen', version: 1})
+      .catch(() => false)
+      .finally(() => {
+        autoRequest = undefined;
+        scheduleAuto();
+      });
+    return autoRequest;
+  }
+
+  function canAutoFill() {
+    return autoEnabled && !autoUsed && !document.hidden && !document.prerendering && document.hasFocus();
+  }
+
+  function emptyTargets(target, nodes) {
+    return [target.username, target.password].filter(id => id != null).every(id => {
+      const field = nodes.get(id);
+      return field && visible(field) && inputValue.get.call(field) === '';
+    });
+  }
   let captureTimer;
   let planning = false;
   let nextProbe = 0;
@@ -45,6 +101,8 @@
   }
 
   function invalidate(records) {
+    if (records.length) scheduleAuto();
+    if (records.length && inline?.position) inline.position();
     if (records.length && capturePermit) scheduleCapturePlan();
     let remaining = MAX_MUTATIONS;
     for (const record of records) {
@@ -349,6 +407,215 @@
   }
   void prepareCapture();
 
+  addEventListener('focus', scheduleAuto);
+  document.addEventListener('visibilitychange', scheduleAuto);
+  void refreshAutoSetting();
+
+  function dismissInline() {
+    if (!inline) return;
+    inline.host?.remove();
+    clearTimeout(inline.expiry);
+    inline = undefined;
+  }
+
+  function activeInput() {
+    let node = document.activeElement;
+    while (node?.shadowRoot?.activeElement) node = node.shadowRoot.activeElement;
+    return node;
+  }
+
+  function inlineCall(action) {
+    return chrome.runtime.sendMessage({kind: 'ConfidexInline', version: 1, action}).catch(() => false);
+  }
+
+  async function showInline(field, after = null) {
+    dismissInline();
+    inlineSelection = undefined;
+    if (!document.hasFocus() || !visible(field)) return;
+    const view = {field};
+    inline = view;
+    if (autoEnabled && !after) {
+      await tryAutoFill();
+      if (inline !== view) return;
+    }
+    const result = await inlineCall({Discover: {after}});
+    if (inline !== view) return;
+    const site = result?.Site;
+    const fieldId = ids.get(field);
+    const choice = site?.forms.find(({target}) => target.username === fieldId || target.password === fieldId);
+    if (!choice || activeInput() !== field || !visible(field)) return dismissInline();
+    const rows = site.matches.rows.filter(row => choice.target.password !== null || row.username);
+    if (!rows.length && !site.matches.next) return dismissInline();
+    if (site.preferred) {
+      const index = rows.findIndex(row => JSON.stringify(row.target) === JSON.stringify(site.preferred));
+      if (index > 0) rows.unshift(rows.splice(index, 1)[0]);
+    }
+
+    const host = document.createElement('div');
+    const root = host.attachShadow({mode: 'closed'});
+    view.host = host;
+    view.root = root;
+    const style = new CSSStyleSheet();
+    style.replaceSync(`
+      :host { all:initial!important; position:fixed!important; inset:0 auto auto 0!important;
+        width:0!important;height:0!important;overflow:visible!important;z-index:2147483647!important;
+        opacity:1!important;visibility:visible!important;transform:none!important;pointer-events:none!important }
+      button,.list { box-sizing:border-box; font:14px/1.35 system-ui,sans-serif; pointer-events:auto; }
+      button { cursor:pointer; border:0; text-align:start; }
+      button:focus-visible { outline:2px solid #e4ba61; outline-offset:-2px; }
+      .icon { position:fixed; display:grid;place-items:center;border-radius:6px;
+        background:#e4ba61;color:#201707;padding:2px; }
+      .list { position:fixed; overflow:auto; padding:4px; background:#18191c;
+        color:#f5f4ef;border:1px solid #494a50;border-radius:8px;box-shadow:0 6px 22px #0004; }
+      .list[hidden] { display:none; }
+      .list button { display:block;width:100%;padding:8px 12px;border-radius:5px;background:transparent;color:inherit; }
+      .list button:hover,.list button:focus { background:#303135; }
+      strong,small { display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+      small { color:#cecdd0;font-size:13px; }
+    `);
+    root.adoptedStyleSheets = [style];
+    const icon = document.createElement('button');
+    icon.type = 'button';
+    icon.className = 'icon';
+    icon.ariaLabel = 'Confidex · ' + site.labels.fill;
+    icon.title = icon.ariaLabel;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '18');
+    svg.setAttribute('aria-hidden', 'true');
+    const path = document.createElementNS(svg.namespaceURI, 'path');
+    path.setAttribute('d', 'M13 9a5 5 0 1 1-10 0 5 5 0 0 1 10 0Zm-1.5 3.5L20 21l2-2-2-2-1.5 1.5');
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke','currentColor');
+    path.setAttribute('stroke-width','2');
+    svg.append(path);
+    icon.append(svg);
+    const list = document.createElement('div');
+    list.className = 'list';
+    const multiple = after !== null || rows.length !== 1 || Boolean(site.matches.next);
+    list.hidden = !multiple;
+    function choose(row) {
+      if (inline !== view || !visible(field) || !document.hasFocus()) return;
+      dismissInline();
+      const selection = {operation: site.operation, field};
+      inlineSelection = selection;
+      void inlineCall({Fill: {operation: site.operation, form: choice.target.form, target: row.target}}).finally(() => {
+        if (inlineSelection === selection) inlineSelection = undefined;
+      });
+    }
+    icon.addEventListener('click', event => {
+      if (!event.isTrusted) return;
+      if (!multiple) choose(rows[0]);
+      else { list.hidden = !list.hidden; position(); }
+    });
+    for (const row of rows) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      const title = document.createElement('strong');
+      title.textContent = row.title || site.labels.untitled;
+      const name = document.createElement('small');
+      name.textContent = row.username;
+      button.append(title, name);
+      button.addEventListener('click', event => { if (event.isTrusted) choose(row); });
+      list.append(button);
+    }
+    if (site.matches.next) {
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.textContent = site.labels.more;
+      more.addEventListener('click', event => {
+        if (!event.isTrusted) return;
+        field.focus({preventScroll:true});
+        void showInline(field, site.matches.next);
+      });
+      list.append(more);
+    }
+    root.addEventListener('mousedown', event => {
+      if (event.button === 0) event.preventDefault();
+    });
+    root.addEventListener('keydown', event => {
+      if (!event.isTrusted || event.key !== 'Enter' || event.isComposing || event.repeat) return;
+      const index = Array.prototype.indexOf.call(list.children, root.activeElement);
+      if (index < 0 || !rows[index]) return;
+      event.preventDefault();
+      event.stopPropagation();
+      choose(rows[index]);
+    });
+    root.append(icon, list);
+    document.documentElement.append(host);
+
+    function position() {
+      if (inline !== view) return;
+      const r = field.getBoundingClientRect();
+      if (!visible(field) || r.bottom <= 0 || r.top >= innerHeight || r.width < 36 || r.height < 18) {
+        dismissInline();
+        return;
+      }
+      const size = Math.min(28, r.height - 4);
+      Object.assign(icon.style, {left:(r.right-size-4)+'px',top:(r.top+(r.height-size)/2)+'px',width:size+'px',height:size+'px'});
+      const width = Math.min(Math.max(220,r.width),420,innerWidth-8);
+      const below = innerHeight - r.bottom - 6;
+      const above = r.top - 6;
+      const up = below < 120 && above > below;
+      Object.assign(list.style, {width:width+'px',left:Math.max(4,Math.min(r.left,innerWidth-width-4))+'px',
+        maxHeight:Math.max(0,Math.min(280,up ? above : below))+'px',
+        top:up ? 'auto' : (r.bottom+3)+'px', bottom:up ? (innerHeight-r.top+3)+'px' : 'auto'});
+    }
+    view.position = position;
+    position();
+    view.expiry = setTimeout(() => { if (inline === view) dismissInline(); }, 89000);
+    view.arrow = direction => {
+      if (!multiple) { icon.focus({preventScroll:true}); return; }
+      list.hidden = false;
+      position();
+      const buttons = [...list.children];
+      const index = buttons.indexOf(root.activeElement);
+      buttons[index < 0 ? (direction > 0 ? 0 : buttons.length-1)
+        : (index+direction+buttons.length)%buttons.length].focus({preventScroll:true});
+    };
+  }
+
+  document.addEventListener('focusin', event => {
+    if (!event.isTrusted) return;
+    const field = event.composedPath()[0];
+    if (inline?.host && event.composedPath().includes(inline.host)) return;
+    if (inline?.field === field) return;
+    dismissInline();
+    if (field instanceof HTMLInputElement && KINDS.has(field.type)) void showInline(field);
+  }, true);
+  document.addEventListener('focusout', () => {
+    const view = inline;
+    setTimeout(() => {
+      if (view && inline === view && activeInput() !== view.field && activeInput() !== view.host) dismissInline();
+    }, 0);
+  }, true);
+  document.addEventListener('keydown', event => {
+    if (!inline || !event.isTrusted || event.isComposing
+        || !event.composedPath().some(node => node === inline.field || node === inline.host)) return;
+    if (event.key === 'Escape') {
+      const {field,host} = inline;
+      if (host && activeInput() === host) field.focus({preventScroll:true});
+      dismissInline();
+    } else if (inline.arrow && ['ArrowDown','ArrowUp'].includes(event.key)) {
+      inline.arrow(event.key === 'ArrowDown' ? 1 : -1);
+    } else return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+  document.addEventListener('input', event => {
+    if (event.isTrusted && event.composedPath()[0] instanceof HTMLInputElement) autoUsed = true;
+    inlineSelection = undefined; dismissInline(); }, true);
+  document.addEventListener('pointerdown', event => {
+    if (!event.isTrusted) return;
+    inlineSelection = undefined;
+    if (inline && !event.composedPath().some(node => node === inline.host || node === inline.field)) dismissInline();
+  }, true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) dismissInline(); });
+  addEventListener('blur', dismissInline);
+  addEventListener('pagehide', dismissInline);
+  addEventListener('resize', () => inline?.position?.());
+  document.addEventListener('scroll', () => inline?.position?.(), true);
+
   function matchingForm(operation, formId, origin) {
     const snapshot = operations.get(operation);
     if (!snapshot || document.prerendering || location.origin !== origin) return;
@@ -369,6 +636,9 @@
     if (!entries.length || entries.some(([id, value]) => typeof value !== 'string' || value.length > 4096
         || !fresh.form.fields.some(field => field.id === id))) return false;
     const fields = entries.map(([id, value]) => [fresh.nodes.get(id), value]);
+    if (message.automatic && (!canAutoFill() || !emptyTargets(message.automatic, fresh.nodes))) return false;
+    autoUsed = true;
+    dismissInline();
     // Assign both fields before events can run site code and replace the form.
     for (const [input, value] of fields) setValue(input, value);
     for (const [input] of fields) {
@@ -383,16 +653,28 @@
         || sender.url !== chrome.runtime.getURL('background.js') || message?.version !== 1) return;
     if (message.kind === 'ConfidexDocumentCheck') return void reply(true);
     if (message.kind === 'ConfidexCaptureReset') {
+      inlineSelection = undefined;
+      dismissInline();
       resetCapture();
       void prepareCapture();
+      void refreshAutoSetting();
       return void reply(true);
     }
     if (document.prerendering || message.origin !== location.origin
         || location.protocol !== 'https:') return void reply(false);
 
-    if (message.kind === 'ConfidexInspect' || message.kind === 'ConfidexPreflight') {
+    if (message.inline && (inlineSelection?.operation !== message.operation || !document.hasFocus()
+        || !visible(inlineSelection.field))) return void reply(false);
+
+    if (message.kind === 'ConfidexInlineInspect') {
+      if (!inline || !document.hasFocus() || activeInput() !== inline.field) return void reply(false);
       const {page, forms} = inspect();
+      return void reply({snapshot: {page, forms}, field: ids.get(inline.field)});
+    }
+    if (message.kind === 'ConfidexInspect' || message.kind === 'ConfidexPreflight') {
+      const {page, forms, nodes} = inspect();
       if (message.kind === 'ConfidexPreflight') {
+        if (message.automatic && (!canAutoFill() || !emptyTargets(message.automatic, nodes))) return void reply(false);
         const form = forms.find(form => form.id === message.form);
         if (!form) return void reply(false);
         operations.clear();

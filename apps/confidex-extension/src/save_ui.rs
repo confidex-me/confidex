@@ -17,6 +17,7 @@ type Pending = Rc<RefCell<Option<PopupReply>>>;
 
 #[derive(Default)]
 pub struct SavePanel {
+    all_tabs: bool,
     offers: Vec<(Offer, f64)>,
     selected: Option<(String, Selection)>,
     pending: Option<Pending>,
@@ -27,7 +28,18 @@ pub struct SavePanel {
 }
 
 impl SavePanel {
+    pub fn all_tabs() -> Self {
+        Self {
+            all_tabs: true,
+            ..Self::default()
+        }
+    }
+
     fn request(&mut self, ctx: &egui::Context, action: PopupAction, polling: bool) {
+        let action = match action {
+            PopupAction::Save(save) if self.all_tabs => PopupAction::VaultSave(save),
+            other => other,
+        };
         let reply = Pending::default();
         self.pending = Some(reply.clone());
         self.polling = polling;
@@ -238,13 +250,19 @@ fn show_offer(
             Some(PopupAction::Save(SaveAction::Dismiss {
                 id: offer.id.clone(),
             }))
-        } else if ui.button(locale.text("extension-save-never")).clicked() {
-            Some(PopupAction::SetPolicy {
-                origin: offer.origin.clone(),
-                policy: SitePolicy::NoSave,
-            })
         } else {
-            None
+            ui.menu_button(locale.text("extension-offer-more"), |ui| {
+                if !ui.button(locale.text("extension-save-never")).clicked() {
+                    return None;
+                }
+                ui.close();
+                Some(PopupAction::SetPolicy {
+                    origin: offer.origin.clone(),
+                    policy: SitePolicy::NoSave,
+                })
+            })
+            .inner
+            .flatten()
         }
     })
     .inner

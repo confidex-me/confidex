@@ -45,33 +45,3 @@ canvas {
   outline: 2px solid Highlight;
   outline-offset: 4px;
 }
-
-#site-permissions {
-  position: fixed;
-  z-index: 1;
-  right: max(16px, calc((100vw - 480px) / 2));
-  left: 16px;
-  bottom: 16px;
-  pointer-events: none;
-  text-align: right;
-  color: CanvasText;
-  font: 14px/1.4 system-ui, sans-serif;
-}
-
-#site-permissions button, #site-permissions-status:not(:empty) {
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: Canvas;
-  color: CanvasText;
-}
-
-#site-permissions button {
-  pointer-events: auto;
-  border: 1px solid GrayText;
-  font: inherit;
-}
-
-#site-permissions button:focus-visible {
-  outline: 2px solid Highlight;
-  outline-offset: 3px;
-}
