@@ -1,14 +1,13 @@
 use super::*;
+use confidex_vault::record::{MAX_TAG_BYTES, MAX_TAGS};
 use std::{cell::RefCell, rc::Rc};
 
 #[test]
 fn pending_tags_follow_core_byte_count_and_uniqueness_limits_without_rewriting_old_tags() {
     let mut tags = vec!["".into(), " work ".into(), "work".into(), "日本語".into()];
     let before = tags.clone();
-    let mut state = State {
-        input: " work ".into(),
-        ..Default::default()
-    };
+    let mut state = design::tags::Editor::default();
+    state.input = " work ".into();
     assert_eq!(state.problem(&tags), Some("vault-tag-duplicate"));
     assert!(!state.apply(&mut tags));
     assert_eq!(tags, before);

@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""Build the unpacked extension and a reproducible Chromium pilot ZIP."""
+import fcntl
+import json
+import re
+import shutil
+import tempfile
+import zipfile
+from pathlib import Path
+
+from build import ROOT, build_wasm, wasm_tools
+
+
+def build_bundle(bundle):
+    target, bindgen, optimizer = wasm_tools()
+    source = ROOT / 'apps/confidex-extension/web'
+    bundle.mkdir(parents=True)
+    for name in ('manifest.json', 'background.js', 'popup.html', 'popup.css', 'popup-boot.js',
+                 'extension-strings.js', 'vault-host.html', 'session.css',
+                 'vault-host.js', 'session-worker.js', 'content-bootstrap.js',
+                 'content-channel.js', 'site-permissions.js'):
+        shutil.copy2(source / name, bundle)
+    messages = {}
+    message_ids = (
+        'extension-startup-error', 'vault-working', 'vault-refresh', 'vault-more', 'extension-fill', 'vault-untitled',
+        'extension-sites-grant', 'extension-sites-unavailable',
+    )
+    message_pattern = r'^({}) = (.+)$'.format('|'.join(message_ids))
+    for path in sorted((ROOT / 'crates/confidex-ui/locales').glob('*.ftl')):
+        if path.name.startswith('gallery.'):
+            continue
+        catalogue = dict(re.findall(message_pattern,
+                                    path.read_text(), re.MULTILINE))
+        if len(catalogue) != len(message_ids):
+            raise ValueError(f'Missing startup translations in {path.name}')
+        messages[path.stem] = catalogue
+    (bundle / 'session-messages.json').write_text(json.dumps(messages, ensure_ascii=False))
+    for directory, names in (
+        ('fonts', ('*.ttf', '*.txt')),
+        ('icons', ('16.png', '32.png', '48.png', '128.png')),
+    ):
+        destination = bundle / directory
+        destination.mkdir()
+        path = ROOT / ('crates/confidex-ui/assets/fonts' if directory == 'fonts'
+                       else 'apps/confidex/assets/icons/png')
+        for pattern in names:
+            for asset in sorted(path.glob(pattern)):
+                shutil.copy2(asset, destination)
+    shutil.copy2(ROOT / 'LICENSE', bundle)
+    for feature, name in [('session', 'engine'), ('ui', 'ui')]:
+        build_wasm(target, bindgen, optimizer, bundle / name, 'confidex-extension',
+                   'confidex_extension', name, 268435456, '--features', feature)
+    build_wasm(target, bindgen, optimizer, bundle / 'content', 'confidex-extension-content',
+               'confidex_extension_content', 'content', 16777216)
+    for path in bundle.rglob('*.d.ts'):
+        path.unlink()
+
+
+def validate_bundle(bundle):
+    for name in ('manifest.json', 'popup.html', 'popup.css', 'popup-boot.js',
+                 'extension-strings.js', 'vault-host.html', 'session.css', 'vault-host.js',
+                 'session-messages.json', 'session-worker.js', 'background.js',
+                 'content-bootstrap.js', 'content-channel.js', 'site-permissions.js',
+                 'engine/engine.js', 'ui/ui.js', 'content/content.js'):
+        if not (bundle / name).is_file() or not (bundle / name).stat().st_size:
+            raise ValueError(f'Missing extension asset: {name}')
+    for name in ('engine/engine_bg.wasm', 'ui/ui_bg.wasm', 'content/content_bg.wasm'):
+        with (bundle / name).open('rb') as module:
+            if module.read(8) != b'\0asm\1\0\0\0':
+                raise ValueError(f'Invalid extension WASM: {name}')
+    for path in bundle.rglob('*.js'):
+        for relative in re.findall(r'(?:from\s*|import\s*\(\s*)[\'"](\.[^\'"]+)[\'"]',
+                                   path.read_text()):
+            imported = (path.parent / relative).resolve()
+            if not imported.is_relative_to(bundle.resolve()) or not imported.is_file():
+                raise ValueError(f'Missing extension import in {path.relative_to(bundle)}: {relative}')
+
+
+def package_bundle(bundle, output):
+    with zipfile.ZipFile(output, 'w') as archive:
+        for path in sorted(bundle.rglob('*'), key=Path.as_posix):
+            if path.is_file():
+                entry = zipfile.ZipInfo(path.relative_to(bundle).as_posix())
+                entry.create_system = 3
+                entry.external_attr = 0o100644 << 16
+                archive.writestr(entry, path.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+
+
+def main():
+    dist = ROOT / 'dist'
+    dist.mkdir(exist_ok=True)
+    bundle = dist / 'extension'
+    archive = dist / 'confidex-chromium.zip'
+    # Serialize builders and keep the installed bundle available during compilation.
+    with (dist / '.extension-build.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        with tempfile.TemporaryDirectory(prefix='.extension-build-', dir=dist) as temporary:
+            stage = Path(temporary) / 'extension'
+            previous = Path(temporary) / 'previous'
+            packaged = Path(temporary) / archive.name
+            build_bundle(stage)
+            validate_bundle(stage)
+            package_bundle(stage, packaged)
+            if bundle.exists():
+                bundle.rename(previous)
+            installed = False
+            try:
+                stage.rename(bundle)
+                installed = True
+                packaged.replace(archive)
+            except OSError:
+                if installed:
+                    bundle.rename(stage)
+                if previous.exists():
+                    previous.rename(bundle)
+                raise
+    print(bundle)
+    print(archive)
+
+
+if __name__ == '__main__':
+    main()

@@ -21,6 +21,7 @@ pub mod record;
 pub mod section;
 mod select;
 pub mod settings;
+pub mod tags;
 pub mod totp;
 pub mod value;
 pub mod wifi_qr;
@@ -457,17 +458,26 @@ pub(super) fn icon_button_sized(
     enabled: bool,
     side: f32,
 ) -> egui::Response {
-    let response = ui
-        .add_enabled(
-            enabled,
-            egui::Button::new("")
-                .min_size(Vec2::splat(side))
-                .frame_when_inactive(false)
-                .stroke(egui::Stroke::NONE)
-                .corner_radius(Metrics::FIELD_RADIUS),
-        )
-        .on_hover_text(label)
-        .on_disabled_hover_text(label);
+    let response = ui.add_enabled(enabled, icon_button_widget(side).frame_when_inactive(false));
+    finish_icon_button(ui, p, label, icon, response)
+}
+
+fn icon_button_widget(side: f32) -> egui::Button<'static> {
+    egui::Button::new("")
+        .min_size(Vec2::splat(side))
+        .stroke(egui::Stroke::NONE)
+        .corner_radius(Metrics::FIELD_RADIUS)
+}
+
+fn finish_icon_button(
+    ui: &egui::Ui,
+    p: Palette,
+    label: &str,
+    icon: Icon,
+    response: egui::Response,
+) -> egui::Response {
+    let enabled = response.enabled();
+    let response = response.on_hover_text(label).on_disabled_hover_text(label);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, label));
     focus_ring(ui, response.rect, response.has_focus(), p.accent);
     icon.paint(
@@ -592,69 +602,125 @@ pub fn record_row_icon(
         r.widget_info(|| {
             egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, title)
         });
-        let painter = ui
-            .painter()
-            .with_clip_rect(r.rect.intersect(ui.clip_rect()));
-        let avatar = egui::Rect::from_center_size(
-            egui::pos2(
-                r.rect.left() + Metrics::MD + d.avatar / 2.,
-                r.rect.center().y,
-            ),
-            Vec2::splat(d.avatar),
+        let avatar = paint_record_row(
+            ui,
+            p,
+            r.rect,
+            r.rect.right() - Metrics::MD,
+            title,
+            detail,
+            icon,
         );
-        painter.rect_filled(avatar, Metrics::FIELD_RADIUS, p.control);
-        match icon {
-            Some(RowIcon::Texture(texture)) => {
-                painter.image(
-                    texture,
-                    avatar,
-                    egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1., 1.)),
-                    egui::Color32::WHITE,
-                );
-            }
-            Some(RowIcon::External) => {}
-            None => {
-                painter.text(
-                    avatar.center(),
-                    egui::Align2::CENTER_CENTER,
-                    initials(title),
-                    fonts::medium(d.body),
-                    p.text,
-                );
-            }
-        }
-        let title_font = fonts::medium(d.body + 2.);
-        let (title_height, detail_height) = ui.fonts_mut(|f| {
-            (
-                f.row_height(&title_font),
-                f.row_height(&fonts::regular(Metrics::CAPTION)),
-            )
-        });
-        let pos = egui::pos2(
-            avatar.right() + Metrics::MD,
-            r.rect.center().y - (title_height + 2. + detail_height) / 2.,
-        );
-        for (text, at, font, color) in [
-            (title, pos, title_font, p.text),
-            (
-                detail,
-                pos + Vec2::new(0., title_height + 2.),
-                fonts::regular(Metrics::CAPTION),
-                p.text_muted,
-            ),
-        ] {
-            let mut job = egui::text::LayoutJob::simple(
-                text.to_owned(),
-                font,
-                color,
-                (r.rect.right() - at.x - Metrics::MD).max(1.),
-            );
-            job.wrap.max_rows = 1;
-            painter.galley(at, ui.fonts_mut(|fonts| fonts.layout_job(job)), color);
-        }
         (r, avatar)
     })
     .inner
+}
+
+pub fn record_row_action(
+    ui: &mut egui::Ui,
+    p: Palette,
+    title: &str,
+    detail: &str,
+    label: &str,
+    icon: Icon,
+) -> egui::Response {
+    let d = density(ui);
+    let (rect, row) =
+        ui.allocate_exact_size(Vec2::new(ui.available_width(), d.row), egui::Sense::hover());
+    let action = egui::Rect::from_center_size(
+        egui::pos2(rect.right() - Metrics::MD - d.control / 2., rect.center().y),
+        Vec2::splat(d.control),
+    );
+    paint_row(ui, p, &row, false);
+    paint_record_row(
+        ui,
+        p,
+        rect,
+        action.left() - Metrics::SM,
+        title,
+        detail,
+        None,
+    );
+    let mut action_ui = ui.new_child(egui::UiBuilder::new().max_rect(action).layout(
+        egui::Layout::centered_and_justified(egui::Direction::TopDown),
+    ));
+    let response = action_ui.add(
+        icon_button_widget(d.control)
+            .fill(p.control)
+            .stroke(egui::Stroke::new(1., p.border)),
+    );
+    finish_icon_button(ui, p, label, icon, response)
+}
+
+fn paint_record_row(
+    ui: &mut egui::Ui,
+    p: Palette,
+    rect: egui::Rect,
+    text_right: f32,
+    title: &str,
+    detail: &str,
+    icon: Option<RowIcon>,
+) -> egui::Rect {
+    let d = density(ui);
+    let painter = ui.painter().with_clip_rect(rect.intersect(ui.clip_rect()));
+    let avatar = egui::Rect::from_center_size(
+        egui::pos2(rect.left() + Metrics::MD + d.avatar / 2., rect.center().y),
+        Vec2::splat(d.avatar),
+    );
+    painter.rect_filled(avatar, Metrics::FIELD_RADIUS, p.control);
+    match icon {
+        Some(RowIcon::Texture(texture)) => {
+            painter.image(
+                texture,
+                avatar,
+                egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1., 1.)),
+                egui::Color32::WHITE,
+            );
+        }
+        Some(RowIcon::External) => {}
+        None => {
+            painter.text(
+                avatar.center(),
+                egui::Align2::CENTER_CENTER,
+                initials(title),
+                fonts::medium(d.body),
+                p.text,
+            );
+        }
+    }
+    let title_font = fonts::medium(d.body + 2.);
+    let (title_height, detail_height) = ui.fonts_mut(|f| {
+        (
+            f.row_height(&title_font),
+            f.row_height(&fonts::regular(Metrics::CAPTION)),
+        )
+    });
+    let pos = egui::pos2(
+        avatar.right() + Metrics::MD,
+        rect.center().y - (title_height + 2. + detail_height) / 2.,
+    );
+    let mut text_clip = painter.clip_rect();
+    text_clip.max.x = text_clip.max.x.min(text_right);
+    let painter = painter.with_clip_rect(text_clip);
+    for (text, at, font, color) in [
+        (title, pos, title_font, p.text),
+        (
+            detail,
+            pos + Vec2::new(0., title_height + 2.),
+            fonts::regular(Metrics::CAPTION),
+            p.text_muted,
+        ),
+    ] {
+        let mut job = egui::text::LayoutJob::simple(
+            text.to_owned(),
+            font,
+            color,
+            (text_right - at.x).max(1.),
+        );
+        job.wrap.max_rows = 1;
+        painter.galley(at, ui.fonts_mut(|fonts| fonts.layout_job(job)), color);
+    }
+    avatar
 }
 
 #[cfg(test)]
@@ -806,6 +872,59 @@ mod input_tests {
             }
         }
     }
+    #[test]
+    fn record_row_action_stays_square_inside_the_list_width() {
+        for (viewport, width) in [(1000., 480.), (390., 260.)] {
+            let ctx = egui::Context::default();
+            setup(&ctx);
+            let palette = crate::theme::THEMES[0].colors;
+            let title = "Very long record name ".repeat(20);
+            let mut action_rect = egui::Rect::NOTHING;
+            let mut text_right = 0.;
+            let mut row_top = 0.;
+            let mut list_right = 0.;
+            let mut next_row_top = 0.;
+            for _ in 0..2 {
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(viewport, 400.),
+                        )),
+                        ..Default::default()
+                    },
+                    |ui| {
+                        apply_density(ui.ctx(), false);
+                        ui.set_width(width);
+                        let available = ui.available_rect_before_wrap();
+                        row_top = available.top();
+                        list_right = available.right();
+                        action_rect =
+                            record_row_action(ui, palette, &title, "4 fields", "Edit", Icon::Edit)
+                                .rect;
+                        next_row_top = ui.cursor().top();
+                    },
+                );
+                output.textures_delta.clear();
+                text_right = output
+                    .shapes
+                    .iter()
+                    .find_map(|shape| match &shape.shape {
+                        egui::Shape::Text(text) if text.galley.job.text == "4 fields" => {
+                            Some(shape.clip_rect.right())
+                        }
+                        _ => None,
+                    })
+                    .unwrap();
+            }
+            assert!((action_rect.width() - action_rect.height()).abs() < 1.);
+            assert!((list_right - action_rect.right() - Metrics::MD).abs() < 1.);
+            assert!(action_rect.top() > row_top);
+            assert!(next_row_top > action_rect.bottom());
+            assert!(text_right <= action_rect.left() - Metrics::SM);
+        }
+    }
+
     #[test]
     fn rendered_density_uses_logical_retina_sizes_without_changing_zoom() {
         for (width, control, input, body, row) in

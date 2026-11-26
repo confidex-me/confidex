@@ -15,6 +15,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use zeroize::{Zeroize, Zeroizing};
 pub mod backup;
 mod blob;
+pub mod browser_logins;
 pub mod device_unlock;
 pub mod export;
 pub mod export_flow;
@@ -1238,7 +1239,11 @@ impl Engine {
                         epoch,
                         kind: EventKind::Content,
                     },
-                    require_current,
+                    if require_current {
+                        ParentCheck::Current
+                    } else {
+                        ParentCheck::AllowBranch
+                    },
                 )
                 .await?;
                 if let Some(index) = &mut self.search
@@ -1296,7 +1301,7 @@ impl Engine {
                         epoch: *epoch,
                         kind: EventKind::Deletion,
                     },
-                    true,
+                    ParentCheck::Current,
                 )
                 .await?;
                 if let Some(index) = &mut self.search
@@ -1387,12 +1392,29 @@ pub fn new_record() -> Result<Draft, Error> {
     })
 }
 
+enum ParentCheck {
+    AllowBranch,
+    Current,
+    OnlyCurrent,
+}
+
 async fn append<S: Store>(
     store: &mut S,
     vault: &lock::OpenedVault,
     record: &Record,
     options: Options<'_>,
-    require_current: bool,
+    check: ParentCheck,
+) -> Result<RevisionId, Error> {
+    append_if(store, vault, record, options, check, || true).await
+}
+
+async fn append_if<S: Store>(
+    store: &mut S,
+    vault: &lock::OpenedVault,
+    record: &Record,
+    options: Options<'_>,
+    check: ParentCheck,
+    live: impl Fn() -> bool,
 ) -> Result<RevisionId, Error> {
     let Options {
         record_id,
@@ -1423,8 +1445,12 @@ async fn append<S: Store>(
     };
     for _ in 0..4 {
         let current = record_heads(store, vault.vault_id(), record_id).await?;
-        if expected.map_or(!current.is_empty(), |revision| {
-            require_current && !current.iter().any(|h| h.revision == revision)
+        if expected.map_or(!current.is_empty(), |revision| match check {
+            ParentCheck::AllowBranch => false,
+            ParentCheck::Current => !current.iter().any(|h| h.revision == revision),
+            ParentCheck::OnlyCurrent => {
+                !matches!(current.as_slice(), [head] if head.revision == revision)
+            }
         }) {
             return Err(confidex_storage::Error::Conflict.into());
         }
@@ -1442,7 +1468,7 @@ async fn append<S: Store>(
                 expected: None,
             });
         }
-        match sync::publish_local(
+        match sync::publish_local_if(
             store,
             vault.vault_id(),
             vec![confidex_storage::StoredObject {
@@ -1451,6 +1477,7 @@ async fn append<S: Store>(
                 tags: tags.clone(),
             }],
             changes,
+            &live,
         )
         .await
         {
@@ -1521,6 +1548,26 @@ async fn read_draft(
     record: RecordId,
     revision: RevisionId,
 ) -> Result<Option<Draft>, Error> {
+    let Some(content) = read_record(store, vault, record, revision).await? else {
+        return Ok(None);
+    };
+    let fields = fields::read(&content)?;
+    Ok(Some(Draft {
+        record,
+        revision: Some(revision),
+        title: title(&content)?,
+        sections: sections::read(&content, &fields),
+        fields,
+        tags: content.tags.clone(),
+    }))
+}
+
+async fn read_record(
+    store: &mut impl Store,
+    vault: &lock::OpenedVault,
+    record: RecordId,
+    revision: RevisionId,
+) -> Result<Option<Record>, Error> {
     let wire = store.object(vault.vault_id(), revision).await?;
     let opened = envelope::open(
         &wire,
@@ -1533,18 +1580,7 @@ async fn read_draft(
     if opened.revision.header().record_id != record {
         return Err(Error::Integrity);
     }
-    if opened.revision.header().kind == EventKind::Deletion {
-        return Ok(None);
-    }
-    let fields = fields::read(&opened.record)?;
-    Ok(Some(Draft {
-        record,
-        revision: Some(revision),
-        title: title(&opened.record)?,
-        sections: sections::read(&opened.record, &fields),
-        fields,
-        tags: opened.record.tags.clone(),
-    }))
+    Ok((opened.revision.header().kind != EventKind::Deletion).then_some(opened.record))
 }
 
 async fn audit<S: Store>(store: &mut S, vault: &lock::OpenedVault) -> Result<(), Error> {

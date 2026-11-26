@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = Peribadi: tag pertama menjadi folder. Organisasi
 settings-auto-lock = Kunci apabila tidak aktif
 settings-auto-lock-hint = Tetapan ini hanya terpakai pada peti besi ini pada peranti ini. Anda perlu membuka kuncinya untuk membukanya semula.
 settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan peranti. Cuba lagi.
+
+extension-session-hint = Biarkan tab sesi ini terbuka semasa menggunakan Confidex dalam pelayar.
+extension-new-login = Log masuk baharu
+extension-saved-local = Disimpan pada peranti ini.
+extension-sync-pending = Menunggu penyegerakan.
+extension-login-conflicts = Selesaikan konflik rekod dalam apl utama Confidex.
+extension-login-ambiguous = Betulkan medan log masuk yang tidak jelas dalam apl utama Confidex.
+extension-login-changed = Rekod telah berubah. Pilih sekali lagi untuk mengedit versi terkini.
+extension-current-revision = Semakan semasa
+extension-reapply-draft = Gunakan semula perubahan saya
+extension-password-replacement-hint = Masukkan kata laluan baharu untuk menggantikan kata laluan yang disimpan.
+
+extension-startup-error = Confidex tidak dapat dimulakan. Muat semula sambungan dan cuba lagi.
+
+extension-sites-grant = Benarkan akses ke laman HTTPS
+extension-sites-revoke = Tarik balik akses ke laman HTTPS
+extension-sites-unavailable = Akses laman tidak dapat diubah.
+
+extension-auto-fill-on-open = Isi log masuk secara automatik apabila halaman dibuka
+extension-fill = Isi maklumat log masuk
+extension-saved-logins = Butiran log masuk yang disimpan
+extension-no-form = Tiada borang log masuk yang disokong ditemui.
+extension-site-no-access = Buka halaman HTTPS dan benarkan akses laman dalam tab sesi.
+extension-form-changed = Halaman, borang atau rekod telah berubah. Muat semula senarai dan pilih semula.
+extension-form-choice = Borang log masuk
+extension-session-open = Buka sesi
+extension-filled = Maklumat log masuk telah diisi.
+
+extension-save-offer = Simpan butiran log masuk ini?
+extension-update-offer = Pilih butiran log masuk untuk dikemas kini
+extension-update-password = Kemas kini kata laluan
+extension-save-dismiss = Bukan sekarang
+extension-offer-more = Lagi
+extension-load-error = Data untuk laman ini tidak dapat dimuatkan.
+extension-retry = Cuba lagi
+extension-current-site = Laman semasa
+extension-save-never = Jangan tawarkan penyimpanan di laman ini
+extension-site-disable = Nyahaktifkan Confidex di laman ini
+extension-site-enable = Aktifkan Confidex di laman ini
+extension-saving-enable = Tawarkan penyimpanan di laman ini
+extension-site-disabled = Confidex dinyahaktifkan di laman ini.
+extension-save-changed = Tawaran telah berubah atau tamat tempoh. Semak tawaran semasa.
+extension-save-duplicate = Butiran log masuk ini sudah disimpan.

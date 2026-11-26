@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = 개인: 첫 번째 태그가 폴더가 됩니다
 settings-auto-lock = 사용하지 않을 때 잠금
 settings-auto-lock-hint = 이 설정은 이 기기의 이 보관함에만 적용됩니다. 다시 열려면 보관함의 잠금을 해제해야 합니다.
 settings-device-unlock-error = 기기를 사용한 잠금 해제를 변경할 수 없습니다. 다시 시도하세요.
+
+extension-session-hint = 브라우저에서 Confidex를 사용하는 동안 이 세션 탭을 열어 두세요.
+extension-new-login = 새 로그인
+extension-saved-local = 이 기기에 저장했습니다.
+extension-sync-pending = 동기화 대기 중입니다.
+extension-login-conflicts = 기본 Confidex 앱에서 항목 충돌을 해결하세요.
+extension-login-ambiguous = 기본 Confidex 앱에서 모호한 로그인 필드를 수정하세요.
+extension-login-changed = 항목이 변경되었습니다. 최신 버전을 편집하려면 다시 선택하세요.
+extension-current-revision = 현재 리비전
+extension-reapply-draft = 내 변경 사항 다시 적용
+extension-password-replacement-hint = 저장된 비밀번호를 바꾸려면 새 비밀번호를 입력하세요.
+
+extension-startup-error = Confidex를 시작할 수 없습니다. 확장 프로그램을 새로고침한 후 다시 시도하세요.
+
+extension-sites-grant = HTTPS 사이트 접근 허용
+extension-sites-revoke = HTTPS 사이트 접근 권한 삭제
+extension-sites-unavailable = 사이트 접근 권한을 변경할 수 없습니다.
+
+extension-auto-fill-on-open = 페이지를 열 때 로그인 정보 자동 입력
+extension-fill = 로그인 정보 채우기
+extension-saved-logins = 저장된 로그인 정보
+extension-no-form = 지원되는 로그인 양식을 찾지 못했습니다.
+extension-site-no-access = HTTPS 페이지를 열고 세션 탭에서 사이트 액세스를 허용하세요.
+extension-form-changed = 페이지, 양식 또는 항목이 변경되었습니다. 목록을 새로 고친 뒤 다시 선택하세요.
+extension-form-choice = 로그인 양식
+extension-session-open = 세션 열기
+extension-filled = 로그인 정보를 채웠습니다.
+
+extension-save-offer = 이 로그인 정보를 저장할까요?
+extension-update-offer = 업데이트할 로그인 정보를 선택하세요
+extension-update-password = 비밀번호 업데이트
+extension-save-dismiss = 나중에
+extension-offer-more = 더 보기
+extension-load-error = 이 사이트의 데이터를 불러올 수 없습니다.
+extension-retry = 다시 시도
+extension-current-site = 현재 사이트
+extension-save-never = 이 사이트에서 저장 제안 안 함
+extension-site-disable = 이 사이트에서 Confidex 사용 중지
+extension-site-enable = 이 사이트에서 Confidex 사용
+extension-saving-enable = 이 사이트에서 저장 제안
+extension-site-disabled = 이 사이트에서 Confidex가 꺼져 있습니다.
+extension-save-changed = 저장 제안이 변경되었거나 만료되었습니다. 현재 제안을 확인하세요.
+extension-save-duplicate = 이 로그인 정보는 이미 저장되어 있습니다.

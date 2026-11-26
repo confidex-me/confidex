@@ -619,3 +619,46 @@ export-bitwarden-profile-hint = Personal: prima etichetă devine un dosar. Organ
 settings-auto-lock = Blochează la inactivitate
 settings-auto-lock-hint = Această setare se aplică doar acestui seif pe acest dispozitiv. Va trebui să îl deblocați pentru a-l deschide din nou.
 settings-device-unlock-error = Nu s-a putut modifica deblocarea cu dispozitivul. Încercați din nou.
+
+extension-session-hint = Lasă această filă a sesiunii deschisă cât timp folosești Confidex în browser.
+extension-new-login = Autentificare nouă
+extension-saved-local = Salvat pe acest dispozitiv.
+extension-sync-pending = Sincronizare în așteptare.
+extension-login-conflicts = Rezolvați conflictele dintre înregistrări în aplicația principală Confidex.
+extension-login-ambiguous = Corectați câmpurile de autentificare ambigue în aplicația principală Confidex.
+extension-login-changed = Înregistrarea s-a modificat. Selectați-o din nou pentru a edita versiunea curentă.
+extension-current-revision = Revizia curentă
+extension-reapply-draft = Reaplică modificările mele
+extension-password-replacement-hint = Introduceți o parolă nouă pentru a o înlocui pe cea salvată.
+
+extension-startup-error = Confidex nu a putut porni. Reîncarcă extensia și încearcă din nou.
+
+extension-sites-grant = Permite accesul la site-uri HTTPS
+extension-sites-revoke = Revocă accesul la site-uri HTTPS
+extension-sites-unavailable = Accesul la site-uri nu a putut fi modificat.
+
+extension-auto-fill-on-open = Completează automat datele de conectare la deschiderea paginii
+extension-fill = Completează datele de conectare
+extension-saved-logins = Date de conectare salvate
+extension-no-form = Nu s-a găsit niciun formular de conectare compatibil.
+extension-site-no-access = Deschide o pagină HTTPS și permite accesul la site-uri în fila sesiunii.
+extension-form-changed = Pagina, formularul sau înregistrarea s-a schimbat. Reîncarcă lista și alege din nou.
+extension-form-choice = Formular de conectare
+extension-session-open = Deschide sesiunea
+extension-filled = Datele de conectare au fost completate.
+
+extension-save-offer = Salvezi aceste date de conectare?
+extension-update-offer = Alege datele de conectare de actualizat
+extension-update-password = Actualizează parola
+extension-save-dismiss = Nu acum
+extension-offer-more = Mai multe
+extension-load-error = Datele acestui site nu au putut fi încărcate.
+extension-retry = Reîncearcă
+extension-current-site = Site-ul curent
+extension-save-never = Nu propune salvarea pe acest site
+extension-site-disable = Dezactivează Confidex pe acest site
+extension-site-enable = Activează Confidex pe acest site
+extension-saving-enable = Propune salvarea pe acest site
+extension-site-disabled = Confidex este dezactivat pe acest site.
+extension-save-changed = Propunerea s-a schimbat sau a expirat. Verifică propunerile actuale.
+extension-save-duplicate = Aceste date de conectare sunt deja salvate.

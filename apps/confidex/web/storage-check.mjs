@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {runBrowser} from '../../../tools/browser-run.mjs';
 
 const result = await runBrowser(process.argv[2], {
-  '/storage.js': await readFile(new URL('./storage.js', import.meta.url)),
+  '/storage.js': await readFile(new URL('../../../crates/confidex-browser/web/storage.js', import.meta.url)),
 }, async ({evaluate, command}) => {
   await evaluate(`(async () => {
     const {dbCall:call} = await import('/storage.js');

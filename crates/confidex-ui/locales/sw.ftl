@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Binafsi: lebo ya kwanza inakuwa folda. Shirika: 
 settings-auto-lock = Funga usipotumika
 settings-auto-lock-hint = Mpangilio huu unatumika kwa sefu hii kwenye kifaa hiki pekee. Utahitaji kuifungua tena ili kuitumia.
 settings-device-unlock-error = Imeshindikana kubadilisha ufunguaji kwa kifaa. Jaribu tena.
+
+extension-session-hint = Acha kichupo hiki cha kipindi kikiwa wazi unapotumia Confidex kwenye kivinjari.
+extension-new-login = Ingia mpya
+extension-saved-local = Imehifadhiwa kwenye kifaa hiki.
+extension-sync-pending = Inasubiri usawazishaji.
+extension-login-conflicts = Tatua migongano ya rekodi katika programu kuu ya Confidex.
+extension-login-ambiguous = Sahihisha sehemu za kuingia zenye utata katika programu kuu ya Confidex.
+extension-login-changed = Rekodi imebadilika. Ichague tena ili kuhariri toleo la sasa.
+extension-current-revision = Toleo la sasa
+extension-reapply-draft = Tekeleza tena mabadiliko yangu
+extension-password-replacement-hint = Weka nenosiri jipya ili kubadilisha lililohifadhiwa.
+
+extension-startup-error = Confidex haikuweza kuanza. Pakia upya kiendelezi na ujaribu tena.
+
+extension-sites-grant = Ruhusu ufikiaji wa tovuti za HTTPS
+extension-sites-revoke = Ondoa ruhusa ya kufikia tovuti za HTTPS
+extension-sites-unavailable = Haikuwezekana kubadilisha ruhusa ya kufikia tovuti.
+
+extension-auto-fill-on-open = Jaza taarifa za kuingia kiotomatiki ukurasa unapofunguliwa
+extension-fill = Jaza taarifa za kuingia
+extension-saved-logins = Taarifa za kuingia zilizohifadhiwa
+extension-no-form = Hakuna fomu ya kuingia inayotumika iliyopatikana.
+extension-site-no-access = Fungua ukurasa wa HTTPS na uruhusu ufikiaji wa tovuti kwenye kichupo cha kipindi.
+extension-form-changed = Ukurasa, fomu au rekodi imebadilika. Onyesha upya orodha na uchague tena.
+extension-form-choice = Fomu ya kuingia
+extension-session-open = Fungua kipindi
+extension-filled = Taarifa za kuingia zimejazwa.
+
+extension-save-offer = Uhifadhi taarifa hizi za kuingia?
+extension-update-offer = Chagua taarifa za kuingia za kusasisha
+extension-update-password = Sasisha nenosiri
+extension-save-dismiss = Si sasa
+extension-offer-more = Zaidi
+extension-load-error = Imeshindikana kupakia data ya tovuti hii.
+extension-retry = Jaribu tena
+extension-current-site = Tovuti ya sasa
+extension-save-never = Usipendekeze kuhifadhi kwenye tovuti hii
+extension-site-disable = Zima Confidex kwenye tovuti hii
+extension-site-enable = Washa Confidex kwenye tovuti hii
+extension-saving-enable = Pendekeza kuhifadhi kwenye tovuti hii
+extension-site-disabled = Confidex imezimwa kwenye tovuti hii.
+extension-save-changed = Pendekezo limebadilika au limeisha muda. Angalia mapendekezo ya sasa.
+extension-save-duplicate = Taarifa hizi za kuingia zimehifadhiwa tayari.

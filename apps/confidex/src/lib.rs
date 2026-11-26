@@ -1,7 +1,5 @@
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod browser;
-#[cfg(any(all(target_arch = "wasm32", target_os = "unknown"), test))]
-mod browser_input;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod browser_store;
 #[cfg(all(
@@ -35,4 +33,4 @@ pub mod sync_defaults;
 pub mod sync_transport;
 
 #[cfg(any(target_arch = "wasm32", test))]
-mod browser_wire;
+use confidex_browser::wire as browser_wire;

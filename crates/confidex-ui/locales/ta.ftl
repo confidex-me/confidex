@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = தனிப்பட்டது: முதல�
 settings-auto-lock = செயல்பாடின்றி இருக்கும்போது பூட்டு
 settings-auto-lock-hint = இந்த அமைப்பு இந்தச் சாதனத்தில் உள்ள இந்தப் பெட்டகத்திற்கு மட்டுமே பொருந்தும். மீண்டும் திறக்கப் பெட்டகத்தின் பூட்டை நீக்க வேண்டும்.
 settings-device-unlock-error = சாதனத்தின் மூலம் பூட்டை நீக்கும் அமைப்பை மாற்ற முடியவில்லை. மீண்டும் முயலவும்.
+
+extension-session-hint = உலாவியில் Confidex ஐப் பயன்படுத்தும்போது இந்த அமர்வு தாவலைத் திறந்தே வைத்திருங்கள்.
+extension-new-login = புதிய உள்நுழைவு
+extension-saved-local = இந்தச் சாதனத்தில் சேமிக்கப்பட்டது.
+extension-sync-pending = ஒத்திசைவு நிலுவையில் உள்ளது.
+extension-login-conflicts = முரண்பட்ட பதிவுகளை முதன்மை Confidex செயலியில் சரிசெய்யவும்.
+extension-login-ambiguous = குழப்பமான உள்நுழைவுப் புலங்களை முதன்மை Confidex செயலியில் சரிசெய்யவும்.
+extension-login-changed = பதிவு மாறியுள்ளது. தற்போதைய பதிப்பைத் திருத்த மீண்டும் தேர்ந்தெடுக்கவும்.
+extension-current-revision = தற்போதைய பதிப்பு
+extension-reapply-draft = எனது மாற்றங்களை மீண்டும் செயல்படுத்து
+extension-password-replacement-hint = சேமித்த கடவுச்சொல்லை மாற்றப் புதிய கடவுச்சொல்லை உள்ளிடவும்.
+
+extension-startup-error = Confidex ஐத் தொடங்க முடியவில்லை. நீட்டிப்பை மீண்டும் ஏற்றி முயற்சிக்கவும்.
+
+extension-sites-grant = HTTPS தளங்களுக்கான அணுகலை அனுமதி
+extension-sites-revoke = HTTPS தளங்களுக்கான அணுகலை நீக்கு
+extension-sites-unavailable = தள அணுகலை மாற்ற முடியவில்லை.
+
+extension-auto-fill-on-open = பக்கம் திறக்கும்போது உள்நுழைவு விவரங்களைத் தானாக நிரப்பு
+extension-fill = உள்நுழைவு விவரங்களை நிரப்பு
+extension-saved-logins = சேமித்த உள்நுழைவு விவரங்கள்
+extension-no-form = ஆதரிக்கப்படும் உள்நுழைவுப் படிவம் கிடைக்கவில்லை.
+extension-site-no-access = HTTPS பக்கத்தைத் திறந்து, அமர்வுத் தாவலில் தள அணுகலை அனுமதிக்கவும்.
+extension-form-changed = பக்கம், படிவம் அல்லது பதிவு மாறிவிட்டது. பட்டியலைப் புதுப்பித்து மீண்டும் தேர்ந்தெடுக்கவும்.
+extension-form-choice = உள்நுழைவுப் படிவம்
+extension-session-open = அமர்வைத் திற
+extension-filled = உள்நுழைவு விவரங்கள் நிரப்பப்பட்டன.
+
+extension-save-offer = இந்த உள்நுழைவு விவரங்களைச் சேமிக்கவா?
+extension-update-offer = புதுப்பிக்க வேண்டிய உள்நுழைவைத் தேர்ந்தெடுக்கவும்
+extension-update-password = கடவுச்சொல்லைப் புதுப்பி
+extension-save-dismiss = இப்போது வேண்டாம்
+extension-offer-more = மேலும்
+extension-load-error = இந்தத் தளத்தின் தரவை ஏற்ற முடியவில்லை.
+extension-retry = மீண்டும் முயலவும்
+extension-current-site = தற்போதைய தளம்
+extension-save-never = இந்தத் தளத்தில் சேமிக்கப் பரிந்துரைக்க வேண்டாம்
+extension-site-disable = இந்தத் தளத்தில் Confidex-ஐ முடக்கு
+extension-site-enable = இந்தத் தளத்தில் Confidex-ஐ இயக்கு
+extension-saving-enable = இந்தத் தளத்தில் சேமிக்கப் பரிந்துரை
+extension-site-disabled = இந்தத் தளத்தில் Confidex முடக்கப்பட்டுள்ளது.
+extension-save-changed = பரிந்துரை மாறியுள்ளது அல்லது காலாவதியாகிவிட்டது. தற்போதைய பரிந்துரைகளைப் பார்க்கவும்.
+extension-save-duplicate = இந்த உள்நுழைவு விவரங்கள் ஏற்கெனவே சேமிக்கப்பட்டுள்ளன.

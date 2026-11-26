@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = वैयक्तिक: पहिला टॅ
 settings-auto-lock = निष्क्रिय असताना लॉक करा
 settings-auto-lock-hint = ही सेटिंग फक्त या डिव्हाइसवरील या व्हॉल्टसाठी आहे. पुन्हा उघडण्यासाठी व्हॉल्ट अनलॉक करावा लागेल.
 settings-device-unlock-error = डिव्हाइसने अनलॉक करण्याची सेटिंग बदलता आली नाही. पुन्हा प्रयत्न करा.
+
+extension-session-hint = ब्राउझरमध्ये Confidex वापरताना हा सत्र टॅब उघडा ठेवा.
+extension-new-login = नवीन लॉगिन
+extension-saved-local = या डिव्हाइसवर जतन केले.
+extension-sync-pending = सिंक बाकी आहे.
+extension-login-conflicts = मुख्य Confidex ॲपमध्ये नोंदींचे संघर्ष सोडवा.
+extension-login-ambiguous = मुख्य Confidex ॲपमध्ये लॉगिनची संदिग्ध फील्ड दुरुस्त करा.
+extension-login-changed = नोंद बदलली आहे. नवीनतम आवृत्ती संपादित करण्यासाठी ती पुन्हा निवडा.
+extension-current-revision = सध्याची आवृत्ती
+extension-reapply-draft = माझे बदल पुन्हा लागू करा
+extension-password-replacement-hint = जतन केलेला पासवर्ड बदलण्यासाठी नवीन पासवर्ड प्रविष्ट करा.
+
+extension-startup-error = Confidex सुरू करता आले नाही. विस्तार पुन्हा लोड करा आणि पुन्हा प्रयत्न करा.
+
+extension-sites-grant = HTTPS साइटना प्रवेश द्या
+extension-sites-revoke = HTTPS साइटचा प्रवेश काढा
+extension-sites-unavailable = साइटच्या प्रवेशाची परवानगी बदलता आली नाही.
+
+extension-auto-fill-on-open = पृष्ठ उघडल्यावर लॉगिन आपोआप भरा
+extension-fill = लॉगिन तपशील भरा
+extension-saved-logins = जतन केलेली लॉगिन माहिती
+extension-no-form = समर्थित लॉगिन फॉर्म सापडला नाही.
+extension-site-no-access = HTTPS पेज उघडा आणि सत्र टॅबमध्ये साइटला प्रवेश द्या.
+extension-form-changed = पेज, फॉर्म किंवा नोंद बदलली आहे. यादी रिफ्रेश करून पुन्हा निवडा.
+extension-form-choice = लॉगिन फॉर्म
+extension-session-open = सत्र उघडा
+extension-filled = लॉगिन तपशील भरले.
+
+extension-save-offer = ही लॉगिन माहिती जतन करायची का?
+extension-update-offer = अपडेट करण्यासाठी लॉगिन निवडा
+extension-update-password = पासवर्ड अपडेट करा
+extension-save-dismiss = आत्ता नाही
+extension-offer-more = अधिक
+extension-load-error = या साइटचा डेटा लोड करता आला नाही.
+extension-retry = पुन्हा प्रयत्न करा
+extension-current-site = सध्याची साइट
+extension-save-never = या साइटवर जतन करण्याची सूचना देऊ नका
+extension-site-disable = या साइटवर Confidex बंद करा
+extension-site-enable = या साइटवर Confidex सुरू करा
+extension-saving-enable = या साइटवर जतन करण्याची सूचना द्या
+extension-site-disabled = या साइटवर Confidex बंद आहे.
+extension-save-changed = सूचना बदलली आहे किंवा तिची मुदत संपली आहे. सध्याच्या सूचना तपासा.
+extension-save-duplicate = ही लॉगिन माहिती आधीच जतन केली आहे.

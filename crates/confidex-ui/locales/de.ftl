@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Persönlich: Das erste Tag wird zu einem Ordner.
 settings-auto-lock = Bei Inaktivität sperren
 settings-auto-lock-hint = Diese Einstellung gilt nur für diesen Tresor auf diesem Gerät. Zum erneuten Öffnen muss der Tresor entsperrt werden.
 settings-device-unlock-error = Die Geräteentsperrung konnte nicht geändert werden. Versuchen Sie es erneut.
+
+extension-session-hint = Lassen Sie diesen Sitzungstab geöffnet, solange Sie Confidex im Browser verwenden.
+extension-new-login = Neuer Login
+extension-saved-local = Auf diesem Gerät gespeichert.
+extension-sync-pending = Synchronisierung ausstehend.
+extension-login-conflicts = Löse die Konflikte in der Confidex-Hauptanwendung.
+extension-login-ambiguous = Korrigiere mehrdeutige Anmeldefelder in der Confidex-Hauptanwendung.
+extension-login-changed = Der Eintrag wurde geändert. Wähle ihn erneut aus, um die aktuelle Version zu bearbeiten.
+extension-current-revision = Aktuelle Revision
+extension-reapply-draft = Meine Änderungen erneut anwenden
+extension-password-replacement-hint = Gib ein neues Passwort ein, um das gespeicherte zu ersetzen.
+
+extension-startup-error = Confidex konnte nicht gestartet werden. Laden Sie die Erweiterung neu und versuchen Sie es erneut.
+
+extension-sites-grant = Zugriff auf HTTPS-Websites erlauben
+extension-sites-revoke = Zugriff auf HTTPS-Websites entziehen
+extension-sites-unavailable = Der Websitezugriff konnte nicht geändert werden.
+
+extension-auto-fill-on-open = Anmeldedaten beim Öffnen der Seite automatisch ausfüllen
+extension-fill = Anmeldedaten ausfüllen
+extension-saved-logins = Gespeicherte Anmeldedaten
+extension-no-form = Kein unterstütztes Anmeldeformular gefunden.
+extension-site-no-access = Öffnen Sie eine HTTPS-Seite und erlauben Sie den Websitezugriff im Sitzungstab.
+extension-form-changed = Die Seite, das Formular oder der Eintrag hat sich geändert. Aktualisieren Sie die Liste und wählen Sie erneut.
+extension-form-choice = Anmeldeformular
+extension-session-open = Sitzung öffnen
+extension-filled = Anmeldedaten ausgefüllt.
+
+extension-save-offer = Diese Anmeldedaten speichern?
+extension-update-offer = Anmeldung zum Aktualisieren auswählen
+extension-update-password = Passwort aktualisieren
+extension-save-dismiss = Jetzt nicht
+extension-offer-more = Mehr
+extension-load-error = Die Daten konnten nicht geladen werden.
+extension-retry = Erneut versuchen
+extension-current-site = Aktuelle Website
+extension-save-never = Auf dieser Website nie Speichern anbieten
+extension-site-disable = Confidex auf dieser Website deaktivieren
+extension-site-enable = Confidex auf dieser Website aktivieren
+extension-saving-enable = Auf dieser Website Speichern anbieten
+extension-site-disabled = Confidex ist auf dieser Website deaktiviert.
+extension-save-changed = Das Angebot wurde geändert oder ist abgelaufen. Prüfen Sie die aktuellen Angebote.
+extension-save-duplicate = Diese Anmeldedaten sind bereits gespeichert.

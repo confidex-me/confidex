@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = ส่วนบุคคล: แท็กแร�
 settings-auto-lock = ล็อกเมื่อไม่มีการใช้งาน
 settings-auto-lock-hint = การตั้งค่านี้ใช้กับตู้นิรภัยนี้บนอุปกรณ์นี้เท่านั้น คุณต้องปลดล็อกตู้นิรภัยเพื่อเปิดอีกครั้ง
 settings-device-unlock-error = ไม่สามารถเปลี่ยนการปลดล็อกด้วยอุปกรณ์ได้ ลองอีกครั้ง
+
+extension-session-hint = เปิดแท็บเซสชันนี้ไว้ขณะใช้ Confidex ในเบราว์เซอร์
+extension-new-login = ข้อมูลเข้าสู่ระบบใหม่
+extension-saved-local = บันทึกในอุปกรณ์นี้แล้ว
+extension-sync-pending = รอการซิงค์
+extension-login-conflicts = แก้ไขรายการที่ขัดแย้งกันในแอปหลักของ Confidex
+extension-login-ambiguous = แก้ไขช่องข้อมูลเข้าสู่ระบบที่กำกวมในแอปหลักของ Confidex
+extension-login-changed = รายการมีการเปลี่ยนแปลง เลือกอีกครั้งเพื่อแก้ไขเวอร์ชันปัจจุบัน
+extension-current-revision = ฉบับแก้ไขปัจจุบัน
+extension-reapply-draft = ใช้การแก้ไขของฉันอีกครั้ง
+extension-password-replacement-hint = ป้อนรหัสผ่านใหม่เพื่อแทนที่รหัสผ่านที่บันทึกไว้
+
+extension-startup-error = ไม่สามารถเริ่ม Confidex ได้ โปรดโหลดส่วนขยายใหม่แล้วลองอีกครั้ง
+
+extension-sites-grant = อนุญาตให้เข้าถึงเว็บไซต์ HTTPS
+extension-sites-revoke = ยกเลิกการเข้าถึงเว็บไซต์ HTTPS
+extension-sites-unavailable = ไม่สามารถเปลี่ยนสิทธิ์การเข้าถึงเว็บไซต์ได้
+
+extension-auto-fill-on-open = กรอกข้อมูลเข้าสู่ระบบอัตโนมัติเมื่อเปิดหน้า
+extension-fill = กรอกข้อมูลเข้าสู่ระบบ
+extension-saved-logins = ข้อมูลเข้าสู่ระบบที่บันทึกไว้
+extension-no-form = ไม่พบแบบฟอร์มเข้าสู่ระบบที่รองรับ
+extension-site-no-access = เปิดหน้า HTTPS แล้วอนุญาตการเข้าถึงเว็บไซต์ในแท็บเซสชัน
+extension-form-changed = หน้า แบบฟอร์ม หรือรายการมีการเปลี่ยนแปลง รีเฟรชรายการแล้วเลือกอีกครั้ง
+extension-form-choice = แบบฟอร์มเข้าสู่ระบบ
+extension-session-open = เปิดเซสชัน
+extension-filled = กรอกข้อมูลเข้าสู่ระบบแล้ว
+
+extension-save-offer = บันทึกข้อมูลเข้าสู่ระบบนี้หรือไม่
+extension-update-offer = เลือกข้อมูลเข้าสู่ระบบที่จะอัปเดต
+extension-update-password = อัปเดตรหัสผ่าน
+extension-save-dismiss = ไม่ใช่ตอนนี้
+extension-offer-more = เพิ่มเติม
+extension-load-error = โหลดข้อมูลของเว็บไซต์นี้ไม่สำเร็จ
+extension-retry = ลองอีกครั้ง
+extension-current-site = เว็บไซต์ปัจจุบัน
+extension-save-never = ไม่เสนอให้บันทึกในเว็บไซต์นี้
+extension-site-disable = ปิดใช้ Confidex ในเว็บไซต์นี้
+extension-site-enable = เปิดใช้ Confidex ในเว็บไซต์นี้
+extension-saving-enable = เสนอให้บันทึกในเว็บไซต์นี้
+extension-site-disabled = Confidex ถูกปิดใช้งานในเว็บไซต์นี้
+extension-save-changed = ข้อเสนอมีการเปลี่ยนแปลงหรือหมดอายุแล้ว โปรดตรวจสอบข้อเสนอปัจจุบัน
+extension-save-duplicate = บันทึกข้อมูลเข้าสู่ระบบนี้แล้ว

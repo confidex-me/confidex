@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Personlig: den första taggen blir en mapp. Orga
 settings-auto-lock = Lås vid inaktivitet
 settings-auto-lock-hint = Inställningen gäller bara det här valvet på den här enheten. Du måste låsa upp valvet för att öppna det igen.
 settings-device-unlock-error = Det gick inte att ändra upplåsning med enheten. Försök igen.
+
+extension-session-hint = Låt den här sessionsfliken vara öppen medan du använder Confidex i webbläsaren.
+extension-new-login = Ny inloggning
+extension-saved-local = Sparat på den här enheten.
+extension-sync-pending = Väntar på synkronisering.
+extension-login-conflicts = Lös konflikter mellan poster i Confidex huvudapp.
+extension-login-ambiguous = Rätta otydliga inloggningsfält i Confidex huvudapp.
+extension-login-changed = Posten har ändrats. Välj den igen för att redigera den aktuella versionen.
+extension-current-revision = Aktuell version
+extension-reapply-draft = Tillämpa mina ändringar igen
+extension-password-replacement-hint = Ange ett nytt lösenord för att ersätta det sparade.
+
+extension-startup-error = Confidex kunde inte starta. Ladda om tillägget och försök igen.
+
+extension-sites-grant = Tillåt åtkomst till HTTPS-webbplatser
+extension-sites-revoke = Ta bort åtkomst till HTTPS-webbplatser
+extension-sites-unavailable = Det gick inte att ändra webbplatsåtkomsten.
+
+extension-auto-fill-on-open = Fyll i inloggningen automatiskt när sidan öppnas
+extension-fill = Fyll i inloggningsuppgifter
+extension-saved-logins = Sparade inloggningar
+extension-no-form = Inget inloggningsformulär som stöds hittades.
+extension-site-no-access = Öppna en HTTPS-sida och tillåt åtkomst till webbplatser på sessionsfliken.
+extension-form-changed = Sidan, formuläret eller posten har ändrats. Uppdatera listan och välj igen.
+extension-form-choice = Inloggningsformulär
+extension-session-open = Öppna session
+extension-filled = Inloggningsuppgifterna har fyllts i.
+
+extension-save-offer = Vill du spara inloggningen?
+extension-update-offer = Välj en inloggning att uppdatera
+extension-update-password = Uppdatera lösenord
+extension-save-dismiss = Inte nu
+extension-offer-more = Mer
+extension-load-error = Det gick inte att läsa in data för webbplatsen.
+extension-retry = Försök igen
+extension-current-site = Aktuell webbplats
+extension-save-never = Föreslå aldrig att spara på den här webbplatsen
+extension-site-disable = Inaktivera Confidex på den här webbplatsen
+extension-site-enable = Aktivera Confidex på den här webbplatsen
+extension-saving-enable = Föreslå att spara på den här webbplatsen
+extension-site-disabled = Confidex är inaktiverat på den här webbplatsen.
+extension-save-changed = Förslaget har ändrats eller gått ut. Granska de aktuella förslagen.
+extension-save-duplicate = Inloggningen är redan sparad.

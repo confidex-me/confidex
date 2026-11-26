@@ -145,6 +145,27 @@ jobs:
         run: node apps/confidex/web/input-check.mjs /usr/bin/google-chrome dist/wasm
       - if: ${{ inputs.release-tag == '' }}
         run: node apps/confidex/web/storage-check.mjs /usr/bin/google-chrome
+      - name: Build Chromium pilot package
+        if: ${{ inputs.release-tag == '' }}
+        run: make extension
+      - name: Check Chromium pilot package in Chrome
+        if: ${{ inputs.release-tag == '' }}
+        timeout-minutes: 10
+        run: |
+          extension="$RUNNER_TEMP/confidex-chromium"
+          unzip -q dist/confidex-chromium.zip -d "$extension"
+          cargo build --locked -p confidexsyncd
+          node apps/confidex-extension/startup-check.mjs /usr/bin/google-chrome "$extension"
+          node apps/confidex-extension/browser-check.mjs /usr/bin/google-chrome "$extension" dist/web target/debug/confidexsyncd --popup-only
+          node apps/confidex-extension/browser-check.mjs /usr/bin/google-chrome "$extension" dist/web target/debug/confidexsyncd --vault-only
+      - name: Upload Chromium pilot package
+        if: ${{ inputs.release-tag == '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: chromium-extension
+          path: dist/confidex-chromium.zip
+          if-no-files-found: error
+          retention-days: 7
       - run: npx wrangler deploy --dry-run --config apps/confidex/wrangler.toml
       - run: python3 builders/syncd/build.py
       - run: npx wrangler deploy --dry-run --config apps/confidexsyncd/wrangler.toml

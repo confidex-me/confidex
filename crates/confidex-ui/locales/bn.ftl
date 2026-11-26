@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = ব্যক্তিগত: প্রথম ট
 settings-auto-lock = নিষ্ক্রিয় থাকলে লক করুন
 settings-auto-lock-hint = এই সেটিং শুধু এই ডিভাইসে এই ভল্টের জন্য প্রযোজ্য। আবার খুলতে ভল্ট আনলক করতে হবে।
 settings-device-unlock-error = ডিভাইস দিয়ে আনলক করার সেটিং বদলানো যায়নি। আবার চেষ্টা করুন।
+
+extension-session-hint = ব্রাউজারে Confidex ব্যবহার করার সময় এই সেশন ট্যাবটি খোলা রাখুন।
+extension-new-login = নতুন লগইন
+extension-saved-local = এই ডিভাইসে সংরক্ষিত হয়েছে।
+extension-sync-pending = সিঙ্কের অপেক্ষায়।
+extension-login-conflicts = মূল Confidex অ্যাপে রেকর্ডের দ্বন্দ্ব মেটান।
+extension-login-ambiguous = মূল Confidex অ্যাপে লগইনের অস্পষ্ট ক্ষেত্রগুলি ঠিক করুন।
+extension-login-changed = রেকর্ডটি বদলেছে। সর্বশেষ সংস্করণ সম্পাদনা করতে আবার বেছে নিন।
+extension-current-revision = বর্তমান সংস্করণ
+extension-reapply-draft = আমার পরিবর্তনগুলি আবার প্রয়োগ করুন
+extension-password-replacement-hint = সংরক্ষিত পাসওয়ার্ড বদলাতে নতুন পাসওয়ার্ড লিখুন।
+
+extension-startup-error = Confidex চালু করা যায়নি। এক্সটেনশন পুনরায় লোড করে আবার চেষ্টা করুন।
+
+extension-sites-grant = HTTPS সাইটে অ্যাক্সেস দিন
+extension-sites-revoke = HTTPS সাইটের অ্যাক্সেস সরান
+extension-sites-unavailable = সাইটে অ্যাক্সেসের অনুমতি বদলানো যায়নি।
+
+extension-auto-fill-on-open = পৃষ্ঠা খোলার সময় লগইন স্বয়ংক্রিয়ভাবে পূরণ করুন
+extension-fill = লগইন তথ্য পূরণ করুন
+extension-saved-logins = সংরক্ষিত লগইন
+extension-no-form = সমর্থিত কোনো লগইন ফর্ম পাওয়া যায়নি।
+extension-site-no-access = একটি HTTPS পৃষ্ঠা খুলুন এবং সেশন ট্যাবে সাইট অ্যাক্সেসের অনুমতি দিন।
+extension-form-changed = পৃষ্ঠা, ফর্ম বা রেকর্ড বদলে গেছে। তালিকা রিফ্রেশ করে আবার নির্বাচন করুন।
+extension-form-choice = লগইন ফর্ম
+extension-session-open = সেশন খুলুন
+extension-filled = লগইন তথ্য পূরণ হয়েছে।
+
+extension-save-offer = এই লগইন তথ্য সংরক্ষণ করবেন?
+extension-update-offer = আপডেট করার জন্য লগইন বেছে নিন
+extension-update-password = পাসওয়ার্ড আপডেট করুন
+extension-save-dismiss = এখন নয়
+extension-offer-more = আরও
+extension-load-error = এই বিভাগের তথ্য লোড করা যায়নি।
+extension-retry = আবার চেষ্টা করুন
+extension-current-site = বর্তমান সাইট
+extension-save-never = এই সাইটে সংরক্ষণের প্রস্তাব দেবেন না
+extension-site-disable = এই সাইটে Confidex বন্ধ করুন
+extension-site-enable = এই সাইটে Confidex চালু করুন
+extension-saving-enable = এই সাইটে সংরক্ষণের প্রস্তাব দিন
+extension-site-disabled = এই সাইটে Confidex বন্ধ আছে।
+extension-save-changed = প্রস্তাবটি বদলেছে বা মেয়াদ শেষ হয়েছে। বর্তমান প্রস্তাবগুলো দেখুন।
+extension-save-duplicate = এই লগইন তথ্য আগেই সংরক্ষিত হয়েছে।

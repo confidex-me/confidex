@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = Cá nhân: thẻ đầu tiên trở thành thư 
 settings-auto-lock = Khóa khi không hoạt động
 settings-auto-lock-hint = Cài đặt này chỉ áp dụng cho két này trên thiết bị này. Bạn cần mở khóa két để mở lại.
 settings-device-unlock-error = Không thể thay đổi tính năng mở khóa bằng thiết bị. Hãy thử lại.
+
+extension-session-hint = Giữ tab phiên này mở trong khi sử dụng Confidex trên trình duyệt.
+extension-new-login = Thông tin đăng nhập mới
+extension-saved-local = Đã lưu trên thiết bị này.
+extension-sync-pending = Đang chờ đồng bộ.
+extension-login-conflicts = Giải quyết xung đột giữa các mục trong ứng dụng Confidex chính.
+extension-login-ambiguous = Sửa các trường đăng nhập không rõ ràng trong ứng dụng Confidex chính.
+extension-login-changed = Mục đã thay đổi. Hãy chọn lại để chỉnh sửa phiên bản mới nhất.
+extension-current-revision = Bản sửa đổi hiện tại
+extension-reapply-draft = Áp dụng lại chỉnh sửa của tôi
+extension-password-replacement-hint = Nhập mật khẩu mới để thay thế mật khẩu đã lưu.
+
+extension-startup-error = Không thể khởi động Confidex. Hãy tải lại tiện ích mở rộng và thử lại.
+
+extension-sites-grant = Cho phép truy cập các trang HTTPS
+extension-sites-revoke = Thu hồi quyền truy cập các trang HTTPS
+extension-sites-unavailable = Không thể thay đổi quyền truy cập trang web.
+
+extension-auto-fill-on-open = Tự động điền thông tin đăng nhập khi mở trang
+extension-fill = Điền thông tin đăng nhập
+extension-saved-logins = Thông tin đăng nhập đã lưu
+extension-no-form = Không tìm thấy biểu mẫu đăng nhập được hỗ trợ.
+extension-site-no-access = Mở trang HTTPS và cho phép truy cập trang web trong thẻ phiên.
+extension-form-changed = Trang, biểu mẫu hoặc mục đã thay đổi. Hãy làm mới danh sách và chọn lại.
+extension-form-choice = Biểu mẫu đăng nhập
+extension-session-open = Mở phiên
+extension-filled = Đã điền thông tin đăng nhập.
+
+extension-save-offer = Lưu thông tin đăng nhập này?
+extension-update-offer = Chọn thông tin đăng nhập cần cập nhật
+extension-update-password = Cập nhật mật khẩu
+extension-save-dismiss = Để sau
+extension-offer-more = Thêm
+extension-load-error = Không thể tải dữ liệu của trang web này.
+extension-retry = Thử lại
+extension-current-site = Trang web hiện tại
+extension-save-never = Không đề nghị lưu trên trang này
+extension-site-disable = Tắt Confidex trên trang này
+extension-site-enable = Bật Confidex trên trang này
+extension-saving-enable = Đề nghị lưu trên trang này
+extension-site-disabled = Confidex đã tắt trên trang này.
+extension-save-changed = Đề nghị đã thay đổi hoặc hết hạn. Hãy xem các đề nghị hiện tại.
+extension-save-duplicate = Thông tin đăng nhập này đã được lưu.

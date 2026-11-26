@@ -1,4 +1,6 @@
 //! Shared vault screens. Platform work stays behind Runtime.
+#[cfg(any(all(target_arch = "wasm32", target_os = "unknown"), test))]
+pub mod browser_input;
 mod clipboard;
 pub mod favicons;
 pub mod i18n;

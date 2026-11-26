@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/confidex-device-secrets", "crates/confidex-vault", "crates/confidex-ssh-agent", "crates/confidex-storage", "crates/confidex-app", "crates/confidex-native", "crates/confidex-ui", "apps/confidex", "apps/cfdex", "apps/confidexsyncd", "crates/confidex-image-codec"]
+members = ["crates/confidex-device-secrets", "crates/confidex-vault", "crates/confidex-ssh-agent", "crates/confidex-storage", "crates/confidex-app", "crates/confidex-native", "crates/confidex-ui", "apps/confidex", "apps/cfdex", "apps/confidexsyncd", "crates/confidex-image-codec", "crates/confidex-browser", "apps/confidex-extension", "apps/confidex-extension/content"]
 exclude = ["vendor/keepass"]
 resolver = "3"
 

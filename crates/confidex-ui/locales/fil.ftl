@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = Pansarili: magiging folder ang unang tag. Organi
 settings-auto-lock = I-lock kapag walang aktibidad
 settings-auto-lock-hint = Para lang sa vault na ito sa device na ito ang setting. Kailangan mong i-unlock ang vault para buksan itong muli.
 settings-device-unlock-error = Hindi mabago ang pag-unlock gamit ang device. Subukan muli.
+
+extension-session-hint = Panatilihing bukas ang tab ng sesyon habang ginagamit ang Confidex sa browser.
+extension-new-login = Bagong login
+extension-saved-local = Na-save sa device na ito.
+extension-sync-pending = Naghihintay ng pag-sync.
+extension-login-conflicts = Ayusin ang mga salungatan ng record sa pangunahing Confidex app.
+extension-login-ambiguous = Ayusin ang mga malabong field ng login sa pangunahing Confidex app.
+extension-login-changed = Nagbago ang record. Piliin ito muli upang i-edit ang pinakabagong bersyon.
+extension-current-revision = Kasalukuyang rebisyon
+extension-reapply-draft = Ilapat muli ang aking mga pagbabago
+extension-password-replacement-hint = Maglagay ng bagong password upang palitan ang naka-save.
+
+extension-startup-error = Hindi masimulan ang Confidex. I-reload ang extension at subukang muli.
+
+extension-sites-grant = Payagan ang access sa mga HTTPS site
+extension-sites-revoke = Alisin ang access sa mga HTTPS site
+extension-sites-unavailable = Hindi mabago ang access sa mga site.
+
+extension-auto-fill-on-open = Awtomatikong punan ang login sa pagbukas ng pahina
+extension-fill = Punan ang detalye sa pag-sign in
+extension-saved-logins = Mga naka-save na detalye sa pag-sign in
+extension-no-form = Walang nakitang suportadong form sa pag-sign in.
+extension-site-no-access = Magbukas ng HTTPS na pahina at payagan ang access sa mga site sa tab ng session.
+extension-form-changed = Nagbago ang pahina, form, o tala. I-refresh ang listahan at pumili muli.
+extension-form-choice = Form sa pag-sign in
+extension-session-open = Buksan ang session
+extension-filled = Napunan ang detalye sa pag-sign in.
+
+extension-save-offer = I-save ang mga detalye sa pag-sign in na ito?
+extension-update-offer = Piliin ang ia-update na mga detalye sa pag-sign in
+extension-update-password = I-update ang password
+extension-save-dismiss = Hindi ngayon
+extension-offer-more = Higit pa
+extension-load-error = Hindi ma-load ang data para sa site na ito.
+extension-retry = Subukan muli
+extension-current-site = Kasalukuyang site
+extension-save-never = Huwag mag-alok na mag-save sa site na ito
+extension-site-disable = I-disable ang Confidex sa site na ito
+extension-site-enable = I-enable ang Confidex sa site na ito
+extension-saving-enable = Mag-alok na mag-save sa site na ito
+extension-site-disabled = Naka-disable ang Confidex sa site na ito.
+extension-save-changed = Nagbago o nag-expire na ang alok. Tingnan ang mga kasalukuyang alok.
+extension-save-duplicate = Naka-save na ang mga detalye sa pag-sign in na ito.

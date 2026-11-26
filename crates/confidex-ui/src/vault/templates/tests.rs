@@ -116,7 +116,7 @@ fn every_catalogue_choice_creates_only_a_draft_and_localizes_its_fields_and_sect
             assert_eq!(draft.fields.len(), template.fields.len());
             for (field, spec) in draft.fields.iter().zip(template.fields) {
                 assert_eq!(field.type_name, spec.type_name);
-                let label = name_key(spec.name);
+                let label = crate::i18n::starter_name_key(spec.name);
                 assert_ne!(app.locale.text(&label), label, "{} {label}", template.id);
                 assert_eq!(field.name, app.locale.text(&label));
             }

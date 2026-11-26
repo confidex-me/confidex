@@ -681,3 +681,46 @@ export-bitwarden-profile-hint = Личный: первый тег станет �
 settings-auto-lock = Блокировать при бездействии
 settings-auto-lock-hint = Настройка действует только для этого сейфа на этом устройстве. Для открытия снова потребуется разблокировка
 settings-device-unlock-error = Не удалось изменить разблокировку с помощью устройства. Повторите попытку.
+
+extension-session-hint = Не закрывайте вкладку сеанса, пока пользуетесь Confidex в браузере.
+extension-new-login = Новый логин
+extension-saved-local = Сохранено на этом устройстве.
+extension-sync-pending = Ожидается синхронизация.
+extension-login-conflicts = Разрешите конфликты записей в основном приложении Confidex.
+extension-login-ambiguous = Проверьте неоднозначные поля логина в основном приложении Confidex.
+extension-login-changed = Запись изменилась. Выберите её снова, чтобы отредактировать актуальную версию.
+extension-current-revision = Актуальная ревизия
+extension-reapply-draft = Перенести мои правки
+extension-password-replacement-hint = Введите новый пароль, чтобы заменить сохранённый.
+
+extension-startup-error = Не удалось запустить Confidex. Перезагрузите расширение и попробуйте снова.
+
+extension-sites-grant = Разрешить доступ к HTTPS-сайтам
+extension-sites-revoke = Отозвать доступ к HTTPS-сайтам
+extension-sites-unavailable = Не удалось изменить доступ к сайтам.
+
+extension-auto-fill-on-open = Автозаполнение при открытии страницы
+extension-fill = Заполнить логин
+extension-saved-logins = Сохранённые логины
+extension-no-form = Подходящая форма входа не найдена.
+extension-site-no-access = Откройте страницу HTTPS и разрешите доступ к сайтам во вкладке сессии.
+extension-form-changed = Страница, форма или запись изменилась. Обновите список и выберите снова.
+extension-form-choice = Форма входа
+extension-session-open = Открыть сессию
+extension-filled = Данные для входа заполнены.
+
+extension-save-offer = Сохранить этот логин?
+extension-update-offer = Выберите логин для обновления
+extension-update-password = Обновить пароль
+extension-save-dismiss = Не сейчас
+extension-offer-more = Ещё
+extension-load-error = Не удалось загрузить данные для этого сайта.
+extension-retry = Повторить
+extension-current-site = Текущий сайт
+extension-save-never = Не предлагать сохранение для этого сайта
+extension-site-disable = Отключить Confidex на этом сайте
+extension-site-enable = Включить Confidex на этом сайте
+extension-saving-enable = Предлагать сохранение для этого сайта
+extension-site-disabled = Confidex отключён на этом сайте.
+extension-save-changed = Предложение изменилось или истекло. Проверьте текущие предложения.
+extension-save-duplicate = Этот логин уже сохранён.

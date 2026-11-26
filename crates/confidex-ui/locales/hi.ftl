@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = व्यक्तिगत: पहला टै
 settings-auto-lock = निष्क्रिय होने पर लॉक करें
 settings-auto-lock-hint = यह सेटिंग केवल इस डिवाइस पर इस वॉल्ट के लिए है। दोबारा खोलने के लिए वॉल्ट अनलॉक करना होगा।
 settings-device-unlock-error = डिवाइस से अनलॉक करने की सेटिंग नहीं बदली जा सकी। फिर कोशिश करें।
+
+extension-session-hint = ब्राउज़र में Confidex का उपयोग करते समय इस सत्र टैब को खुला रखें।
+extension-new-login = नया लॉगिन
+extension-saved-local = इस डिवाइस पर सहेजा गया।
+extension-sync-pending = सिंक बाकी है।
+extension-login-conflicts = मुख्य Confidex ऐप में रिकॉर्ड के टकराव हल करें।
+extension-login-ambiguous = मुख्य Confidex ऐप में अस्पष्ट लॉगिन फ़ील्ड ठीक करें।
+extension-login-changed = रिकॉर्ड बदल गया है। नवीनतम संस्करण संपादित करने के लिए उसे फिर से चुनें।
+extension-current-revision = वर्तमान संशोधन
+extension-reapply-draft = मेरे बदलाव फिर से लागू करें
+extension-password-replacement-hint = सहेजा गया पासवर्ड बदलने के लिए नया पासवर्ड दर्ज करें।
+
+extension-startup-error = Confidex शुरू नहीं हो सका। एक्सटेंशन फिर से लोड करें और दोबारा कोशिश करें।
+
+extension-sites-grant = HTTPS साइटों की अनुमति दें
+extension-sites-revoke = HTTPS साइटों की अनुमति हटाएँ
+extension-sites-unavailable = साइटों की अनुमति नहीं बदली जा सकी।
+
+extension-auto-fill-on-open = पेज खुलने पर लॉगिन अपने आप भरें
+extension-fill = लॉगिन विवरण भरें
+extension-saved-logins = सहेजी गई लॉगिन जानकारी
+extension-no-form = कोई समर्थित लॉगिन फ़ॉर्म नहीं मिला।
+extension-site-no-access = HTTPS पेज खोलें और सत्र टैब में साइटों की अनुमति दें।
+extension-form-changed = पेज, फ़ॉर्म या रिकॉर्ड बदल गया है। सूची रीफ़्रेश करके फिर से चुनें।
+extension-form-choice = लॉगिन फ़ॉर्म
+extension-session-open = सत्र खोलें
+extension-filled = लॉगिन विवरण भर दिया गया।
+
+extension-save-offer = यह लॉगिन जानकारी सहेजें?
+extension-update-offer = अपडेट करने के लिए लॉगिन चुनें
+extension-update-password = पासवर्ड अपडेट करें
+extension-save-dismiss = अभी नहीं
+extension-offer-more = और विकल्प
+extension-load-error = इस साइट का डेटा लोड नहीं हो सका।
+extension-retry = फिर कोशिश करें
+extension-current-site = वर्तमान साइट
+extension-save-never = इस साइट पर सहेजने का सुझाव न दें
+extension-site-disable = इस साइट पर Confidex बंद करें
+extension-site-enable = इस साइट पर Confidex चालू करें
+extension-saving-enable = इस साइट पर सहेजने का सुझाव दें
+extension-site-disabled = इस साइट पर Confidex बंद है।
+extension-save-changed = सुझाव बदल गया है या उसकी समय सीमा बीत गई है। मौजूदा सुझाव देखें।
+extension-save-duplicate = यह लॉगिन जानकारी पहले से सहेजी गई है।

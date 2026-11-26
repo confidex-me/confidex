@@ -25,6 +25,7 @@ pub trait Transport {
         body: Vec<u8>,
     ) -> Result<Reply, Error>;
 }
+#[derive(Default)]
 pub struct Offline;
 impl Transport for Offline {
     async fn send(&mut self, _: &str, _: &str, _: &str, _: Vec<u8>) -> Result<Reply, Error> {
@@ -277,6 +278,16 @@ pub(super) async fn publish_local(
     objects: Vec<StoredObject>,
     heads: Vec<HeadChange>,
 ) -> Result<(), Error> {
+    publish_local_if(store, vault, objects, heads, || true).await
+}
+
+pub(super) async fn publish_local_if(
+    store: &mut impl Store,
+    vault: VaultId,
+    objects: Vec<StoredObject>,
+    heads: Vec<HeadChange>,
+    live: impl Fn() -> bool,
+) -> Result<(), Error> {
     let previous = store.sync_state(vault).await?;
     let current = match &previous {
         Some(bytes) => bytes.clone(),
@@ -289,6 +300,9 @@ pub(super) async fn publish_local(
         heads,
     };
     commit.validate()?;
+    if !live() {
+        return Err(Error::Input);
+    }
     store.publish_branches(vault, &commit).await?;
     Ok(())
 }
@@ -504,6 +518,60 @@ pub(super) fn head_changes(combined: &Graph, local: &[Head]) -> Result<Vec<HeadC
     }
     Ok(changes)
 }
+async fn conflict_reports(
+    store: &mut impl Store,
+    vault: &lock::OpenedVault,
+    heads: &[Head],
+) -> Result<Vec<Conflict>, Error> {
+    // A resolution can merge the first two heads. Further heads for the
+    // same record remain intact and appear on the next completed sync.
+    let mut conflicts = Vec::new();
+    for heads in heads.chunk_by(|left, right| left.record == right.record) {
+        if let [local, remote, ..] = heads {
+            conflicts.push(Conflict {
+                record: local.record,
+                local: conflict_version(store, vault, local).await?,
+                remote: conflict_version(store, vault, remote).await?,
+            });
+            if conflicts.len() == confidex_storage::PAGE_SIZE {
+                break;
+            }
+        }
+    }
+    Ok(conflicts)
+}
+
+async fn conflict_version(
+    store: &mut impl Store,
+    vault: &lock::OpenedVault,
+    head: &Head,
+) -> Result<Version, Error> {
+    let wire = store.object(vault.vault_id(), head.revision).await?;
+    let verified = envelope::verify(&wire, vault.anchor(), Some(&head.revision), MAX_OPEN_MEMORY)
+        .map_err(|_| Error::Integrity)?;
+    let header = verified.header();
+    if header.record_id != head.record {
+        return Err(Error::Integrity);
+    }
+    let epoch = header.metadata.epoch;
+    let deleted = header.kind == EventKind::Deletion;
+    let title = if deleted {
+        String::new()
+    } else {
+        title(
+            &verified
+                .open(vault.keys(), MAX_OPEN_MEMORY)
+                .map_err(|_| Error::Integrity)?,
+        )?
+    };
+    Ok(Version {
+        revision: head.revision,
+        title,
+        epoch,
+        deleted,
+    })
+}
+
 pub async fn step(
     store: &mut impl Store,
     transport: &mut impl Transport,
@@ -698,6 +766,7 @@ pub async fn step(
         if commit.previous.as_deref() != Some(commit.current.as_slice()) {
             store.publish_branches(vault.vault_id(), &commit).await?;
         }
+        report.conflicts = conflict_reports(store, vault, &local).await?;
         return Ok(report);
     }
     let base = state.cursor.to_string();
@@ -776,7 +845,12 @@ pub async fn check(
                 && reply.etag.as_deref() == Some(format!("\"{digest}\"").as_str())
                 && all_heads(store, vault.vault_id()).await? == state.heads
             {
-                return Ok(None);
+                let conflicts = conflict_reports(store, vault, &state.heads).await?;
+                return Ok((!conflicts.is_empty()).then_some(Report {
+                    server: Some(server),
+                    conflicts,
+                    ..Report::default()
+                }));
             }
         } else if reply.status != 404 {
             return Err(Error::Server(reply.status));

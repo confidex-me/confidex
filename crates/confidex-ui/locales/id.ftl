@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = Pribadi: tag pertama menjadi folder. Organisasi:
 settings-auto-lock = Kunci saat tidak aktif
 settings-auto-lock-hint = Pengaturan ini hanya berlaku untuk brankas ini di perangkat ini. Anda perlu membuka kuncinya untuk membukanya lagi.
 settings-device-unlock-error = Tidak dapat mengubah buka kunci dengan perangkat. Coba lagi.
+
+extension-session-hint = Biarkan tab sesi ini tetap terbuka saat menggunakan Confidex di browser.
+extension-new-login = Login baru
+extension-saved-local = Disimpan di perangkat ini.
+extension-sync-pending = Menunggu sinkronisasi.
+extension-login-conflicts = Selesaikan konflik entri di aplikasi utama Confidex.
+extension-login-ambiguous = Perbaiki kolom login yang ambigu di aplikasi utama Confidex.
+extension-login-changed = Entri telah berubah. Pilih kembali untuk mengedit versi terbaru.
+extension-current-revision = Revisi saat ini
+extension-reapply-draft = Terapkan ulang perubahan saya
+extension-password-replacement-hint = Masukkan kata sandi baru untuk mengganti yang tersimpan.
+
+extension-startup-error = Confidex tidak dapat dimulai. Muat ulang ekstensi dan coba lagi.
+
+extension-sites-grant = Izinkan akses ke situs HTTPS
+extension-sites-revoke = Cabut akses ke situs HTTPS
+extension-sites-unavailable = Akses situs tidak dapat diubah.
+
+extension-auto-fill-on-open = Isi login otomatis saat halaman dibuka
+extension-fill = Isi info masuk
+extension-saved-logins = Info masuk tersimpan
+extension-no-form = Formulir masuk yang didukung tidak ditemukan.
+extension-site-no-access = Buka halaman HTTPS dan izinkan akses situs di tab sesi.
+extension-form-changed = Halaman, formulir, atau entri telah berubah. Muat ulang daftar dan pilih lagi.
+extension-form-choice = Formulir masuk
+extension-session-open = Buka sesi
+extension-filled = Info masuk telah diisi.
+
+extension-save-offer = Simpan info masuk ini?
+extension-update-offer = Pilih info masuk yang akan diperbarui
+extension-update-password = Perbarui kata sandi
+extension-save-dismiss = Jangan sekarang
+extension-offer-more = Lainnya
+extension-load-error = Data untuk situs ini tidak dapat dimuat.
+extension-retry = Coba lagi
+extension-current-site = Situs saat ini
+extension-save-never = Jangan tawarkan penyimpanan di situs ini
+extension-site-disable = Nonaktifkan Confidex di situs ini
+extension-site-enable = Aktifkan Confidex di situs ini
+extension-saving-enable = Tawarkan penyimpanan di situs ini
+extension-site-disabled = Confidex dinonaktifkan di situs ini.
+extension-save-changed = Penawaran berubah atau kedaluwarsa. Periksa penawaran saat ini.
+extension-save-duplicate = Info masuk ini sudah tersimpan.

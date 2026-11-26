@@ -1,4 +1,4 @@
-import init, { WorkerService } from '/app.js';
+import init, { WorkerService } from './app.js';
 await init();
 const service = new WorkerService();
 let queue = Promise.resolve();

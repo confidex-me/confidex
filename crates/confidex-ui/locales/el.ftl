@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Προσωπικό: η πρώτη ετικέτα
 settings-auto-lock = Κλείδωμα σε αδράνεια
 settings-auto-lock-hint = Αυτή η ρύθμιση ισχύει μόνο για αυτό το θησαυροφυλάκιο σε αυτή τη συσκευή. Για να το ανοίξετε ξανά, θα χρειαστεί ξεκλείδωμα.
 settings-device-unlock-error = Δεν ήταν δυνατή η αλλαγή του ξεκλειδώματος με τη συσκευή. Δοκιμάστε ξανά.
+
+extension-session-hint = Κρατήστε ανοιχτή αυτή την καρτέλα συνεδρίας όσο χρησιμοποιείτε το Confidex στο πρόγραμμα περιήγησης.
+extension-new-login = Νέα σύνδεση
+extension-saved-local = Αποθηκεύτηκε σε αυτήν τη συσκευή.
+extension-sync-pending = Εκκρεμεί συγχρονισμός.
+extension-login-conflicts = Επιλύστε τις διενέξεις εγγραφών στην κύρια εφαρμογή Confidex.
+extension-login-ambiguous = Διορθώστε τα ασαφή πεδία σύνδεσης στην κύρια εφαρμογή Confidex.
+extension-login-changed = Η εγγραφή άλλαξε. Επιλέξτε την ξανά για να επεξεργαστείτε την τρέχουσα έκδοση.
+extension-current-revision = Τρέχουσα έκδοση
+extension-reapply-draft = Εφαρμογή των αλλαγών μου ξανά
+extension-password-replacement-hint = Εισαγάγετε νέο κωδικό πρόσβασης για να αντικαταστήσετε τον αποθηκευμένο.
+
+extension-startup-error = Δεν ήταν δυνατή η εκκίνηση του Confidex. Επαναφορτώστε την επέκταση και δοκιμάστε ξανά.
+
+extension-sites-grant = Να επιτρέπεται η πρόσβαση σε ιστοτόπους HTTPS
+extension-sites-revoke = Κατάργηση πρόσβασης σε ιστοτόπους HTTPS
+extension-sites-unavailable = Δεν ήταν δυνατή η αλλαγή πρόσβασης σε ιστοτόπους.
+
+extension-auto-fill-on-open = Αυτόματη συμπλήρωση κατά το άνοιγμα της σελίδας
+extension-fill = Συμπλήρωση στοιχείων σύνδεσης
+extension-saved-logins = Αποθηκευμένα στοιχεία σύνδεσης
+extension-no-form = Δεν βρέθηκε υποστηριζόμενη φόρμα σύνδεσης.
+extension-site-no-access = Ανοίξτε μια σελίδα HTTPS και επιτρέψτε την πρόσβαση σε ιστοτόπους από την καρτέλα συνεδρίας.
+extension-form-changed = Η σελίδα, η φόρμα ή η καταχώριση άλλαξε. Ανανεώστε τη λίστα και επιλέξτε ξανά.
+extension-form-choice = Φόρμα σύνδεσης
+extension-session-open = Άνοιγμα συνεδρίας
+extension-filled = Τα στοιχεία σύνδεσης συμπληρώθηκαν.
+
+extension-save-offer = Να αποθηκευτούν αυτά τα στοιχεία σύνδεσης;
+extension-update-offer = Επιλέξτε στοιχεία σύνδεσης για ενημέρωση
+extension-update-password = Ενημέρωση κωδικού πρόσβασης
+extension-save-dismiss = Όχι τώρα
+extension-offer-more = Περισσότερα
+extension-load-error = Δεν ήταν δυνατή η φόρτωση των δεδομένων.
+extension-retry = Δοκιμή ξανά
+extension-current-site = Τρέχων ιστότοπος
+extension-save-never = Να μην προτείνεται αποθήκευση σε αυτόν τον ιστότοπο
+extension-site-disable = Απενεργοποίηση Confidex σε αυτόν τον ιστότοπο
+extension-site-enable = Ενεργοποίηση Confidex σε αυτόν τον ιστότοπο
+extension-saving-enable = Πρόταση αποθήκευσης σε αυτόν τον ιστότοπο
+extension-site-disabled = Το Confidex είναι απενεργοποιημένο σε αυτόν τον ιστότοπο.
+extension-save-changed = Η πρόταση άλλαξε ή έληξε. Δείτε τις τρέχουσες προτάσεις.
+extension-save-duplicate = Αυτά τα στοιχεία σύνδεσης έχουν ήδη αποθηκευτεί.

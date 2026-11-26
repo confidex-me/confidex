@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = 个人：第一个标签将成为文件夹。组
 settings-auto-lock = 无操作时锁定
 settings-auto-lock-hint = 此设置仅适用于此设备上的此保险库。再次打开时需要解锁保险库。
 settings-device-unlock-error = 无法更改设备解锁设置。请重试。
+
+extension-session-hint = 在浏览器中使用 Confidex 时，请保持此会话标签页打开。
+extension-new-login = 新建登录凭据
+extension-saved-local = 已保存在此设备上。
+extension-sync-pending = 等待同步。
+extension-login-conflicts = 请在 Confidex 主应用中解决条目冲突。
+extension-login-ambiguous = 请在 Confidex 主应用中修正有歧义的登录字段。
+extension-login-changed = 条目已更改。请重新选择以编辑当前版本。
+extension-current-revision = 当前修订版本
+extension-reapply-draft = 重新应用我的编辑
+extension-password-replacement-hint = 输入新密码以替换已保存的密码。
+
+extension-startup-error = 无法启动 Confidex。请重新加载扩展程序后重试。
+
+extension-sites-grant = 允许访问 HTTPS 网站
+extension-sites-revoke = 撤销访问 HTTPS 网站的权限
+extension-sites-unavailable = 无法更改网站访问权限。
+
+extension-auto-fill-on-open = 打开页面时自动填充登录信息
+extension-fill = 填充登录信息
+extension-saved-logins = 已保存的登录信息
+extension-no-form = 未找到受支持的登录表单。
+extension-site-no-access = 打开 HTTPS 页面，并在会话标签页中允许访问网站。
+extension-form-changed = 页面、表单或记录已更改。请刷新列表后重新选择。
+extension-form-choice = 登录表单
+extension-session-open = 打开会话
+extension-filled = 已填充登录信息。
+
+extension-save-offer = 保存此登录信息？
+extension-update-offer = 选择要更新的登录信息
+extension-update-password = 更新密码
+extension-save-dismiss = 暂不
+extension-offer-more = 更多
+extension-load-error = 无法加载此网站的数据。
+extension-retry = 重试
+extension-current-site = 当前网站
+extension-save-never = 不再为此网站提供保存建议
+extension-site-disable = 在此网站上停用 Confidex
+extension-site-enable = 在此网站上启用 Confidex
+extension-saving-enable = 在此网站上提供保存建议
+extension-site-disabled = 此网站已停用 Confidex。
+extension-save-changed = 保存建议已更改或过期。请查看当前建议。
+extension-save-duplicate = 此登录信息已保存。

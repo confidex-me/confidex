@@ -1,0 +1,16 @@
+[package]
+name = "confidex-extension-content"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license-file = "../../../LICENSE"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+wasm-bindgen = "=0.2.130"
+web-sys = { version = "=0.3.107", features = ["Document", "Element"] }

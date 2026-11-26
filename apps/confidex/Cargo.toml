@@ -17,6 +17,7 @@ export-ui-check = ["confidex-ui/export-check"]
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
+confidex-browser = { path = "../../crates/confidex-browser", features = ["wire"] }
 confidex-app = { path = "../../crates/confidex-app" }
 confidex-ui = { path = "../../crates/confidex-ui", default-features = false }
 confidex-storage = { path = "../../crates/confidex-storage" }

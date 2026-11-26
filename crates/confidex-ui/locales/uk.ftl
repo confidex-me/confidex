@@ -620,3 +620,46 @@ export-bitwarden-profile-hint = Особистий: перший тег стан
 settings-auto-lock = Блокувати за бездіяльності
 settings-auto-lock-hint = Налаштування діє лише для цього сейфа на цьому пристрої. Для повторного відкриття знадобиться розблокування.
 settings-device-unlock-error = Не вдалося змінити розблокування за допомогою пристрою. Спробуйте ще раз.
+
+extension-session-hint = Тримайте вкладку сеансу відкритою, поки користуєтеся Confidex у браузері.
+extension-new-login = Новий логін
+extension-saved-local = Збережено на цьому пристрої.
+extension-sync-pending = Очікується синхронізація.
+extension-login-conflicts = Усуньте конфлікти записів в основному застосунку Confidex.
+extension-login-ambiguous = Виправте неоднозначні поля логіна в основному застосунку Confidex.
+extension-login-changed = Запис змінився. Виберіть його знову, щоб відредагувати актуальну версію.
+extension-current-revision = Поточна ревізія
+extension-reapply-draft = Повторно застосувати мої зміни
+extension-password-replacement-hint = Введіть новий пароль, щоб замінити збережений.
+
+extension-startup-error = Не вдалося запустити Confidex. Перезавантажте розширення та спробуйте ще раз.
+
+extension-sites-grant = Дозволити доступ до HTTPS-сайтів
+extension-sites-revoke = Відкликати доступ до HTTPS-сайтів
+extension-sites-unavailable = Не вдалося змінити доступ до сайтів.
+
+extension-auto-fill-on-open = Автозаповнення під час відкриття сторінки
+extension-fill = Заповнити дані для входу
+extension-saved-logins = Збережені дані для входу
+extension-no-form = Підтримувану форму входу не знайдено.
+extension-site-no-access = Відкрийте сторінку HTTPS і надайте доступ до сайтів у вкладці сеансу.
+extension-form-changed = Сторінка, форма або запис змінилися. Оновіть список і виберіть ще раз.
+extension-form-choice = Форма входу
+extension-session-open = Відкрити сеанс
+extension-filled = Дані для входу заповнено.
+
+extension-save-offer = Зберегти ці дані для входу?
+extension-update-offer = Виберіть запис для оновлення
+extension-update-password = Оновити пароль
+extension-save-dismiss = Не зараз
+extension-offer-more = Ще
+extension-load-error = Не вдалося завантажити дані для цього сайту.
+extension-retry = Повторити
+extension-current-site = Поточний сайт
+extension-save-never = Не пропонувати збереження для цього сайту
+extension-site-disable = Вимкнути Confidex на цьому сайті
+extension-site-enable = Увімкнути Confidex на цьому сайті
+extension-saving-enable = Пропонувати збереження для цього сайту
+extension-site-disabled = Confidex вимкнено на цьому сайті.
+extension-save-changed = Пропозиція змінилася або спливла. Перегляньте поточні пропозиції.
+extension-save-duplicate = Ці дані для входу вже збережено.

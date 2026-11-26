@@ -1,0 +1,33 @@
+html { width: 400px; height: 560px; }
+body {
+  width: min(400px, 100vw);
+  height: min(560px, 100vh);
+  display: flex;
+  flex-direction: column;
+}
+#session { flex: 1; min-height: 0; height: 0; }
+@font-face {
+  font-family: ConfidexInter;
+  src: url("fonts/Inter-Medium.ttf");
+  font-weight: 500;
+}
+#site-permissions {
+  position: fixed;
+  z-index: 1;
+  font: 500 14px/1.4 ConfidexInter, system-ui, sans-serif;
+}
+#site-permissions button {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  cursor: pointer;
+}
+#site-permissions button:hover { filter: brightness(1.06); }
+#site-permissions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+#site-permissions button:disabled { opacity: .65; }
+#site-permissions-status:not(:empty) { display: block; margin-top: 8px; color: CanvasText; }

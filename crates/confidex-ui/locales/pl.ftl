@@ -620,3 +620,46 @@ export-bitwarden-profile-hint = Osobisty: pierwszy tag stanie się folderem. Org
 settings-auto-lock = Blokuj przy braku aktywności
 settings-auto-lock-hint = To ustawienie dotyczy tylko tego sejfu na tym urządzeniu. Aby otworzyć go ponownie, trzeba go odblokować.
 settings-device-unlock-error = Nie udało się zmienić odblokowywania urządzeniem. Spróbuj ponownie.
+
+extension-session-hint = Pozostaw tę kartę sesji otwartą, gdy korzystasz z Confidex w przeglądarce.
+extension-new-login = Nowe dane logowania
+extension-saved-local = Zapisano na tym urządzeniu.
+extension-sync-pending = Oczekiwanie na synchronizację.
+extension-login-conflicts = Rozwiąż konflikty wpisów w głównej aplikacji Confidex.
+extension-login-ambiguous = Popraw niejednoznaczne pola logowania w głównej aplikacji Confidex.
+extension-login-changed = Wpis został zmieniony. Wybierz go ponownie, aby edytować aktualną wersję.
+extension-current-revision = Aktualna wersja
+extension-reapply-draft = Zastosuj ponownie moje zmiany
+extension-password-replacement-hint = Wpisz nowe hasło, aby zastąpić zapisane.
+
+extension-startup-error = Nie udało się uruchomić Confidex. Załaduj rozszerzenie ponownie i spróbuj jeszcze raz.
+
+extension-sites-grant = Zezwól na dostęp do stron HTTPS
+extension-sites-revoke = Cofnij dostęp do stron HTTPS
+extension-sites-unavailable = Nie udało się zmienić dostępu do stron.
+
+extension-auto-fill-on-open = Automatycznie uzupełniaj dane logowania po otwarciu strony
+extension-fill = Wypełnij dane logowania
+extension-saved-logins = Zapisane dane logowania
+extension-no-form = Nie znaleziono obsługiwanego formularza logowania.
+extension-site-no-access = Otwórz stronę HTTPS i zezwól na dostęp do witryn na karcie sesji.
+extension-form-changed = Strona, formularz lub wpis uległy zmianie. Odśwież listę i wybierz ponownie.
+extension-form-choice = Formularz logowania
+extension-session-open = Otwórz sesję
+extension-filled = Dane logowania zostały wypełnione.
+
+extension-save-offer = Zapisać te dane logowania?
+extension-update-offer = Wybierz dane logowania do zaktualizowania
+extension-update-password = Zaktualizuj hasło
+extension-save-dismiss = Nie teraz
+extension-offer-more = Więcej
+extension-load-error = Nie udało się wczytać danych tej witryny.
+extension-retry = Spróbuj ponownie
+extension-current-site = Bieżąca witryna
+extension-save-never = Nie proponuj zapisywania w tej witrynie
+extension-site-disable = Wyłącz Confidex w tej witrynie
+extension-site-enable = Włącz Confidex w tej witrynie
+extension-saving-enable = Proponuj zapisywanie w tej witrynie
+extension-site-disabled = Confidex jest wyłączony w tej witrynie.
+extension-save-changed = Propozycja zmieniła się lub wygasła. Sprawdź bieżące propozycje.
+extension-save-duplicate = Te dane logowania są już zapisane.

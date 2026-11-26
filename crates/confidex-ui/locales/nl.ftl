@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Persoonlijk: de eerste tag wordt een map. Organi
 settings-auto-lock = Vergrendelen bij inactiviteit
 settings-auto-lock-hint = Deze instelling geldt alleen voor deze kluis op dit apparaat. Je moet de kluis ontgrendelen om deze opnieuw te openen.
 settings-device-unlock-error = Ontgrendeling met het apparaat kon niet worden gewijzigd. Probeer het opnieuw.
+
+extension-session-hint = Houd dit sessietabblad open zolang je Confidex in je browser gebruikt.
+extension-new-login = Nieuwe aanmelding
+extension-saved-local = Op dit apparaat opgeslagen.
+extension-sync-pending = Synchronisatie in afwachting.
+extension-login-conflicts = Los conflicten tussen items op in de hoofdapp van Confidex.
+extension-login-ambiguous = Corrigeer onduidelijke inlogvelden in de hoofdapp van Confidex.
+extension-login-changed = Het item is gewijzigd. Selecteer het opnieuw om de huidige versie te bewerken.
+extension-current-revision = Huidige revisie
+extension-reapply-draft = Mijn wijzigingen opnieuw toepassen
+extension-password-replacement-hint = Voer een nieuw wachtwoord in om het opgeslagen wachtwoord te vervangen.
+
+extension-startup-error = Confidex kon niet starten. Laad de extensie opnieuw en probeer het nogmaals.
+
+extension-sites-grant = Toegang tot HTTPS-sites toestaan
+extension-sites-revoke = Toegang tot HTTPS-sites intrekken
+extension-sites-unavailable = De sitetoegang kon niet worden gewijzigd.
+
+extension-auto-fill-on-open = Inloggegevens automatisch invullen bij het openen van de pagina
+extension-fill = Inloggegevens invullen
+extension-saved-logins = Opgeslagen inloggegevens
+extension-no-form = Geen ondersteund inlogformulier gevonden.
+extension-site-no-access = Open een HTTPS-pagina en sta toegang tot sites toe op het sessietabblad.
+extension-form-changed = De pagina, het formulier of het item is gewijzigd. Vernieuw de lijst en kies opnieuw.
+extension-form-choice = Inlogformulier
+extension-session-open = Sessie openen
+extension-filled = Inloggegevens ingevuld.
+
+extension-save-offer = Deze inloggegevens opslaan?
+extension-update-offer = Kies de inloggegevens om bij te werken
+extension-update-password = Wachtwoord bijwerken
+extension-save-dismiss = Niet nu
+extension-offer-more = Meer
+extension-load-error = De gegevens voor deze website konden niet worden geladen.
+extension-retry = Opnieuw proberen
+extension-current-site = Huidige website
+extension-save-never = Nooit vragen om op deze site op te slaan
+extension-site-disable = Confidex op deze site uitschakelen
+extension-site-enable = Confidex op deze site inschakelen
+extension-saving-enable = Vragen om op deze site op te slaan
+extension-site-disabled = Confidex is uitgeschakeld op deze site.
+extension-save-changed = De suggestie is gewijzigd of verlopen. Bekijk de huidige suggesties.
+extension-save-duplicate = Deze inloggegevens zijn al opgeslagen.

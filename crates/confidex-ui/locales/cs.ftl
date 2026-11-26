@@ -620,3 +620,46 @@ export-bitwarden-profile-hint = Osobní: první štítek se změní na složku. 
 settings-auto-lock = Zamknout při nečinnosti
 settings-auto-lock-hint = Toto nastavení platí pouze pro tento trezor na tomto zařízení. Při dalším otevření bude nutné trezor odemknout.
 settings-device-unlock-error = Odemknutí pomocí zařízení nelze změnit. Zkuste to znovu.
+
+extension-session-hint = Při používání Confidexu v prohlížeči nechte tuto kartu relace otevřenou.
+extension-new-login = Nové přihlášení
+extension-saved-local = Uloženo v tomto zařízení.
+extension-sync-pending = Čeká na synchronizaci.
+extension-login-conflicts = Vyřešte konflikty záznamů v hlavní aplikaci Confidex.
+extension-login-ambiguous = Opravte nejednoznačná přihlašovací pole v hlavní aplikaci Confidex.
+extension-login-changed = Záznam se změnil. Vyberte ho znovu a upravte aktuální verzi.
+extension-current-revision = Aktuální revize
+extension-reapply-draft = Znovu použít moje úpravy
+extension-password-replacement-hint = Zadejte nové heslo, pokud chcete nahradit uložené.
+
+extension-startup-error = Confidex se nepodařilo spustit. Znovu načtěte rozšíření a zkuste to znovu.
+
+extension-sites-grant = Povolit přístup k webům HTTPS
+extension-sites-revoke = Odebrat přístup k webům HTTPS
+extension-sites-unavailable = Přístup k webům se nepodařilo změnit.
+
+extension-auto-fill-on-open = Automaticky vyplnit přihlášení při otevření stránky
+extension-fill = Vyplnit přihlašovací údaje
+extension-saved-logins = Uložené přihlašovací údaje
+extension-no-form = Nebyl nalezen podporovaný přihlašovací formulář.
+extension-site-no-access = Otevřete stránku HTTPS a povolte přístup k webům na kartě relace.
+extension-form-changed = Stránka, formulář nebo záznam se změnily. Obnovte seznam a vyberte znovu.
+extension-form-choice = Přihlašovací formulář
+extension-session-open = Otevřít relaci
+extension-filled = Přihlašovací údaje byly vyplněny.
+
+extension-save-offer = Uložit tyto přihlašovací údaje?
+extension-update-offer = Vyberte přihlašovací údaje k aktualizaci
+extension-update-password = Aktualizovat heslo
+extension-save-dismiss = Teď ne
+extension-offer-more = Další možnosti
+extension-load-error = Údaje se nepodařilo načíst.
+extension-retry = Zkusit znovu
+extension-current-site = Aktuální web
+extension-save-never = Nenabízet uložení na tomto webu
+extension-site-disable = Vypnout Confidex na tomto webu
+extension-site-enable = Zapnout Confidex na tomto webu
+extension-saving-enable = Nabízet uložení na tomto webu
+extension-site-disabled = Confidex je na tomto webu vypnutý.
+extension-save-changed = Nabídka se změnila nebo vypršela. Zkontrolujte aktuální nabídky.
+extension-save-duplicate = Tyto přihlašovací údaje jsou už uložené.

@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = 個人用：最初のタグがフォルダーに
 settings-auto-lock = 操作がない場合にロック
 settings-auto-lock-hint = この設定は、このデバイス上のこの保管庫にのみ適用されます。再び開くにはロックを解除する必要があります。
 settings-device-unlock-error = デバイスによるロック解除を変更できませんでした。もう一度お試しください。
+
+extension-session-hint = ブラウザーで Confidex を使用している間は、このセッションタブを開いたままにしてください。
+extension-new-login = 新しいログイン
+extension-saved-local = このデバイスに保存しました。
+extension-sync-pending = 同期待ちです。
+extension-login-conflicts = 競合する項目は Confidex のメインアプリで解決してください。
+extension-login-ambiguous = ログイン項目の曖昧なフィールドを Confidex のメインアプリで修正してください。
+extension-login-changed = 項目が変更されました。最新版を編集するには、もう一度選択してください。
+extension-current-revision = 現在のリビジョン
+extension-reapply-draft = 変更を再適用
+extension-password-replacement-hint = 保存済みのパスワードを変更するには、新しいパスワードを入力してください。
+
+extension-startup-error = Confidex を起動できませんでした。拡張機能を再読み込みして、もう一度お試しください。
+
+extension-sites-grant = HTTPS サイトへのアクセスを許可
+extension-sites-revoke = HTTPS サイトへのアクセス許可を取り消す
+extension-sites-unavailable = サイトへのアクセス権を変更できませんでした。
+
+extension-auto-fill-on-open = ページを開いたときにログイン情報を自動入力
+extension-fill = ログイン情報を入力
+extension-saved-logins = 保存済みのログイン情報
+extension-no-form = 対応するログインフォームが見つかりませんでした。
+extension-site-no-access = HTTPS ページを開き、セッションタブでサイトへのアクセスを許可してください。
+extension-form-changed = ページ、フォーム、または項目が変更されました。一覧を更新して選び直してください。
+extension-form-choice = ログインフォーム
+extension-session-open = セッションを開く
+extension-filled = ログイン情報を入力しました。
+
+extension-save-offer = このログイン情報を保存しますか？
+extension-update-offer = 更新するログイン情報を選択してください
+extension-update-password = パスワードを更新
+extension-save-dismiss = 今はしない
+extension-offer-more = その他
+extension-load-error = このサイトのデータを読み込めませんでした。
+extension-retry = 再試行
+extension-current-site = 現在のサイト
+extension-save-never = このサイトでは保存を提案しない
+extension-site-disable = このサイトで Confidex を無効にする
+extension-site-enable = このサイトで Confidex を有効にする
+extension-saving-enable = このサイトで保存を提案する
+extension-site-disabled = このサイトでは Confidex が無効になっています。
+extension-save-changed = 保存の提案が変更されたか、有効期限が切れました。現在の提案を確認してください。
+extension-save-duplicate = このログイン情報は保存済みです。

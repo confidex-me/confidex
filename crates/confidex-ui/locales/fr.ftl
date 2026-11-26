@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Personnel : la première étiquette devient un d
 settings-auto-lock = Verrouiller en cas d’inactivité
 settings-auto-lock-hint = Ce réglage s’applique uniquement à ce coffre sur cet appareil. Vous devrez le déverrouiller pour le rouvrir.
 settings-device-unlock-error = Impossible de modifier le déverrouillage avec l’appareil. Réessayez.
+
+extension-session-hint = Gardez cet onglet de session ouvert pendant que vous utilisez Confidex dans le navigateur.
+extension-new-login = Nouvel identifiant
+extension-saved-local = Enregistré sur cet appareil.
+extension-sync-pending = Synchronisation en attente.
+extension-login-conflicts = Résolvez les conflits de fiches dans l’application principale Confidex.
+extension-login-ambiguous = Corrigez les champs de connexion ambigus dans l’application principale Confidex.
+extension-login-changed = La fiche a changé. Sélectionnez-la de nouveau pour modifier la version actuelle.
+extension-current-revision = Révision actuelle
+extension-reapply-draft = Réappliquer mes modifications
+extension-password-replacement-hint = Saisissez un nouveau mot de passe pour remplacer celui qui est enregistré.
+
+extension-startup-error = Confidex n’a pas pu démarrer. Rechargez l’extension et réessayez.
+
+extension-sites-grant = Autoriser l’accès aux sites HTTPS
+extension-sites-revoke = Retirer l’accès aux sites HTTPS
+extension-sites-unavailable = Impossible de modifier l’accès aux sites.
+
+extension-auto-fill-on-open = Remplir les identifiants à l’ouverture de la page
+extension-fill = Remplir les identifiants
+extension-saved-logins = Identifiants enregistrés
+extension-no-form = Aucun formulaire de connexion pris en charge.
+extension-site-no-access = Ouvrez une page HTTPS et autorisez l’accès aux sites dans l’onglet de session.
+extension-form-changed = La page, le formulaire ou l’entrée a changé. Actualisez la liste et sélectionnez à nouveau.
+extension-form-choice = Formulaire de connexion
+extension-session-open = Ouvrir la session
+extension-filled = Identifiants remplis.
+
+extension-save-offer = Enregistrer ces identifiants ?
+extension-update-offer = Choisissez les identifiants à mettre à jour
+extension-update-password = Mettre à jour le mot de passe
+extension-save-dismiss = Pas maintenant
+extension-offer-more = Plus
+extension-load-error = Impossible de charger les données de ce site.
+extension-retry = Réessayer
+extension-current-site = Site actuel
+extension-save-never = Ne jamais proposer l’enregistrement sur ce site
+extension-site-disable = Désactiver Confidex sur ce site
+extension-site-enable = Activer Confidex sur ce site
+extension-saving-enable = Proposer l’enregistrement sur ce site
+extension-site-disabled = Confidex est désactivé sur ce site.
+extension-save-changed = La proposition a changé ou a expiré. Consultez les propositions actuelles.
+extension-save-duplicate = Ces identifiants sont déjà enregistrés.

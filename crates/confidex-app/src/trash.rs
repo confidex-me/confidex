@@ -145,7 +145,7 @@ pub(super) async fn restore(
             epoch,
             kind: EventKind::Content,
         },
-        true,
+        super::ParentCheck::Current,
     )
     .await?;
     Ok(())

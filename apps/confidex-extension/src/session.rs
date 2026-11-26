@@ -1,0 +1,713 @@
+use crate::{
+    autofill::{Autofill, PopupReply, SiteAction, SiteReply, SiteRequest},
+    autosave::{Autosave, Candidate, OfferKind, SaveAction, SaveReply, SaveRequest, SitePolicy},
+    lease::Lease,
+    protocol::{
+        Action, FormReport, MAX_REQUEST, MAX_RESPONSE, Reply, Request, Response, SyncStatus,
+    },
+    sync_schedule::SyncSchedule,
+};
+use confidex_app::{
+    Command, DeviceKeys, Error, Output,
+    browser_logins::{CaptureMatches, Change, NewLogin},
+};
+use confidex_browser::{BrowserStore, Net, Runtime};
+use confidex_storage::{Store, VaultId, VaultInfo};
+use js_sys::Uint8Array;
+use std::{cell::Cell, rc::Rc};
+use wasm_bindgen::prelude::*;
+use zeroize::Zeroizing;
+
+struct NoDeviceKeys;
+
+impl DeviceKeys for NoDeviceKeys {
+    async fn remove(&mut self, _: VaultId) -> bool {
+        false
+    }
+    async fn load(&mut self, _: VaultId) -> Option<String> {
+        None
+    }
+    async fn save(&mut self, _: VaultId, _: &str) -> bool {
+        false
+    }
+}
+
+fn now() -> u64 {
+    js_sys::Date::now() as u64
+}
+
+// Worker control can validate liveness while Engine awaits storage or the network.
+#[wasm_bindgen]
+pub struct SessionLease {
+    lease: Lease,
+    autofill: Autofill,
+    autosave: Autosave,
+    reported_sync: Rc<Cell<SyncStatus>>,
+}
+
+#[wasm_bindgen]
+impl SessionLease {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self {
+            lease: Lease::default(),
+            autofill: Autofill::default(),
+            autosave: Autosave::default(),
+            reported_sync: Rc::new(Cell::new(SyncStatus::Disabled)),
+        }
+    }
+
+    pub fn remaining(&self) -> i32 {
+        self.lease.remaining(now())
+    }
+
+    pub fn was_locked(&self) -> bool {
+        self.lease.was_locked()
+    }
+
+    pub fn activity(&self) {
+        self.lease.activity(now());
+    }
+
+    pub fn site_live(&self, operation: &str) -> bool {
+        self.remaining() > 0 && (operation.is_empty() || self.autofill.live(now(), operation))
+    }
+
+    pub fn site_navigation(&self, tab: u32, origin: Option<String>) {
+        self.autofill.navigate(tab, origin.as_deref());
+        self.autosave.navigate(tab, origin.as_deref());
+    }
+
+    pub fn site_closed(&self, tab: u32) {
+        self.autofill.navigate(tab, None);
+        self.autosave.close_tab(tab);
+    }
+
+    pub fn site_policy(&self, allowed: bool, exceptions: &str) -> bool {
+        if self.autosave.set_policy(allowed, exceptions) {
+            self.autofill.clear();
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn capture_plan(&self, context: &str, snapshot: &str) -> Option<String> {
+        serde_json::to_string(&self.autosave.plan(self.remaining(), context, snapshot)?).ok()
+    }
+
+    pub fn accept_capture(&self, context: &str, capture: &str) -> bool {
+        self.remaining() > 0 && self.autosave.capture(now(), context, capture).is_some()
+    }
+
+    pub fn capture_expiry(&self) -> i32 {
+        self.autosave.next_expiry(now())
+    }
+
+    pub fn save_badges(&self) -> String {
+        serde_json::to_string(&self.autosave.badges(now())).unwrap_or_else(|_| "[]".into())
+    }
+
+    pub fn list_saves(&self, tab: Option<u32>) -> Option<String> {
+        let reply = if self.remaining() > 0 {
+            SaveReply::Offers {
+                offers: self.autosave.offers(now(), tab),
+                sync: self.reported_sync.get(),
+            }
+        } else {
+            SaveReply::Locked
+        };
+        let reply = serde_json::to_string(&reply).ok()?;
+        (reply.len() <= MAX_RESPONSE).then_some(reply)
+    }
+
+    pub fn accept_form(&self, context: &str, report: &str) -> bool {
+        self.remaining() > 0 && FormReport::valid(context, report)
+    }
+}
+
+#[wasm_bindgen]
+pub struct Session {
+    runtime: Runtime<Net>,
+    server: Option<String>,
+    lease: Lease,
+    sync: SyncSchedule,
+    autofill: Autofill,
+    autosave: Autosave,
+    reported_sync: Rc<Cell<SyncStatus>>,
+    conflicts: bool,
+}
+
+#[wasm_bindgen]
+impl Session {
+    #[wasm_bindgen(constructor)]
+    pub fn new(lease: &SessionLease) -> Self {
+        Self {
+            runtime: Runtime::default(),
+            server: None,
+            lease: lease.lease.clone(),
+            autofill: lease.autofill.clone(),
+            autosave: lease.autosave.clone(),
+            reported_sync: lease.reported_sync.clone(),
+            sync: SyncSchedule::default(),
+            conflicts: false,
+        }
+    }
+
+    pub fn sync_delay(&self) -> i32 {
+        if !self.is_open() {
+            return -1;
+        }
+        self.sync.delay(now())
+    }
+
+    pub async fn sync_automatically(&mut self) -> bool {
+        if self.sync_delay() != 0 {
+            return false;
+        }
+        let previous = (self.sync.status(), self.conflicts);
+        self.sync_step().await;
+        self.is_open() && previous != (self.sync.status(), self.conflicts)
+    }
+
+    pub async fn execute_site(&mut self, input: Uint8Array) -> Result<Uint8Array, JsValue> {
+        let result = if input.length() as usize > MAX_REQUEST || !self.is_open() {
+            input.fill(0, 0, input.length());
+            SiteReply::Popup(if self.is_open() {
+                PopupReply::Error
+            } else {
+                PopupReply::Locked
+            })
+        } else {
+            let bytes = Zeroizing::new(input.to_vec());
+            input.fill(0, 0, input.length());
+            match serde_json::from_slice::<SiteRequest>(&bytes) {
+                Ok(request) if request.valid() => {
+                    self.run_site(request).await.unwrap_or_else(|error| {
+                        SiteReply::Popup(match error {
+                            Error::Input | Error::Storage(confidex_storage::Error::Conflict) => {
+                                PopupReply::Changed
+                            }
+                            Error::Locked => PopupReply::Locked,
+                            _ => PopupReply::Error,
+                        })
+                    })
+                }
+                _ => SiteReply::Popup(PopupReply::Error),
+            }
+        };
+        let result = if self.is_open() {
+            result
+        } else {
+            SiteReply::Popup(PopupReply::Locked)
+        };
+        encode(&result)
+    }
+
+    pub async fn execute_save(&mut self, input: Uint8Array) -> Result<Uint8Array, JsValue> {
+        let reply = if input.length() as usize > MAX_REQUEST || !self.is_open() {
+            input.fill(0, 0, input.length());
+            SaveReply::Locked
+        } else {
+            let bytes = Zeroizing::new(input.to_vec());
+            input.fill(0, 0, input.length());
+            match serde_json::from_slice::<SaveRequest>(&bytes) {
+                Ok(request) if request.valid() => match self.run_save(request).await {
+                    Ok(reply) => reply,
+                    Err(Error::Input | Error::Storage(confidex_storage::Error::Conflict)) => {
+                        SaveReply::Changed
+                    }
+                    Err(Error::Locked) => SaveReply::Locked,
+                    Err(_) => SaveReply::Error,
+                },
+                _ => SaveReply::Error,
+            }
+        };
+        encode(&if self.is_open() {
+            reply
+        } else {
+            SaveReply::Locked
+        })
+    }
+
+    pub async fn review_capture(&mut self) -> bool {
+        let Some(candidate) = self.autosave.next(now()).filter(|_| self.is_open()) else {
+            return false;
+        };
+        let matches = self.match_capture(&candidate).await;
+        if self.capture_live(&candidate) {
+            self.autosave.review(
+                &candidate,
+                matches.ok().and_then(|matches| candidate.offer(matches)),
+            );
+        }
+        self.autosave.next(now()).is_some()
+    }
+
+    pub async fn execute(&mut self, input: Uint8Array) -> Result<Uint8Array, JsValue> {
+        let result = if input.length() as usize > MAX_REQUEST {
+            input.fill(0, 0, input.length());
+            Err(Error::Input)
+        } else {
+            let bytes = Zeroizing::new(input.to_vec());
+            input.fill(0, 0, input.length());
+            let request = Request::decode(&bytes);
+            drop(bytes);
+            match request {
+                Ok(request) => self.run(request.action).await,
+                Err(error) => Err(error),
+            }
+        };
+        let result = if self.lease.remaining(now()) == 0
+            && !matches!(result, Ok(Reply::Locked { .. } | Reply::Disconnected))
+        {
+            Err(Error::Locked)
+        } else {
+            result
+        };
+        encode(&result)
+    }
+}
+
+fn encode(result: &impl serde::Serialize) -> Result<Uint8Array, JsValue> {
+    let bytes = Zeroizing::new(
+        serde_json::to_vec(result).map_err(|_| JsValue::from_str("Invalid session reply"))?,
+    );
+    if bytes.len() > MAX_RESPONSE {
+        return Err(JsValue::from_str("Session reply limit"));
+    }
+    Ok(Uint8Array::from(bytes.as_slice()))
+}
+
+impl Session {
+    fn capture_live(&self, candidate: &Rc<Candidate>) -> bool {
+        self.is_open() && self.autosave.present(now(), candidate)
+    }
+
+    async fn match_capture(&mut self, candidate: &Rc<Candidate>) -> Result<CaptureMatches, Error> {
+        let lease = &self.lease;
+        let autosave = &self.autosave;
+        self.runtime
+            .engine_mut()
+            .match_browser_capture(
+                &mut BrowserStore,
+                &candidate.origin,
+                candidate.username.as_deref(),
+                &candidate.password,
+                || {
+                    let now = now();
+                    lease.remaining(now) > 0 && autosave.present(now, candidate)
+                },
+            )
+            .await
+    }
+
+    async fn run_save(&mut self, request: SaveRequest) -> Result<SaveReply, Error> {
+        match request.action {
+            SaveAction::List => Err(Error::Input),
+            SaveAction::Dismiss { id } => {
+                if !self.autosave.dismiss(now(), request.tab, &id) {
+                    return Err(Error::Input);
+                }
+                Ok(SaveReply::Dismissed)
+            }
+            SaveAction::Confirm { id, target } => {
+                let (candidate, offer) = self
+                    .autosave
+                    .find(now(), request.tab, &id)
+                    .ok_or(Error::Input)?;
+                let selectable = |offer: &OfferKind| match (offer, &target) {
+                    (OfferKind::New { .. }, None) => true,
+                    (OfferKind::Update(rows), Some(target)) => {
+                        rows.iter().any(|row| &row.target == target)
+                    }
+                    _ => false,
+                };
+                if !selectable(&offer) {
+                    return Err(Error::Input);
+                }
+                self.lease.activity(now());
+                let matches = self.match_capture(&candidate).await?;
+                if !self.capture_live(&candidate) {
+                    return Err(Error::Input);
+                }
+                let duplicate = matches.duplicate;
+                let offer = candidate.offer(matches);
+                if !offer.as_ref().is_some_and(selectable) {
+                    self.autosave.review(&candidate, offer);
+                    return Ok(if duplicate {
+                        SaveReply::Duplicate
+                    } else {
+                        SaveReply::Changed
+                    });
+                }
+                let live = || {
+                    let now = now();
+                    self.lease.remaining(now) > 0 && self.autosave.present(now, &candidate)
+                };
+                let engine = self.runtime.engine_mut();
+                if let Some(target) = target {
+                    let mut change = Change::default();
+                    change.password = Some(candidate.password.clone());
+                    engine
+                        .update_browser_login_if(&mut BrowserStore, &target, &change, now(), live)
+                        .await?;
+                } else {
+                    let login = NewLogin {
+                        title: candidate.origin.trim_start_matches("https://").to_owned(),
+                        url: candidate.origin.clone(),
+                        username: candidate.username.clone().unwrap_or_default(),
+                        password: candidate.password.clone(),
+                        notes: String::new(),
+                        tags: vec![],
+                    };
+                    let record = confidex_app::new_record()?.record;
+                    engine
+                        .create_browser_login_if(&mut BrowserStore, record, &login, now(), live)
+                        .await?;
+                }
+                self.autosave.review(&candidate, None);
+                self.local_change();
+                Ok(SaveReply::Saved(self.sync.status()))
+            }
+        }
+    }
+
+    async fn run_site(&mut self, request: SiteRequest) -> Result<SiteReply, Error> {
+        let SiteRequest {
+            context, action, ..
+        } = request;
+        if self.autosave.policy(&context.origin) == SitePolicy::Disabled {
+            return Ok(SiteReply::Popup(PopupReply::Unavailable));
+        }
+        match action {
+            SiteAction::Find {
+                operation,
+                snapshot,
+                mut after,
+                previous,
+                recent,
+                inline_field,
+                automatic,
+            } => {
+                let forms = snapshot.choices(&context.origin);
+                if automatic && forms.len() != 1 {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
+                }
+                if inline_field.is_some_and(|field| {
+                    !forms.iter().any(|choice| {
+                        choice.target.username == Some(field)
+                            || choice.target.password == Some(field)
+                    })
+                }) {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
+                }
+                if after.is_none()
+                    && previous.as_deref().is_some_and(|id| {
+                        self.autofill.same_snapshot(now(), id, &context, &snapshot)
+                    })
+                {
+                    return Ok(SiteReply::Popup(PopupReply::Live));
+                }
+                let mut matches = confidex_app::browser_logins::Page {
+                    rows: vec![],
+                    issues: Default::default(),
+                    next: None,
+                };
+                loop {
+                    let page = self
+                        .runtime
+                        .engine_mut()
+                        .find_browser_logins(&mut BrowserStore, after, &context.origin)
+                        .await?;
+                    if !self.is_open() {
+                        return Err(Error::Locked);
+                    }
+                    matches.issues.ambiguous |= page.issues.ambiguous;
+                    matches.issues.conflicts |= page.issues.conflicts;
+                    matches.rows.extend(page.rows);
+                    // A storage cursor can lead to unrelated sites. Check for a second
+                    // actual match before deciding whether to show a single-click icon.
+                    let enough = if automatic || inline_field.is_some() {
+                        matches.rows.len() > 1
+                    } else {
+                        !matches.rows.is_empty()
+                    };
+                    if enough || page.next.is_none() {
+                        matches.next = page.next;
+                        break;
+                    }
+                    after = page.next;
+                }
+                if let Some((record, field)) = recent {
+                    if let Some(index) = matches.rows.iter().position(|row| {
+                        row.target.head.record == record && row.target.field == field
+                    }) {
+                        matches.rows[..=index].rotate_right(1);
+                    } else if matches.next.is_some()
+                        && let Some(row) = self
+                            .runtime
+                            .engine_mut()
+                            .recent_browser_login(&mut BrowserStore, record, field, &context.origin)
+                            .await?
+                    {
+                        matches.rows.insert(0, row);
+                    }
+                }
+                matches.issues.conflicts |= self.conflicts;
+                let origin = context.origin.clone();
+                let policy = self.autosave.policy(&origin);
+                if policy == SitePolicy::Disabled {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
+                }
+                let preferred =
+                    self.autofill
+                        .issue(now(), operation.clone(), context, snapshot, &matches);
+                Ok(SiteReply::Popup(PopupReply::Site {
+                    operation,
+                    origin,
+                    forms,
+                    matches,
+                    sync: self.sync.status(),
+                    preferred,
+                    policy,
+                }))
+            }
+            SiteAction::Fill {
+                operation,
+                form,
+                target,
+                snapshot,
+            } => {
+                let fields = self
+                    .autofill
+                    .consume(now(), &operation, &context, &snapshot, form, &target)
+                    .ok_or(Error::Input)?;
+                let login = self
+                    .runtime
+                    .engine_mut()
+                    .prepare_browser_fill(
+                        &mut BrowserStore,
+                        &target,
+                        &context.origin,
+                        fields.username.is_some(),
+                        fields.password.is_some(),
+                    )
+                    .await?;
+                if !self.is_open() {
+                    return Err(Error::Locked);
+                }
+                if self.autosave.policy(&context.origin) == SitePolicy::Disabled {
+                    return Ok(SiteReply::Popup(PopupReply::Unavailable));
+                }
+                if fields.password.is_none() {
+                    self.autofill
+                        .begin_continuation(now(), operation, context, target);
+                }
+                self.lease.activity(now());
+                Ok(SiteReply::Fill { fields, login })
+            }
+            SiteAction::Complete { operation } => {
+                self.autofill.complete(&operation, &context);
+                Ok(SiteReply::Popup(PopupReply::Filled))
+            }
+        }
+    }
+
+    fn is_open(&self) -> bool {
+        self.lease.remaining(now()) > 0
+    }
+
+    async fn command(&mut self, command: Command) -> Result<Output, Error> {
+        self.runtime
+            .execute(
+                &mut NoDeviceKeys,
+                &mut confidex_app::Request {
+                    generation: 0,
+                    command,
+                },
+            )
+            .await
+            .result
+    }
+
+    async fn vault() -> Result<Option<VaultInfo>, Error> {
+        let mut vaults = BrowserStore.vaults().await?;
+        if vaults.len() > 1 {
+            return Err(Error::Integrity);
+        }
+        Ok(vaults.pop())
+    }
+
+    async fn status(&self) -> Response {
+        Ok(match Self::vault().await? {
+            None => Reply::Disconnected,
+            Some(info) if self.is_open() => Reply::Opened {
+                name: info.name,
+                sync: self.sync.status(),
+            },
+            Some(info) => Reply::Locked { name: info.name },
+        })
+    }
+
+    async fn run(&mut self, action: Action) -> Response {
+        if self.lease.remaining(now()) == 0 {
+            return Err(Error::Locked);
+        }
+        match action {
+            Action::Status => self.status().await,
+            Action::Connect {
+                name,
+                server,
+                mut credentials,
+            } => {
+                if Self::vault().await?.is_some() {
+                    return Err(Error::Input);
+                }
+                let server = confidex_app::sync::server_url(server.trim())?;
+                if !server.starts_with("https://") {
+                    return Err(Error::Input);
+                }
+                let opened = self
+                    .command(Command::Import {
+                        name: name.trim().to_owned(),
+                        server,
+                        password: std::mem::take(&mut credentials.password),
+                        key: std::mem::take(&mut credentials.key),
+                        remember: false,
+                        use_device_unlock: None,
+                    })
+                    .await?;
+                self.opened(opened)
+            }
+            Action::Unlock(mut credentials) => {
+                if self.is_open()
+                    || credentials.password.len() > 4096
+                    || credentials.key.len() > 1024
+                {
+                    return Err(Error::Input);
+                }
+                let vault = Self::vault().await?.ok_or(Error::Input)?;
+                let opened = self
+                    .command(Command::Unlock {
+                        vault: vault.id,
+                        password: std::mem::take(&mut credentials.password),
+                        key: std::mem::take(&mut credentials.key),
+                        remember: false,
+                    })
+                    .await?;
+                self.opened(opened)
+            }
+            Action::Lock => {
+                self.lease.retire();
+                self.server = None;
+                self.command(Command::Lock).await?;
+                self.status().await
+            }
+            Action::Sync if self.is_open() && self.server.is_some() => {
+                let more = self.sync_step().await;
+                Ok(Reply::Synced {
+                    sync: self.sync.status(),
+                    more,
+                })
+            }
+            Action::Sync if self.is_open() => Err(Error::SyncDisabled),
+            Action::Logins { after } if self.is_open() => {
+                let mut page = self
+                    .runtime
+                    .engine_mut()
+                    .browser_logins(&mut BrowserStore, after)
+                    .await?;
+                page.issues.conflicts |= self.conflicts;
+                Ok(Reply::Logins {
+                    page,
+                    sync: self.sync.status(),
+                })
+            }
+            Action::LoginChoices { record, after } if self.is_open() => {
+                let page = self
+                    .runtime
+                    .engine_mut()
+                    .browser_login_choices(&mut BrowserStore, record, after)
+                    .await?;
+                Ok(Reply::LoginChoices(page))
+            }
+            Action::LoginEditor { target } if self.is_open() => {
+                let fields = self
+                    .runtime
+                    .engine_mut()
+                    .browser_login_editor(&mut BrowserStore, &target)
+                    .await?;
+                Ok(Reply::LoginEditor { target, fields })
+            }
+            Action::CreateLogin { record, login } if self.is_open() => {
+                let head = self
+                    .runtime
+                    .engine_mut()
+                    .create_browser_login(&mut BrowserStore, record, &login, now())
+                    .await?;
+                self.local_change();
+                Ok(Reply::Saved(head))
+            }
+            Action::UpdateLogin { target, change } if self.is_open() => {
+                let head = self
+                    .runtime
+                    .engine_mut()
+                    .update_browser_login(&mut BrowserStore, &target, &change, now())
+                    .await?;
+                self.local_change();
+                Ok(Reply::Saved(head))
+            }
+            _ => Err(Error::Locked),
+        }
+    }
+
+    fn opened(&mut self, output: Output) -> Response {
+        let Output::Opened { info, server, .. } = output else {
+            return Err(Error::Integrity);
+        };
+        self.server = server.filter(|url| url.starts_with("https://"));
+        let now = now();
+        self.lease.open(now);
+        if self.server.is_some() {
+            self.sync.start(now);
+            self.reported_sync.set(self.sync.status());
+        }
+        Ok(Reply::Opened {
+            name: info.name,
+            sync: self.sync.status(),
+        })
+    }
+
+    async fn sync_step(&mut self) -> bool {
+        let Some(server) = self.server.clone() else {
+            return false;
+        };
+        let before = (self.sync.status(), self.conflicts);
+        let result = match self.command(Command::Sync { server }).await {
+            Ok(Output::Synced(report)) => {
+                if report.downloaded > 0 {
+                    self.autofill.invalidate_waiting_for_form();
+                }
+                if !report.more {
+                    self.conflicts = !report.conflicts.is_empty();
+                }
+                Ok(report.more)
+            }
+            Ok(_) => Err(Error::Integrity),
+            Err(error) => Err(error),
+        };
+        self.sync.finish(now(), result);
+        if before != (self.sync.status(), self.conflicts) {
+            self.autofill.invalidate_waiting_for_form();
+        }
+        self.reported_sync.set(self.sync.status());
+        result == Ok(true)
+    }
+
+    fn local_change(&mut self) {
+        self.autofill.invalidate_waiting_for_form();
+        self.sync.local_change(now());
+        self.reported_sync.set(self.sync.status());
+    }
+}

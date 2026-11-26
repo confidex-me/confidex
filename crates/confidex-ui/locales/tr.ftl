@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = Kişisel: ilk etiket bir klasör olur. Kuruluş:
 settings-auto-lock = Etkinlik yokken kilitle
 settings-auto-lock-hint = Bu ayar yalnızca bu cihazdaki bu kasa için geçerlidir. Tekrar açmak için kasanın kilidini açmanız gerekir.
 settings-device-unlock-error = Cihazla kilit açma ayarı değiştirilemedi. Tekrar deneyin.
+
+extension-session-hint = Confidex’i tarayıcıda kullanırken bu oturum sekmesini açık tutun.
+extension-new-login = Yeni giriş bilgisi
+extension-saved-local = Bu cihaza kaydedildi.
+extension-sync-pending = Eşitleme bekleniyor.
+extension-login-conflicts = Kayıt çakışmalarını ana Confidex uygulamasında çözün.
+extension-login-ambiguous = Belirsiz giriş alanlarını ana Confidex uygulamasında düzeltin.
+extension-login-changed = Kayıt değişti. Güncel sürümü düzenlemek için kaydı yeniden seçin.
+extension-current-revision = Güncel sürüm
+extension-reapply-draft = Değişikliklerimi yeniden uygula
+extension-password-replacement-hint = Kayıtlı parolayı değiştirmek için yeni bir parola girin.
+
+extension-startup-error = Confidex başlatılamadı. Uzantıyı yeniden yükleyip tekrar deneyin.
+
+extension-sites-grant = HTTPS sitelerine erişime izin ver
+extension-sites-revoke = HTTPS sitelerine erişimi kaldır
+extension-sites-unavailable = Site erişimi değiştirilemedi.
+
+extension-auto-fill-on-open = Sayfa açıldığında giriş bilgilerini otomatik doldur
+extension-fill = Giriş bilgilerini doldur
+extension-saved-logins = Kayıtlı giriş bilgileri
+extension-no-form = Desteklenen bir giriş formu bulunamadı.
+extension-site-no-access = Bir HTTPS sayfası açın ve oturum sekmesinden sitelere erişime izin verin.
+extension-form-changed = Sayfa, form veya kayıt değişti. Listeyi yenileyip yeniden seçin.
+extension-form-choice = Giriş formu
+extension-session-open = Oturumu aç
+extension-filled = Giriş bilgileri dolduruldu.
+
+extension-save-offer = Bu giriş bilgileri kaydedilsin mi?
+extension-update-offer = Güncellenecek giriş bilgilerini seçin
+extension-update-password = Parolayı güncelle
+extension-save-dismiss = Şimdi değil
+extension-offer-more = Diğer
+extension-load-error = Bu sitenin verileri yüklenemedi.
+extension-retry = Tekrar dene
+extension-current-site = Geçerli site
+extension-save-never = Bu sitede kaydetmeyi önerme
+extension-site-disable = Bu sitede Confidex’i devre dışı bırak
+extension-site-enable = Bu sitede Confidex’i etkinleştir
+extension-saving-enable = Bu sitede kaydetmeyi öner
+extension-site-disabled = Confidex bu sitede devre dışı.
+extension-save-changed = Öneri değişti veya süresi doldu. Güncel önerileri inceleyin.
+extension-save-duplicate = Bu giriş bilgileri zaten kayıtlı.

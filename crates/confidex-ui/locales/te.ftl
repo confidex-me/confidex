@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = వ్యక్తిగతం: మొదటి 
 settings-auto-lock = నిష్క్రియంగా ఉన్నప్పుడు లాక్ చేయి
 settings-auto-lock-hint = ఈ సెట్టింగ్ ఈ పరికరంలోని ఈ వాల్ట్‌కు మాత్రమే వర్తిస్తుంది. మళ్లీ తెరవడానికి వాల్ట్‌ను అన్‌లాక్ చేయాలి.
 settings-device-unlock-error = పరికరంతో అన్‌లాక్ చేసే సెట్టింగ్‌ను మార్చలేకపోయాం. మళ్లీ ప్రయత్నించండి.
+
+extension-session-hint = బ్రౌజర్‌లో Confidex వాడుతున్నప్పుడు ఈ సెషన్ ట్యాబ్‌ను తెరిచి ఉంచండి.
+extension-new-login = కొత్త లాగిన్
+extension-saved-local = ఈ పరికరంలో సేవ్ చేయబడింది.
+extension-sync-pending = సమకాలీకరణ పెండింగ్‌లో ఉంది.
+extension-login-conflicts = ప్రధాన Confidex యాప్‌లో రికార్డు వైరుధ్యాలను పరిష్కరించండి.
+extension-login-ambiguous = ప్రధాన Confidex యాప్‌లో అస్పష్టమైన లాగిన్ ఫీల్డ్‌లను సరిచేయండి.
+extension-login-changed = రికార్డు మారింది. తాజా సంస్కరణను సవరించడానికి మళ్లీ ఎంచుకోండి.
+extension-current-revision = ప్రస్తుత సవరణ
+extension-reapply-draft = నా మార్పులను మళ్లీ వర్తింపజేయి
+extension-password-replacement-hint = సేవ్ చేసిన పాస్‌వర్డ్‌ను మార్చడానికి కొత్త పాస్‌వర్డ్‌ను నమోదు చేయండి.
+
+extension-startup-error = Confidex ప్రారంభం కాలేదు. పొడిగింపును మళ్లీ లోడ్ చేసి ప్రయత్నించండి.
+
+extension-sites-grant = HTTPS సైట్‌లకు ప్రాప్యతను అనుమతించండి
+extension-sites-revoke = HTTPS సైట్‌ల ప్రాప్యతను తొలగించండి
+extension-sites-unavailable = సైట్ ప్రాప్యతను మార్చడం సాధ్యం కాలేదు.
+
+extension-auto-fill-on-open = పేజీ తెరిచినప్పుడు లాగిన్ వివరాలను స్వయంచాలకంగా పూరించు
+extension-fill = లాగిన్ వివరాలను పూరించండి
+extension-saved-logins = సేవ్ చేసిన లాగిన్ వివరాలు
+extension-no-form = మద్దతు ఉన్న లాగిన్ ఫారం కనబడలేదు.
+extension-site-no-access = HTTPS పేజీని తెరిచి, సెషన్ ట్యాబ్‌లో సైట్‌లకు ప్రాప్యతను అనుమతించండి.
+extension-form-changed = పేజీ, ఫారం లేదా నమోదు మారింది. జాబితాను రిఫ్రెష్ చేసి మళ్లీ ఎంచుకోండి.
+extension-form-choice = లాగిన్ ఫారం
+extension-session-open = సెషన్‌ను తెరవండి
+extension-filled = లాగిన్ వివరాలు పూరించబడ్డాయి.
+
+extension-save-offer = ఈ లాగిన్ వివరాలను సేవ్ చేయాలా?
+extension-update-offer = అప్‌డేట్ చేయాల్సిన లాగిన్‌ను ఎంచుకోండి
+extension-update-password = పాస్‌వర్డ్‌ను అప్‌డేట్ చేయండి
+extension-save-dismiss = ఇప్పుడు కాదు
+extension-offer-more = మరిన్ని
+extension-load-error = ఈ సైట్ డేటాను లోడ్ చేయలేకపోయాము.
+extension-retry = మళ్లీ ప్రయత్నించండి
+extension-current-site = ప్రస్తుత సైట్
+extension-save-never = ఈ సైట్‌లో సేవ్ చేయమని సూచించవద్దు
+extension-site-disable = ఈ సైట్‌లో Confidex‌ను నిలిపివేయండి
+extension-site-enable = ఈ సైట్‌లో Confidex‌ను ప్రారంభించండి
+extension-saving-enable = ఈ సైట్‌లో సేవ్ చేయమని సూచించండి
+extension-site-disabled = ఈ సైట్‌లో Confidex నిలిపివేయబడింది.
+extension-save-changed = సూచన మారింది లేదా గడువు ముగిసింది. ప్రస్తుత సూచనలను చూడండి.
+extension-save-duplicate = ఈ లాగిన్ వివరాలు ఇప్పటికే సేవ్ అయ్యాయి.

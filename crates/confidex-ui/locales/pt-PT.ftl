@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Pessoal: a primeira etiqueta torna-se uma pasta.
 settings-auto-lock = Bloquear por inatividade
 settings-auto-lock-hint = Esta definição aplica-se apenas a este cofre neste dispositivo. Terá de o desbloquear para o abrir novamente.
 settings-device-unlock-error = Não foi possível alterar o desbloqueio com o dispositivo. Tente novamente.
+
+extension-session-hint = Mantenha este separador da sessão aberto enquanto utiliza o Confidex no navegador.
+extension-new-login = Novo início de sessão
+extension-saved-local = Guardado neste dispositivo.
+extension-sync-pending = Sincronização pendente.
+extension-login-conflicts = Resolva conflitos de registos na aplicação principal do Confidex.
+extension-login-ambiguous = Corrija os campos ambíguos de início de sessão na aplicação principal do Confidex.
+extension-login-changed = O registo mudou. Selecione-o novamente para editar a versão atual.
+extension-current-revision = Revisão atual
+extension-reapply-draft = Reaplicar as minhas alterações
+extension-password-replacement-hint = Introduza uma nova palavra-passe para substituir a que está guardada.
+
+extension-startup-error = Não foi possível iniciar o Confidex. Recarregue a extensão e tente novamente.
+
+extension-sites-grant = Permitir o acesso a sites HTTPS
+extension-sites-revoke = Remover o acesso a sites HTTPS
+extension-sites-unavailable = Não foi possível alterar o acesso aos sites.
+
+extension-auto-fill-on-open = Preencher os dados de acesso ao abrir a página
+extension-fill = Preencher dados de acesso
+extension-saved-logins = Dados de acesso guardados
+extension-no-form = Não foi encontrado um formulário de início de sessão compatível.
+extension-site-no-access = Abra uma página HTTPS e autorize o acesso a sites no separador da sessão.
+extension-form-changed = A página, o formulário ou o registo mudou. Atualize a lista e selecione de novo.
+extension-form-choice = Formulário de início de sessão
+extension-session-open = Abrir sessão
+extension-filled = Dados de acesso preenchidos.
+
+extension-save-offer = Guardar estes dados de acesso?
+extension-update-offer = Escolha os dados de acesso a atualizar
+extension-update-password = Atualizar palavra-passe
+extension-save-dismiss = Agora não
+extension-offer-more = Mais
+extension-load-error = Não foi possível carregar os dados deste site.
+extension-retry = Tentar novamente
+extension-current-site = Site atual
+extension-save-never = Nunca sugerir guardar neste site
+extension-site-disable = Desativar o Confidex neste site
+extension-site-enable = Ativar o Confidex neste site
+extension-saving-enable = Sugerir guardar neste site
+extension-site-disabled = O Confidex está desativado neste site.
+extension-save-changed = A sugestão mudou ou expirou. Consulte as sugestões atuais.
+extension-save-duplicate = Estes dados de acesso já estão guardados.

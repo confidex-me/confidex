@@ -618,3 +618,46 @@ export-bitwarden-profile-hint = Personale: il primo tag diventa una cartella. Or
 settings-auto-lock = Blocca per inattività
 settings-auto-lock-hint = Questa impostazione vale solo per questo caveau su questo dispositivo. Per riaprirlo dovrai sbloccarlo.
 settings-device-unlock-error = Impossibile modificare lo sblocco con il dispositivo. Riprova.
+
+extension-session-hint = Tieni aperta questa scheda della sessione mentre usi Confidex nel browser.
+extension-new-login = Nuovo accesso
+extension-saved-local = Salvato su questo dispositivo.
+extension-sync-pending = Sincronizzazione in attesa.
+extension-login-conflicts = Risolvi i conflitti delle voci nell’app principale di Confidex.
+extension-login-ambiguous = Correggi i campi di accesso ambigui nell’app principale di Confidex.
+extension-login-changed = La voce è cambiata. Selezionala di nuovo per modificare la versione corrente.
+extension-current-revision = Revisione attuale
+extension-reapply-draft = Riapplica le mie modifiche
+extension-password-replacement-hint = Inserisci una nuova password per sostituire quella salvata.
+
+extension-startup-error = Impossibile avviare Confidex. Ricarica l’estensione e riprova.
+
+extension-sites-grant = Consenti l’accesso ai siti HTTPS
+extension-sites-revoke = Revoca l’accesso ai siti HTTPS
+extension-sites-unavailable = Impossibile modificare l’accesso ai siti.
+
+extension-auto-fill-on-open = Compila le credenziali all’apertura della pagina
+extension-fill = Compila i dati di accesso
+extension-saved-logins = Credenziali salvate
+extension-no-form = Nessun modulo di accesso supportato trovato.
+extension-site-no-access = Apri una pagina HTTPS e consenti l’accesso ai siti nella scheda della sessione.
+extension-form-changed = La pagina, il modulo o la voce è cambiata. Aggiorna l’elenco e scegli di nuovo.
+extension-form-choice = Modulo di accesso
+extension-session-open = Apri sessione
+extension-filled = Dati di accesso compilati.
+
+extension-save-offer = Salvare queste credenziali?
+extension-update-offer = Scegli le credenziali da aggiornare
+extension-update-password = Aggiorna password
+extension-save-dismiss = Non ora
+extension-offer-more = Altro
+extension-load-error = Impossibile caricare i dati di questo sito.
+extension-retry = Riprova
+extension-current-site = Sito corrente
+extension-save-never = Non proporre il salvataggio su questo sito
+extension-site-disable = Disattiva Confidex su questo sito
+extension-site-enable = Attiva Confidex su questo sito
+extension-saving-enable = Proponi il salvataggio su questo sito
+extension-site-disabled = Confidex è disattivato su questo sito.
+extension-save-changed = La proposta è cambiata o è scaduta. Controlla le proposte attuali.
+extension-save-duplicate = Queste credenziali sono già salvate.

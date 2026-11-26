@@ -2,17 +2,6 @@ use super::*;
 #[cfg(test)]
 mod tests;
 
-pub(super) fn name_key(name: &str) -> String {
-    format!(
-        "starter-{}",
-        name.split(|c: char| !c.is_ascii_alphanumeric())
-            .filter(|part| !part.is_empty())
-            .map(str::to_ascii_lowercase)
-            .collect::<Vec<_>>()
-            .join("-")
-    )
-}
-
 fn rows(featured: usize, total: usize, width: f32) -> Vec<Vec<usize>> {
     let mut rows = Vec::new();
     for (range, max) in [(0..featured, 3), (featured..total, 2)] {
@@ -254,7 +243,7 @@ impl VaultApp {
                 if let Some(template) = app::templates::get(kind) {
                     let mut sections = template.sections();
                     for section in &mut sections {
-                        section.name = self.locale.text(&name_key(&section.name));
+                        section.name = self.locale.starter_name(&section.name);
                     }
                     draft.sections = Some(sections);
                 }

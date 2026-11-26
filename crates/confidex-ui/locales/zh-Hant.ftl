@@ -615,3 +615,46 @@ export-bitwarden-profile-hint = 個人：第一個標籤將成為資料夾。組
 settings-auto-lock = 閒置時鎖定
 settings-auto-lock-hint = 此設定僅適用於此裝置上的此保險庫。再次開啟時需要解鎖保險庫。
 settings-device-unlock-error = 無法變更裝置解鎖設定。請重試。
+
+extension-session-hint = 在瀏覽器中使用 Confidex 時，請保持此工作階段分頁開啟。
+extension-new-login = 新增登入憑證
+extension-saved-local = 已儲存於這部裝置。
+extension-sync-pending = 等待同步。
+extension-login-conflicts = 請在 Confidex 主應用程式中解決項目衝突。
+extension-login-ambiguous = 請在 Confidex 主應用程式中修正有歧義的登入欄位。
+extension-login-changed = 項目已變更。請重新選取以編輯目前版本。
+extension-current-revision = 目前的修訂版本
+extension-reapply-draft = 重新套用我的編輯
+extension-password-replacement-hint = 輸入新密碼以取代已儲存的密碼。
+
+extension-startup-error = 無法啟動 Confidex。請重新載入擴充功能後再試一次。
+
+extension-sites-grant = 允許存取 HTTPS 網站
+extension-sites-revoke = 撤銷存取 HTTPS 網站的權限
+extension-sites-unavailable = 無法變更網站存取權限。
+
+extension-auto-fill-on-open = 開啟網頁時自動填入登入資料
+extension-fill = 填入登入資訊
+extension-saved-logins = 已儲存的登入資訊
+extension-no-form = 找不到支援的登入表單。
+extension-site-no-access = 開啟 HTTPS 頁面，並在工作階段分頁中允許存取網站。
+extension-form-changed = 頁面、表單或記錄已變更。請重新整理清單後再選擇。
+extension-form-choice = 登入表單
+extension-session-open = 開啟工作階段
+extension-filled = 已填入登入資訊。
+
+extension-save-offer = 儲存這組登入資訊？
+extension-update-offer = 選擇要更新的登入資訊
+extension-update-password = 更新密碼
+extension-save-dismiss = 暫時不要
+extension-offer-more = 更多
+extension-load-error = 無法載入此網站的資料。
+extension-retry = 重試
+extension-current-site = 目前網站
+extension-save-never = 不再建議儲存此網站的登入資訊
+extension-site-disable = 在此網站停用 Confidex
+extension-site-enable = 在此網站啟用 Confidex
+extension-saving-enable = 在此網站提供儲存建議
+extension-site-disabled = 此網站已停用 Confidex。
+extension-save-changed = 儲存建議已變更或過期。請查看目前的建議。
+extension-save-duplicate = 這組登入資訊已儲存。

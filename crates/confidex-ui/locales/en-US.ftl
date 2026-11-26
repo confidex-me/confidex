@@ -678,3 +678,46 @@ export-bitwarden-profile-hint = Personal: the first tag becomes a folder. Organi
 settings-auto-lock = Lock when inactive
 settings-auto-lock-hint = This setting applies only to this vault on this device. You will need to unlock the vault to open it again.
 settings-device-unlock-error = Could not change device unlock. Try again.
+
+extension-session-hint = Keep this session tab open while using Confidex in your browser.
+extension-new-login = New login
+extension-saved-local = Saved on this device.
+extension-sync-pending = Synchronization pending.
+extension-login-conflicts = Resolve conflicting records in the main Confidex app.
+extension-login-ambiguous = Fix ambiguous login fields in the main Confidex app.
+extension-login-changed = This record changed. Select it again to edit the latest version.
+extension-current-revision = Current revision
+extension-reapply-draft = Reapply my edits
+extension-password-replacement-hint = Enter a new password to replace the saved one.
+
+extension-startup-error = Confidex could not start. Reload the extension and try again.
+
+extension-sites-grant = Allow access to HTTPS sites
+extension-sites-revoke = Remove access to HTTPS sites
+extension-sites-unavailable = Could not change site access.
+
+extension-auto-fill-on-open = Autofill login when the page opens
+extension-fill = Fill login
+extension-saved-logins = Saved logins
+extension-no-form = No supported login form found.
+extension-site-no-access = Open an HTTPS page and allow site access in the session tab.
+extension-form-changed = The page, form or login changed. Refresh to choose again.
+extension-form-choice = Login form
+extension-session-open = Open session
+extension-filled = Login filled.
+
+extension-save-offer = Save this login?
+extension-update-offer = Choose a login to update
+extension-update-password = Update password
+extension-save-dismiss = Not now
+extension-offer-more = More
+extension-load-error = Couldn’t load the data for this site.
+extension-retry = Retry
+extension-current-site = Current site
+extension-save-never = Never offer to save on this site
+extension-site-disable = Disable Confidex on this site
+extension-site-enable = Enable Confidex on this site
+extension-saving-enable = Offer to save on this site
+extension-site-disabled = Confidex is disabled on this site.
+extension-save-changed = The save offer changed or expired. Review the current offers.
+extension-save-duplicate = This login is already saved.
